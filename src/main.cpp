@@ -1,33 +1,23 @@
 #include <Arduino.h>
+#include <axp20x.h>
+AXP20X_Class axp;
 
 const int reedFlapPin = GPIO_NUM_0;
 
-#include <Adafruit_SSD1306.h>
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET 4
-#define SCREEN_ADDRESS 0x3C
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
-void clearSSD1306()
-{
-    if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
-    {
-        while (true)
-            yield();
-    }
-    display.clearDisplay();
-    display.display();
-}
-
 void setup()
 {
+    Wire.begin(21, 22);
+    // axp.setChgLEDMode(AXP20X_LED_LOW_LEVEL);
+
+    axp.setChgLEDMode(AXP20X_LED_OFF);       // LED off
+    axp.setChgLEDMode(AXP20X_LED_BLINK_1HZ); // 1blink/sec, low rate
+    axp.setChgLEDMode(AXP20X_LED_BLINK_4HZ); // 4blink/sec, high rate
+    axp.setChgLEDMode(AXP20X_LED_LOW_LEVEL); // LED full on
+
     pinMode(reedFlapPin, INPUT_PULLUP);
     pinMode(LED_BUILTIN, OUTPUT);
-#if false
-    clearSSD1306();
-#endif
-
+    digitalWrite(LED_BUILTIN, LOW);
+    // delay(100);
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, 0);
     esp_deep_sleep_start();
 }
