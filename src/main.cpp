@@ -41,6 +41,7 @@ void setupSSD1306()
 void setup()
 {
     pinMode(inputPin, INPUT_PULLUP);
+    pinMode(LED_BUILTIN, OUTPUT);
     Serial.begin(BAUD_RATE);
     setupSSD1306();
 }
@@ -48,15 +49,18 @@ void setup()
 void loop()
 {
     yield();
-    // delay(500);
+    int state = digitalRead(inputPin);
+    static int previousState = state;
+    if (state == previousState)
+        return;
 
-    // int state = digitalRead(inputPin);
-    // Serial.print("Pin state: ");
-    // Serial.println(state);
-    // if (state)
-    //     return;
-    // display.clearDisplay();
-    // display.print(F("STATE "));
-    // display.println(state);
-    // display.display();
+    digitalWrite(LED_BUILTIN, state);
+    previousState = state;
+    Serial.print("Pin state: ");
+    Serial.println(state);
+    display.clearDisplay();
+    display.setCursor(2, 20);
+    display.print(F("STATE "));
+    display.println(state);
+    display.display();
 }
