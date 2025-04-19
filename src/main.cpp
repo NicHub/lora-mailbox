@@ -1,66 +1,38 @@
 #include <Arduino.h>
 
-const int inputPin = 0;
+const int reedFlapPin = GPIO_NUM_0;
 
-#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <../fonts/PTMono7pt7b.h>
-#include <../fonts/PTMono9pt7b.h>
-#include "../fonts/Comic_Sans_MS_Bold13pt7b.h"
-
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET 4
 #define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-void setupSSD1306()
+void clearSSD1306()
 {
     if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
     {
-        Serial.println(F("SSD1306 allocation failed"));
         while (true)
             yield();
     }
     display.clearDisplay();
     display.display();
-    display.dim(true);
-    display.setRotation(0);
-    display.setTextSize(1);
-    display.setTextColor(SSD1306_WHITE);
-    display.setFont(&Comic_Sans_MS_Bold13pt7b);
-    display.setCursor(2, 20);
-    display.println(F("GPIO"));
-    display.setFont(&PTMono7pt7b);
-    display.setCursor(0, 40);
-    display.println(COMPILATION_DATE);
-    display.print(COMPILATION_TIME);
-    display.display();
 }
 
 void setup()
 {
-    pinMode(inputPin, INPUT_PULLUP);
+    pinMode(reedFlapPin, INPUT_PULLUP);
     pinMode(LED_BUILTIN, OUTPUT);
-    Serial.begin(BAUD_RATE);
-    setupSSD1306();
+#if false
+    clearSSD1306();
+#endif
+
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, 0);
+    esp_deep_sleep_start();
 }
 
 void loop()
 {
     yield();
-    int state = digitalRead(inputPin);
-    static int previousState = state;
-    if (state == previousState)
-        return;
-
-    digitalWrite(LED_BUILTIN, state);
-    previousState = state;
-    Serial.print("Pin state: ");
-    Serial.println(state);
-    display.clearDisplay();
-    display.setCursor(2, 20);
-    display.print(F("STATE "));
-    display.println(state);
-    display.display();
 }
