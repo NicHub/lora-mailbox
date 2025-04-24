@@ -13,6 +13,7 @@
 #include <../fonts/PTMono7pt7b.h>
 #include <../fonts/PTMono9pt7b.h>
 #include "../fonts/Comic_Sans_MS_Bold13pt7b.h"
+#include "send-mail.h"
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -175,6 +176,8 @@ void readLora()
     display.setFont(&PTMono9pt7b);
     display.print(cntMail);
     display.display();
+
+    sendMail();
 }
 
 void startReceive()
@@ -304,6 +307,9 @@ void setup()
     setupSSH1106();
 #endif
     setupLoRa();
+#if (RXorTX == 0)
+    setupWifi();
+#endif
     setupDeepSleep();
     uint8_t reedVals = readReed();
     transmitLora(reedVals);
