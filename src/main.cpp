@@ -154,6 +154,7 @@ void transmitLora(uint8_t reedVals)
 
 void readLora()
 {
+#if (RXorTX == 0)
     String msg;
     int state = radio.readData(msg);
     if (state != RADIOLIB_ERR_NONE)
@@ -178,7 +179,7 @@ void readLora()
     display.display();
 
     sendMail();
-
+#endif
 }
 
 void startReceive()
