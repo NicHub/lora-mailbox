@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <RadioLib.h>
 
-
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -15,7 +14,6 @@
 #define OLED_RESET 4
 #define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
 
 SX1276 radio = nullptr; // SX1276
 
@@ -67,29 +65,43 @@ void setupLoRa()
     radio = new Module(18, 26, 14, 33); // TTGO  CS, DI0, RST, BUSY
 
     Serial.print(F(PREFIX "Initializing LoRa ...  "));
-    // carrier frequency:           868.0 MHz
-    // bandwidth:                   125.0 kHz
-    // spreading factor:            9
-    // coding rate:                 7
-    // sync word:                   0x12 (private network)
-    // output power:                14 dBm
-    // current limit:               60 mA
-    // preamble length:             8 symbols
-    // TCXO voltage:                1.6 V (set to 0 to not use TCXO)
-    // regulator:                   DC-DC (set to true to use LDO)
-    // CRC:                         enabled
-    // int state = radio.begin(
-    //     868.0, // float freq              = Fréquence correcte pour l'Europe
-    //     62.5,  // float bw                = Bande passante réduite
-    //     12,    // uint8_t sf              = Facteur d'étalement maximal
-    //     8,     // uint8_t cr              = Taux de codage plus robuste
-    //     0x12,  // uint8_t syncWord        = SyncWord par défaut
-    //     14,    // int8_t power            = Puissance maximale autorisée
-    //     12,    // uint16_t preambleLength = Longueur de préambule augmentée
-    //     1      // uint8_t gain            // NB this param is different on SX126x => float tcxoVoltage
-    //            // false                  // bool useRegulatorLDO    // NB this param exists on SX126x only
-    // );
+
+    // # SX1276 PARAMETERS
+    // float freq = 434.0           // freq – Carrier frequency in MHz. Allowed values range from 137.0 MHz to 1020.0 MHz.
+    // float bw = 125.0             // bw – %LoRa link bandwidth in kHz. Allowed values are 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125, 250 and 500 kHz.
+    // uint8_t sf = 9               // sf – %LoRa link spreading factor. Allowed values range from 6 to 12.
+    // uint8_t cr = 7               // cr – %LoRa link coding rate denominator. Allowed values range from 5 to 8.
+    // uint8_t syncWord = 0x12      // syncWord – %LoRa sync word. Can be used to distinguish different networks. Note that value 0x34 is reserved for LoRaWAN networks.
+    // int8_t power = 10            // power – Transmission output power in dBm. Allowed values range from 2 to 17 dBm.
+    // uint16_t preambleLength = 8  // preambleLength – Length of %LoRa transmission preamble in symbols. The actual preamble length is 4.25 symbols longer than the set number. Allowed values range from 6 to 65535.
+    // uint8_t gain = 0             // gain – Gain of receiver LNA (low-noise amplifier). Can be set to any integer in range 1 to 6 where 1 is the highest gain. Set to 0 to enable automatic gain control (recommended).
+
+#define LORA_PARAM 2
+#if LORA_PARAM == 0
     int state = radio.begin();
+#elif LORA_PARAM == 1 // Default values
+    int state = radio.begin(
+        434.0, // float freq
+        125.0, // float bw
+        9,     // uint8_t sf
+        7,     // uint8_t cr
+        0x12,  // uint8_t syncWord
+        10,    // int8_t power
+        8,     // uint16_t preambleLength
+        0      // uint8_t gain
+    );
+#elif LORA_PARAM == 2
+    int state = radio.begin(
+        433.92, // float freq
+        31.25,  // float bw
+        8,      // uint8_t sf
+        8,      // uint8_t cr
+        0x12,   // uint8_t syncWord
+        17,     // int8_t power
+        16,     // uint16_t preambleLength
+        0       // uint8_t gain
+    );
+#endif
 
     if (state == RADIOLIB_ERR_NONE)
     {
@@ -183,7 +195,7 @@ void setupSSD1306()
     {
         Serial.println(F("SSD1306 allocation failed"));
         while (true)
-        yield();
+            yield();
     }
     display.clearDisplay();
     display.display();
