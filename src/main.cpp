@@ -1,6 +1,22 @@
 #include <Arduino.h>
 #include <RadioLib.h>
 
+
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <../fonts/PTMono7pt7b.h>
+#include <../fonts/PTMono9pt7b.h>
+#include "../fonts/Comic_Sans_MS_Bold13pt7b.h"
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET 4
+#define SCREEN_ADDRESS 0x3C
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+
 SX1276 radio = nullptr; // SX1276
 
 #define REED_1 GPIO_NUM_15
@@ -25,6 +41,21 @@ ICACHE_RAM_ATTR
 #endif
 
 #define PREFIX "\n[" PROJECT_NAME "] "
+
+void blink(
+    unsigned long on_duration_ms = 10,
+    unsigned long total_duration_ms = 100,
+    unsigned long repeat = 10)
+{
+    pinMode(LED_BUILTIN, OUTPUT);
+    for (size_t i = 0; i < repeat; i++)
+    {
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(on_duration_ms);
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(total_duration_ms - on_duration_ms);
+    }
+}
 
 void setFlag(void)
 {
@@ -106,9 +137,21 @@ void readLora()
         Serial.printf(PREFIX "No packet! state: %d", state);
         return;
     }
+    static uint16_t cntMail = 0;
+    cntMail++;
+    blink();
+    Serial.printf(PREFIX "cntMail:\t\t%d", cntMail);
     Serial.printf(PREFIX "Received:\t\t%s", msg.c_str());
     Serial.printf(PREFIX "RSSI:\t\t%.2f dBm", radio.getRSSI());
     Serial.printf(PREFIX "SNR:\t\t%.2f dB", radio.getSNR());
+
+    // OLED
+    display.clearDisplay();
+    display.display();
+    display.setCursor(0, 12);
+    display.setFont(&PTMono9pt7b);
+    display.print(cntMail);
+    display.display();
 }
 
 void startReceive()
@@ -132,6 +175,32 @@ u_int8_t readReed()
     Serial.print(millis());
     digitalWrite(LED_BUILTIN, HIGH);
     return curVal;
+}
+
+void setupSSD1306()
+{
+    if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
+    {
+        Serial.println(F("SSD1306 allocation failed"));
+        while (true)
+        yield();
+    }
+    display.clearDisplay();
+    display.display();
+    if (RXorTX == 1)
+        return;
+    display.dim(true);
+    display.setRotation(0);
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setFont(&Comic_Sans_MS_Bold13pt7b);
+    display.setCursor(2, 20);
+    display.println(F("MAILBOX"));
+    display.setFont(&PTMono7pt7b);
+    display.setCursor(0, 40);
+    display.println(COMPILATION_DATE);
+    display.print(COMPILATION_TIME);
+    display.display();
 }
 
 void setupSerial()
@@ -174,6 +243,7 @@ void goToDeepSleep()
 {
     if (RXorTX == 0)
         return;
+    Serial.printf(PREFIX "compilation time %s", COMPILATION_TIME);
     Serial.print(F(PREFIX "Going to deep sleep"));
     Serial.flush();
     delay(1000);
@@ -184,6 +254,7 @@ void setup()
 {
     setupGPIOs();
     setupSerial();
+    setupSSD1306();
     setupLoRa();
     setupDeepSleep();
     uint8_t reedVals = readReed();
