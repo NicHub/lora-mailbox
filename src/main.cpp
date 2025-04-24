@@ -10,8 +10,8 @@
 #if OLED_TYPE == 1
 #include <Adafruit_SH1106.h>
 #endif
-#include <../fonts/PTMono7pt7b.h>
-#include <../fonts/PTMono9pt7b.h>
+#include "../fonts/PTMono7pt7b.h"
+#include "../fonts/PTMono9pt7b.h"
 #include "../fonts/Comic_Sans_MS_Bold13pt7b.h"
 #include "send-mail.h"
 
@@ -178,6 +178,7 @@ void readLora()
     display.display();
 
     sendMail();
+
 }
 
 void startReceive()
@@ -218,7 +219,6 @@ void setupSSH1106()
     display.println(COMPILATION_DATE);
     display.print(COMPILATION_TIME);
     display.display();
-
 }
 #endif
 
@@ -322,7 +322,7 @@ void setup()
 
 void loop()
 {
-    // Pour le module RX uniquement.
+    // Pour le module Rx uniquement.
     if (!loraEvent)
     {
         yield();
