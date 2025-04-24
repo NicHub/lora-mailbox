@@ -210,6 +210,9 @@ void setupSSH1106()
 {
     display.begin(SH1106_SWITCHCAPVCC, 0x3C);
     display.clearDisplay();
+    display.display();
+    if (RXorTX == 1)
+        return;
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setFont(&Comic_Sans_MS_Bold13pt7b);
