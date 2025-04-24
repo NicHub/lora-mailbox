@@ -4,7 +4,12 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
+#if OLED_TYPE == 0
 #include <Adafruit_SSD1306.h>
+#endif
+#if OLED_TYPE == 1
+#include <Adafruit_SH1106.h>
+#endif
 #include <../fonts/PTMono7pt7b.h>
 #include <../fonts/PTMono9pt7b.h>
 #include "../fonts/Comic_Sans_MS_Bold13pt7b.h"
@@ -13,7 +18,13 @@
 #define SCREEN_HEIGHT 64
 #define OLED_RESET 4
 #define SCREEN_ADDRESS 0x3C
+
+#if OLED_TYPE == 0
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+#endif
+#if OLED_TYPE == 1
+Adafruit_SH1106 display(OLED_RESET);
+#endif
 
 SX1276 radio = nullptr; // SX1276
 
@@ -189,6 +200,26 @@ u_int8_t readReed()
     return curVal;
 }
 
+#if OLED_TYPE == 1
+void setupSSH1106()
+{
+    display.begin(SH1106_SWITCHCAPVCC, 0x3C);
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setFont(&Comic_Sans_MS_Bold13pt7b);
+    display.setCursor(2, 20);
+    display.println(F("MAILBOX"));
+    display.setFont(&PTMono7pt7b);
+    display.setCursor(0, 40);
+    display.println(COMPILATION_DATE);
+    display.print(COMPILATION_TIME);
+    display.display();
+
+}
+#endif
+
+#if OLED_TYPE == 0
 void setupSSD1306()
 {
     if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
@@ -203,7 +234,7 @@ void setupSSD1306()
         return;
     display.dim(true);
     display.setRotation(0);
-    display.setTextSize(1);
+    display.setTextSize(2);
     display.setTextColor(SSD1306_WHITE);
     display.setFont(&Comic_Sans_MS_Bold13pt7b);
     display.setCursor(2, 20);
@@ -214,6 +245,7 @@ void setupSSD1306()
     display.print(COMPILATION_TIME);
     display.display();
 }
+#endif
 
 void setupSerial()
 {
@@ -266,7 +298,11 @@ void setup()
 {
     setupGPIOs();
     setupSerial();
+#if OLED_TYPE == 0
     setupSSD1306();
+#elif OLED_TYPE == 1
+    setupSSH1106();
+#endif
     setupLoRa();
     setupDeepSleep();
     uint8_t reedVals = readReed();
@@ -280,7 +316,7 @@ void setup()
 
 void loop()
 {
-    // Pour le module Rx uniquement.
+    // Pour le module RX uniquement.
     if (!loraEvent)
     {
         yield();
