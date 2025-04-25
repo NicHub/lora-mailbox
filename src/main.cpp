@@ -1,4 +1,10 @@
-#include <Arduino.h>
+/**
+ * LoRa MAILBOX
+ *
+ * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
+ */
+
+ #include <Arduino.h>
 #include <RadioLib.h>
 
 #include <SPI.h>
