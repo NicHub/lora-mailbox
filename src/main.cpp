@@ -19,7 +19,11 @@
 #include "../fonts/PTMono7pt7b.h"
 #include "../fonts/PTMono9pt7b.h"
 #include "../fonts/Comic_Sans_MS_Bold13pt7b.h"
+
+#if LORA_PARAM == 0
 #include "send-mail.h"
+#include "send-mqtt.h"
+#endif
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -185,6 +189,7 @@ void readLora()
     display.display();
 
     sendMail();
+    sendMQTT("Hello from ESP32!");
 #endif
 }
 
@@ -319,6 +324,7 @@ void setup()
     setupLoRa();
 #if (RXorTX == 0)
     setupWifi();
+    setupMQTT();
 #endif
     setupDeepSleep();
     uint8_t reedVals = readReed();

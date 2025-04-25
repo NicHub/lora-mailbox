@@ -14,6 +14,9 @@
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
   Example adapted from: https://github.com/mobizt/ESP-Mail-Client
 */
+
+#pragma once
+
 #if (RXorTX == 0)
 #include <Arduino.h>
 #if defined(ESP32)
