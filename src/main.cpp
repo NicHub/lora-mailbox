@@ -6,7 +6,6 @@
 
 #include <Arduino.h>
 #include <RadioLib.h>
-
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -322,7 +321,14 @@ void debounce(uint32_t wait)
 {
     if (RXorTX == 0)
         return;
-    delay(wait);
+    unsigned long now = millis();
+    while (millis() - now < wait)
+    {
+        if (anyrtttl::nonblocking::isPlaying())
+            anyrtttl::nonblocking::play();
+        else
+            anyrtttl::nonblocking::begin(BUZZER_PIN, tetris);
+    }
 }
 
 void debouncePIR()
@@ -368,6 +374,7 @@ void setup()
     uint8_t reedVals = readReed();
     transmitLora(reedVals);
     debounce(1000);
+    // debouncePIR();
     setupDeepSleep();
     goToDeepSleep();
     // The Tx module never goes past this point because
