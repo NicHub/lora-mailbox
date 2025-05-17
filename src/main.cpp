@@ -4,7 +4,7 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
- #include <Arduino.h>
+#include <Arduino.h>
 #include <RadioLib.h>
 
 #include <SPI.h>
@@ -37,11 +37,27 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_SH1106 display(OLED_RESET);
 #endif
 
-SX1276 radio = nullptr; // SX1276
+SX1276 radio = nullptr;
 
-#define REED_1 GPIO_NUM_15
-#define REED_2 GPIO_NUM_2
-#define REED_3 GPIO_NUM_4
+#define REED_PIN_1 GPIO_NUM_15
+#define REED_PIN_2 GPIO_NUM_2
+#define REED_PIN_3 GPIO_NUM_4
+#define PIR_PIN_1 GPIO_NUM_4
+#define REED_PIN_CONFIG 1
+#if REED_PIN_CONFIG == 0
+#define MASK ((1ULL << REED_PIN_1) | (1ULL << REED_PIN_2) | (1ULL << REED_PIN_3))
+#elif REED_PIN_CONFIG == 1
+#define MASK (1ULL << PIR_PIN_1)
+#else
+#error "Invalid REED_PIN_CONFIG value"
+#endif
+
+#include <anyrtttl.h>
+#include <binrtttl.h>
+#include <pitches.h>
+
+#define BUZZER_PIN 13
+const char *tetris = "tetris:d=4,o=5,b=160:e6,8b,8c6,8d6,16e6,16d6,8c6,8b,a,8a,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,2a,8p,d6,8f6,a6,8g6,8f6,e6,8e6,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,a";
 
 // save transmission states between loops
 int transmissionState = RADIOLIB_ERR_NONE;
@@ -59,6 +75,10 @@ volatile bool loraEvent = false;
 #if defined(ESP8266) || defined(ESP32)
 ICACHE_RAM_ATTR
 #endif
+void setFlag(void)
+{
+    loraEvent = true;
+}
 
 #define PREFIX "\n[" PROJECT_NAME "] "
 
@@ -77,11 +97,6 @@ void blink(
     }
 }
 
-void setFlag(void)
-{
-    loraEvent = true;
-}
-
 void setupLoRa()
 {
     radio = new Module(18, 26, 14, 33); // TTGO  CS, DI0, RST, BUSY
@@ -98,7 +113,7 @@ void setupLoRa()
     // uint16_t preambleLength = 8  // preambleLength – Length of %LoRa transmission preamble in symbols. The actual preamble length is 4.25 symbols longer than the set number. Allowed values range from 6 to 65535.
     // uint8_t gain = 0             // gain – Gain of receiver LNA (low-noise amplifier). Can be set to any integer in range 1 to 6 where 1 is the highest gain. Set to 0 to enable automatic gain control (recommended).
 
-#define LORA_PARAM 2
+#define LORA_PARAM 3
 #if LORA_PARAM == 0
     int state = radio.begin();
 #elif LORA_PARAM == 1 // Default values
@@ -122,6 +137,17 @@ void setupLoRa()
         17,     // int8_t power
         16,     // uint16_t preambleLength
         0       // uint8_t gain
+    );
+#elif LORA_PARAM == 3
+    int state = radio.begin(
+        868.0, // float freq
+        62.5,  // float bw
+        12,    // uint8_t sf
+        8,     // uint8_t cr
+        0x12,  // uint8_t syncWord
+        14,    // int8_t power
+        12,    // uint16_t preambleLength
+        0      // uint8_t gain
     );
 #endif
 
@@ -204,9 +230,9 @@ u_int8_t readReed()
     if (RXorTX == 0)
         return 0;
     u_int8_t curVal =
-        digitalRead(REED_3) * 100 +
-        digitalRead(REED_2) * 10 +
-        digitalRead(REED_1);
+        digitalRead(REED_PIN_3) * 100 +
+        digitalRead(REED_PIN_2) * 10 +
+        digitalRead(REED_PIN_1);
     digitalWrite(LED_BUILTIN, LOW);
     Serial.print("\nGPIO : ");
     Serial.printf("%03d", curVal);
@@ -215,27 +241,6 @@ u_int8_t readReed()
     digitalWrite(LED_BUILTIN, HIGH);
     return curVal;
 }
-
-#if OLED_TYPE == 1
-void setupSSH1106()
-{
-    display.begin(SH1106_SWITCHCAPVCC, 0x3C);
-    display.clearDisplay();
-    display.display();
-    if (RXorTX == 1)
-        return;
-    display.setTextSize(1);
-    display.setTextColor(WHITE);
-    display.setFont(&Comic_Sans_MS_Bold13pt7b);
-    display.setCursor(2, 20);
-    display.println(F("MAILBOX"));
-    display.setFont(&PTMono7pt7b);
-    display.setCursor(0, 40);
-    display.println(COMPILATION_DATE);
-    display.print(COMPILATION_TIME);
-    display.display();
-}
-#endif
 
 #if OLED_TYPE == 0
 void setupSSD1306()
@@ -263,6 +268,25 @@ void setupSSD1306()
     display.print(COMPILATION_TIME);
     display.display();
 }
+#elif OLED_TYPE == 1
+void setupSSH1106()
+{
+    display.begin(SH1106_SWITCHCAPVCC, 0x3C);
+    display.clearDisplay();
+    display.display();
+    if (RXorTX == 1)
+        return;
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setFont(&Comic_Sans_MS_Bold13pt7b);
+    display.setCursor(2, 20);
+    display.println(F("MAILBOX"));
+    display.setFont(&PTMono7pt7b);
+    display.setCursor(0, 40);
+    display.println(COMPILATION_DATE);
+    display.print(COMPILATION_TIME);
+    display.display();
+}
 #endif
 
 void setupSerial()
@@ -279,19 +303,19 @@ void setupSerial()
 
 void setupGPIOs()
 {
-    pinMode(REED_1, INPUT);
-    pinMode(REED_2, INPUT);
-    pinMode(REED_3, INPUT);
+    pinMode(REED_PIN_1, INPUT);
+    pinMode(REED_PIN_2, INPUT);
+    pinMode(REED_PIN_3, INPUT);
+    pinMode(PIR_PIN_1, INPUT);
     pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(BUZZER_PIN, OUTPUT);
 }
 
 void setupDeepSleep()
 {
     if (RXorTX == 0)
         return;
-    // uint64_t mask = (1ULL << REED_1) | (1ULL << REED_2) | (1ULL << REED_3);
-    uint64_t mask = (1ULL << REED_1);
-    esp_sleep_enable_ext1_wakeup(mask, ESP_EXT1_WAKEUP_ANY_HIGH);
+    esp_sleep_enable_ext1_wakeup(MASK, ESP_EXT1_WAKEUP_ANY_HIGH);
 }
 
 void debounce(uint32_t wait)
@@ -299,6 +323,20 @@ void debounce(uint32_t wait)
     if (RXorTX == 0)
         return;
     delay(wait);
+}
+
+void debouncePIR()
+{
+    if (RXorTX == 0)
+        return;
+
+    while (digitalRead(PIR_PIN_1))
+    {
+        if (!anyrtttl::nonblocking::isPlaying())
+            anyrtttl::nonblocking::begin(BUZZER_PIN, tetris);
+        else
+            anyrtttl::nonblocking::play();
+    }
 }
 
 void goToDeepSleep()
@@ -316,6 +354,7 @@ void setup()
 {
     setupGPIOs();
     setupSerial();
+
 #if OLED_TYPE == 0
     setupSSD1306();
 #elif OLED_TYPE == 1
@@ -325,20 +364,20 @@ void setup()
 #if (RXorTX == 0)
     setupWifi();
     setupMQTT();
-#endif
-    setupDeepSleep();
+#else
     uint8_t reedVals = readReed();
     transmitLora(reedVals);
     debounce(1000);
+    setupDeepSleep();
     goToDeepSleep();
-
-    // Le module Tx ne dépasse jamais ce point
-    // parce que l’ESP redémarre au réveil du deep sleep.
+    // The Tx module never goes past this point because
+    // the ESP restarts upon waking from deep sleep.
+#endif
 }
 
 void loop()
 {
-    // Pour le module Rx uniquement.
+    // For the Rx module only.
     if (!loraEvent)
     {
         yield();
