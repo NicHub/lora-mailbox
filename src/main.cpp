@@ -41,7 +41,7 @@ SX1276 radio = nullptr;
 #define REED_PIN_1 GPIO_NUM_15
 #define REED_PIN_2 GPIO_NUM_2
 #define REED_PIN_3 GPIO_NUM_4
-#define PIR_PIN_1 GPIO_NUM_4
+#define PIR_PIN_1 GPIO_NUM_7
 #define REED_PIN_CONFIG 1
 #if REED_PIN_CONFIG == 0
 #define MASK ((1ULL << REED_PIN_1) | (1ULL << REED_PIN_2) | (1ULL << REED_PIN_3))
@@ -51,12 +51,9 @@ SX1276 radio = nullptr;
 #error "Invalid REED_PIN_CONFIG value"
 #endif
 
-#include <anyrtttl.h>
-#include <binrtttl.h>
-#include <pitches.h>
-
-#define BUZZER_PIN 13
-const char *tetris = "tetris:d=4,o=5,b=160:e6,8b,8c6,8d6,16e6,16d6,8c6,8b,a,8a,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,2a,8p,d6,8f6,a6,8g6,8f6,e6,8e6,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,a";
+//
+//
+//
 
 // save transmission states between loops
 int transmissionState = RADIOLIB_ERR_NONE;
@@ -302,12 +299,8 @@ void setupSerial()
 
 void setupGPIOs()
 {
-    pinMode(REED_PIN_1, INPUT);
-    pinMode(REED_PIN_2, INPUT);
-    pinMode(REED_PIN_3, INPUT);
     pinMode(PIR_PIN_1, INPUT);
     pinMode(LED_BUILTIN, OUTPUT);
-    pinMode(BUZZER_PIN, OUTPUT);
 }
 
 void setupDeepSleep()
@@ -321,35 +314,14 @@ void debounce(uint32_t wait)
 {
     if (RXorTX == 0)
         return;
-    unsigned long now = millis();
-    while (millis() - now < wait)
-    {
-        if (anyrtttl::nonblocking::isPlaying())
-            anyrtttl::nonblocking::play();
-        else
-            anyrtttl::nonblocking::begin(BUZZER_PIN, tetris);
-    }
-}
-
-void debouncePIR()
-{
-    if (RXorTX == 0)
-        return;
-
-    while (digitalRead(PIR_PIN_1))
-    {
-        if (!anyrtttl::nonblocking::isPlaying())
-            anyrtttl::nonblocking::begin(BUZZER_PIN, tetris);
-        else
-            anyrtttl::nonblocking::play();
-    }
+    delay(wait);
 }
 
 void goToDeepSleep()
 {
     if (RXorTX == 0)
         return;
-    Serial.printf(PREFIX "compilation time %s", COMPILATION_TIME);
+    Serial.printf(PREFIX "Compilation time %s", COMPILATION_TIME);
     Serial.print(F(PREFIX "Going to deep sleep"));
     Serial.flush();
     delay(1000);
@@ -359,22 +331,17 @@ void goToDeepSleep()
 void setup()
 {
     setupGPIOs();
+    blink();
     setupSerial();
-
-#if OLED_TYPE == 0
-    setupSSD1306();
-#elif OLED_TYPE == 1
-    setupSSH1106();
-#endif
-    setupLoRa();
+    // setupLoRa();
 #if (RXorTX == 0)
     setupWifi();
     setupMQTT();
 #else
+
     uint8_t reedVals = readReed();
-    transmitLora(reedVals);
+    // transmitLora(reedVals);
     debounce(1000);
-    // debouncePIR();
     setupDeepSleep();
     goToDeepSleep();
     // The Tx module never goes past this point because
