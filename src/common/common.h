@@ -10,6 +10,7 @@
 #include <common/LoraMailBox_Settings.h>
 
 #define PREFIX "\n[" PROJECT_NAME "] "
+#define CNT_LOG_FILENAME "/cnt.log"
 
 SX1262 radio = nullptr; // SX1262
 
@@ -52,7 +53,7 @@ void blink(
 void setupLoRa()
 {
     radio = new Module(CS, IRQ, RST, GPIO);
-    Serial.print(F(PREFIX "Initializing LoRa...  "));
+    Serial.print(F(PREFIX "Initializing LoRa..."));
     int state = radio.begin(
         FREQ,
         BW,
@@ -65,10 +66,40 @@ void setupLoRa()
         USEREGULATORLDO);
     if (state != RADIOLIB_ERR_NONE)
     {
-        Serial.print(F(PREFIX "failed, code "));
-        Serial.println(state);
+        Serial.printf(" failed, code %d\n", state);
         while (true)
             yield();
     }
-    Serial.println(F(PREFIX "success"));
+    Serial.print(F(" success"));
+}
+
+uint16_t getMsgCounterFromFile()
+{
+    uint16_t cnt = 0;
+    File fichier = LittleFS.open(CNT_LOG_FILENAME, "r");
+    if (!fichier)
+        return 0;
+    String contenu = fichier.readString();
+    fichier.close();
+    cnt = contenu.toInt();
+    return cnt;
+}
+
+void saveMsgCounterToFile(uint16_t cnt)
+{
+    File fichier = LittleFS.open(CNT_LOG_FILENAME, "w");
+    if (!fichier)
+        return;
+    fichier.print(cnt);
+    fichier.close();
+    Serial.printf(PREFIX "New value saved: %d", cnt);
+}
+
+void setupLittleFS()
+{
+    while (!LittleFS.begin(true))
+        delay(100);
+
+    if (!LittleFS.exists(CNT_LOG_FILENAME))
+        saveMsgCounterToFile(0);
 }

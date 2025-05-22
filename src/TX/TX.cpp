@@ -1,3 +1,9 @@
+/**
+ * LoRa MAILBOX
+ *
+ * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
+ */
+
 #include <Arduino.h>
 #include "common/common.h"
 #include "common/LoraMailBox_Settings.h"
@@ -6,7 +12,7 @@ void goToDeepSleep()
 {
     Serial.printf(PREFIX "Compilation date %s", COMPILATION_DATE);
     Serial.printf(PREFIX "Compilation time %s", COMPILATION_TIME);
-    Serial.print(F(PREFIX "Going to deep sleep"));
+    Serial.print(F(PREFIX "Going to deep sleep\n"));
     Serial.flush();
     esp_deep_sleep_start();
 }
@@ -32,76 +38,26 @@ void transmitLora(uint16_t cnt)
     int state = radio.startTransmit(msg);
     if (state != RADIOLIB_ERR_NONE)
     {
-        Serial.printf(PREFIX "failed, code %d", state);
+        Serial.printf(PREFIX "Failed, code %d", state);
         return;
     }
-    Serial.print(F(PREFIX "transmission finished!"));
-}
-
-uint16_t cntHandler()
-{
-    while (!LittleFS.begin(true))
-    {
-        delay(100);
-    }
-    Serial.print(F(PREFIX "LittleFS mounted successfully"));
-
-    uint16_t cnt = 0;
-
-#define CNT_LOG_FILENAME "/cnt.log"
-
-    if (LittleFS.exists(CNT_LOG_FILENAME))
-    {
-        File fichier = LittleFS.open(CNT_LOG_FILENAME, "r");
-        if (fichier)
-        {
-            String contenu = fichier.readString();
-            fichier.close();
-            cnt = contenu.toInt();
-            Serial.printf(PREFIX "cnt = %d", cnt);
-        }
-    }
-    else
-    {
-        Serial.print(F(PREFIX "The file " CNT_LOG_FILENAME " does not exist, it will be created"));
-    }
-
-    cnt++;
-    File fichier = LittleFS.open(CNT_LOG_FILENAME, "w");
-    if (fichier)
-    {
-        fichier.print(cnt);
-        fichier.close();
-        Serial.printf(PREFIX "New value saved: %d", cnt);
-    }
-    else
-    {
-        Serial.print(F(PREFIX "Error opening file for writing"));
-    }
-
-    return cnt;
+    Serial.print(F(PREFIX "Transmission finished!"));
 }
 
 void setupSerial()
 {
     Serial.begin(BAUD_RATE);
-    for (size_t i = 0; i < 1; i++)
-    {
-        Serial.println(i);
-        delay(1000);
-    }
 }
 
 void setupGPIOs()
 {
-    // Beware that on XIAO ESP32S3,
-    // LORA_USER_BUTTON and BUILTIN_LED
-    // are both connected on GPIO21!
-    // So if you set BUILTIN_LED pinMode to
-    // OUTPUT and you set BUILTIN_LED to HIGH
-    // and you press LORA_USER_BUTTON,
-    // you create a short-circuit between
-    // GPIIO21 and GND.
+    // Beware that if you use XIAO ESP32S3 with LoRa
+    // shield SX1262, LORA_USER_BUTTON on LoRa shield
+    // and BUILTIN_LED on ESP module are both connected
+    // on GPIO21! So if you set BUILTIN_LED pinMode to
+    // OUTPUT and you set BUILTIN_LED to HIGH and you
+    // press LORA_USER_BUTTON, you create a
+    // short-circuit between GPIIO21 and GND.
     pinMode(LORA_USER_BUTTON, INPUT);
     pinMode(PIR_PIN_0, INPUT);
     pinMode(LORA_GREEN_LED, OUTPUT);
@@ -111,22 +67,28 @@ void setup()
 {
     setupGPIOs();
     setupSerial();
+    setupLittleFS();
     setupLoRa();
 }
 
 void loop()
 {
-    yield();
-    uint16_t cnt = cntHandler();
+    uint16_t cnt = getMsgCounterFromFile();
     transmitLora(cnt);
+    saveMsgCounterToFile(++cnt);
     debounce(5000);
-    // Set DEEP_SLEEP to false to perform signal quality tests.
+
+    // Set DEEP_SLEEP to false to send messages
+    // continuously for example to perform signal
+    // quality tests.
 #define DEEP_SLEEP true
 #if DEEP_SLEEP
     setupDeepSleep();
     goToDeepSleep();
 #endif
-    // If the module goes to deep sleep, this is never executed
-    // because the ESP restarts upon waking up.
+
+    // If the module goes to deep sleep, this is never
+    // executed because the ESP restarts upon
+    // waking up.
     blink();
 }
