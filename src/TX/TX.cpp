@@ -29,11 +29,14 @@ void debounce(uint32_t wait)
 
 void transmitLora(uint16_t cnt)
 {
-    String msg =
-        " cnt: " + String(cnt) +
-        ", millis: " + String(millis()) +
-        ", HelloFrom: " + PROJECT_NAME +
-        ", CompilationTime: " + __TIME__;
+    String msg;
+    JsonDocument doc;
+    doc["cnt"] = cnt;
+    doc["millis"] = millis();
+    doc["from"] = PROJECT_NAME;
+    doc["CompilationTime"] = __TIME__;
+    serializeJson(doc, msg);
+
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
     int state = radio.startTransmit(msg.c_str());
     if (state != RADIOLIB_ERR_NONE)
@@ -42,11 +45,6 @@ void transmitLora(uint16_t cnt)
         return;
     }
     Serial.print(F(PREFIX "Transmission finished!"));
-}
-
-void setupSerial()
-{
-    Serial.begin(BAUD_RATE);
 }
 
 void setupGPIOs()

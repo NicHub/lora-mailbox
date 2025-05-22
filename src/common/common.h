@@ -8,6 +8,7 @@
 #include <LittleFS.h>
 #include <RadioLib.h>
 #include <common/LoraMailBox_Settings.h>
+#include <ArduinoJson.h>
 
 #define PREFIX "\n[" PROJECT_NAME "] "
 #define CNT_LOG_FILENAME "/cnt.log"
@@ -102,4 +103,14 @@ void setupLittleFS()
 
     if (!LittleFS.exists(CNT_LOG_FILENAME))
         saveMsgCounterToFile(0);
+}
+
+void setupSerial(size_t printCnt = 0)
+{
+    Serial.begin(BAUD_RATE);
+    for (size_t i = 0; i <= printCnt; i++)
+    {
+        Serial.println(i);
+        delay(1000);
+    }
 }
