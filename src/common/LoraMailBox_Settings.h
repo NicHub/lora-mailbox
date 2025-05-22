@@ -1,0 +1,49 @@
+#define LORA_GREEN_LED GPIO_NUM_48
+#define LORA_USER_BUTTON GPIO_NUM_21
+#define PIR_PIN_0 GPIO_NUM_1
+#define MASK (1ULL << PIR_PIN_0)
+
+#define LORA_MODULE_PINOUT 0
+#if LORA_MODULE_PINOUT == 0
+#define CS 41
+#define IRQ 39
+#define RST 42
+#define GPIO 40
+#endif
+
+#define LORA_SETTINGS 1
+#if LORA_SETTINGS == 0
+// Default parameters defined in SX1262.h.
+#define FREQ 434.0  // Seeed XIA SX1262 range is 862 - 930 MHz
+#define BW 125.0
+#define SF 9
+#define CR 7
+#define SYNCWORD RADIOLIB_SX126X_SYNC_WORD_PRIVATE
+#define POWER 10
+#define PREAMBLELENGTH 8
+#define TCXOVOLTAGE 1.6
+#define USEREGULATORLDO false
+#elif LORA_SETTINGS == 1
+#define FREQ 868.0
+#define BW 62.5
+#define SF 12
+#define CR 8
+#define SYNCWORD 0x12
+#define POWER 14
+#define PREAMBLELENGTH 12
+#define TCXOVOLTAGE 1.6
+#define USEREGULATORLDO false
+#endif
+
+#if RxOrTx == 0 && defined(ESP32)
+// #define SEND_MAIL
+#define SEND_MQTT
+#endif
+
+#if defined(ESP32)
+// Add ESP32-specific code here if needed
+#endif
+
+#if defined(NRF52840_XXAA)
+// Add NRF52840_XXAA-specific code here if needed
+#endif
