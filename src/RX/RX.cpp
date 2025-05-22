@@ -48,6 +48,12 @@ void setup()
 {
     setupSerial();
     setupLoRa();
+
+    // Set the function that will be called when new
+    // packet is received.
+    radio.setDio1Action(setFlag);
+    radio.startReceive();
+
     // setupWifi();
     // setupMQTT();
 }

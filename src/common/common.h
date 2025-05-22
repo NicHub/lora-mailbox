@@ -12,18 +12,18 @@
 #define PREFIX "\n[" PROJECT_NAME "] "
 #define CNT_LOG_FILENAME "/cnt.log"
 
-SX1262 radio = nullptr; // SX1262
+SX1262 radio = nullptr;
 
-// save transmission states between loops
+// Save transmission states between loops.
 int transmissionState = RADIOLIB_ERR_NONE;
 
-// flag to indicate transmission or reception state
+// Flag to indicate transmission or reception state.
 bool transmitFlag = false;
 
-// flag to indicate that a packet was sent or received
+// Flag to indicate that a packet was sent or received.
 volatile bool loraEvent = false;
 
-// this function is called when a complete packet
+// This function is called when a complete packet
 // is transmitted or received by the module
 // IMPORTANT: this function MUST be 'void' type
 //            and MUST NOT have any arguments!
