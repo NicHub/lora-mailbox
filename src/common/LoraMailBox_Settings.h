@@ -11,7 +11,7 @@
 #define GPIO 40
 #endif
 
-#define LORA_SETTINGS 1
+#define LORA_SETTINGS 0
 #if LORA_SETTINGS == 0
 // Default parameters defined in SX1262.h.
 #define FREQ 434.0  // Seeed XIA SX1262 range is 862 - 930 MHz

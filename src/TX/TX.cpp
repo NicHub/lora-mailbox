@@ -30,12 +30,12 @@ void debounce(uint32_t wait)
 void transmitLora(uint16_t cnt)
 {
     String msg =
-        " cnt: " + String(++cnt) +
+        " cnt: " + String(cnt) +
         ", millis: " + String(millis()) +
         ", HelloFrom: " + PROJECT_NAME +
         ", CompilationTime: " + __TIME__;
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
-    int state = radio.startTransmit(msg);
+    int state = radio.startTransmit(msg.c_str());
     if (state != RADIOLIB_ERR_NONE)
     {
         Serial.printf(PREFIX "Failed, code %d", state);
@@ -81,7 +81,7 @@ void loop()
     // Set DEEP_SLEEP to false to send messages
     // continuously for example to perform signal
     // quality tests.
-#define DEEP_SLEEP true
+#define DEEP_SLEEP false
 #if DEEP_SLEEP
     setupDeepSleep();
     goToDeepSleep();
@@ -91,4 +91,5 @@ void loop()
     // executed because the ESP restarts upon
     // waking up.
     blink();
+    debounce(1000);
 }
