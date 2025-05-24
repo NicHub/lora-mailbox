@@ -1,5 +1,5 @@
 /**
- * LoRa MAILBOX
+ * LoRa MailBox
  *
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
@@ -32,9 +32,9 @@ void transmitLora(uint16_t cnt)
     String msg;
     JsonDocument doc;
     doc["cnt"] = cnt;
-    doc["millis"] = millis();
-    doc["from"] = PROJECT_NAME;
-    doc["CompilationTime"] = __TIME__;
+    // doc["millis"] = millis();
+    // doc["from"] = PROJECT_NAME;
+    // doc["CompilationTime"] = __TIME__;
     serializeJson(doc, msg);
 
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
@@ -71,7 +71,7 @@ void setup()
 
 void loop()
 {
-    uint16_t cnt = getMsgCounterFromFile();
+    uint16_t cnt = readMsgCounterFromFile();
     transmitLora(cnt);
     saveMsgCounterToFile(++cnt);
     debounce(5000);
@@ -85,8 +85,8 @@ void loop()
     goToDeepSleep();
 #endif
 
-    // If the module goes to deep sleep, this is never
-    // executed because the ESP restarts upon
+    // If the module goes to deep sleep, the code below
+    // is never executed because the ESP restarts upon
     // waking up.
     blink();
     debounce(1000);

@@ -1,5 +1,5 @@
 /**
- * LoRa MAILBOX
+ * LoRa MailBox
  *
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
@@ -7,8 +7,9 @@
 #include <Arduino.h>
 #include "common/common.h"
 #include "common/LoraMailBox_Settings.h"
-// #include "LoraMailBox_SendMail.h"
-// #include "LoraMailBox_SendMQTT.h"
+#include "LoraMailBox_WiFi.h"
+
+LoraMailBox_WiFi wifi;
 
 void counterCheck(uint16_t cnt)
 {
@@ -35,7 +36,7 @@ void counterCheck(uint16_t cnt)
     lastCnt = cnt;
 }
 
-uint16_t readLora()
+uint16_t readLoRa()
 {
     String msg;
     int state = radio.readData(msg);
@@ -46,8 +47,9 @@ uint16_t readLora()
     }
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, msg);
-    uint16_t cnt = doc["cnt"];
+    wifi.updateMessages(msg);
 
+    uint16_t cnt = doc["cnt"];
     Serial.printf(PREFIX "Received:\t\t%s", msg.c_str());
     Serial.printf(PREFIX "cnt:\t\t%d", cnt);
     Serial.printf(PREFIX "RSSI:\t\t%.2f dBm", radio.getRSSI());
@@ -61,10 +63,17 @@ void startReceive()
     radio.startReceive();
 }
 
+void setupWiFi()
+{
+    wifi.begin();
+    wifi.updateMessages("Tchô");
+}
+
 void setup()
 {
     setupSerial();
     setupLoRa();
+    setupWiFi();
 
     // Set the function that will be called when new
     // packet is received.
@@ -77,14 +86,12 @@ void setup()
 
 void loop()
 {
+    yield();
     if (!loraEvent)
-    {
-        yield();
         return;
-    }
     loraEvent = false;
     startReceive();
-    uint16_t cnt = readLora();
+    uint16_t cnt = readLoRa();
     counterCheck(cnt);
 
     // sendMail();

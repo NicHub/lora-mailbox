@@ -1,5 +1,5 @@
 /**
- * LoRa MAILBOX
+* LoRa MailBox
  *
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
@@ -24,10 +24,10 @@ bool transmitFlag = false;
 // Flag to indicate that a packet was sent or received.
 volatile bool loraEvent = false;
 
-// This function is called when a complete packet
-// is transmitted or received by the module
-// IMPORTANT: this function MUST be 'void' type
-//            and MUST NOT have any arguments!
+// The `setFlag` function is called when a complete
+// packet is transmitted or received by the module
+// IMPORTANT: this function MUST be 'void' type and
+// MUST NOT have any arguments!
 #if defined(ESP8266) || defined(ESP32)
 ICACHE_RAM_ATTR
 #endif
@@ -74,33 +74,24 @@ void setupLoRa()
     Serial.print(F(" success"));
 }
 
-uint16_t getMsgCounterFromFile()
+uint16_t readMsgCounterFromFile()
 {
-    uint16_t cnt = 0;
-    File fichier = LittleFS.open(CNT_LOG_FILENAME, "r");
-    if (!fichier)
-        return 0;
-    String contenu = fichier.readString();
-    fichier.close();
-    cnt = contenu.toInt();
+    File file = LittleFS.open(CNT_LOG_FILENAME, "r");
+    uint16_t cnt = file.readString().toInt();
+    file.close();
     return cnt;
 }
 
 void saveMsgCounterToFile(uint16_t cnt)
 {
-    File fichier = LittleFS.open(CNT_LOG_FILENAME, "w");
-    if (!fichier)
-        return;
-    fichier.print(cnt);
-    fichier.close();
-    Serial.printf(PREFIX "New value saved: %d", cnt);
+    File file = LittleFS.open(CNT_LOG_FILENAME, "w");
+    file.print(cnt);
+    file.close();
 }
 
 void setupLittleFS()
 {
-    while (!LittleFS.begin(true))
-        delay(100);
-
+    LittleFS.begin(true);
     if (!LittleFS.exists(CNT_LOG_FILENAME))
         saveMsgCounterToFile(0);
 }

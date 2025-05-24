@@ -1,3 +1,9 @@
+/**
+ * LoRa MailBox
+ *
+ * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
+ */
+
 #define LORA_GREEN_LED GPIO_NUM_48
 #define LORA_USER_BUTTON GPIO_NUM_21
 #define PIR_PIN_0 GPIO_NUM_1
@@ -11,7 +17,7 @@
 #define GPIO 40
 #endif
 
-#define LORA_SETTINGS 0
+#define LORA_SETTINGS 1
 #if LORA_SETTINGS == 0
 // Default parameters defined in SX1262.h.
 #define FREQ 434.0  // Seeed XIA SX1262 range is 862 - 930 MHz
