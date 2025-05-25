@@ -1,0 +1,99 @@
+const char *htmlTemplate = R"rawliteral(
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LoRa MailBox</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGlkPSJjZW50ZXJlZF9wb2x5Z29uYWxfbnVtYmVyX3N2ZyIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSItMTEuMCAtMTEuMCAyMiAyMiIKICAgIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6IHJnYmEoMjU1LCAyNTUsIDI1NSwgMCk7Ij4KCiAgICA8dGl0bGU+Q2VudGVyZWQgcG9seWdvbmFsIG51bWJlcjwvdGl0bGU+CiAgICA8ZGVzYz5DZW50ZXJlZCBwb2x5Z29uYWwgbnVtYmVyPC9kZXNjPgoKICAgIDxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+CiAgICAgICAgY2lyY2xlLAogICAgICAgIHBhdGggewogICAgICAgICAgICBmaWxsOiBub25lOwogICAgICAgICAgICBzdHJva2Utd2lkdGg6IDAuNTsKICAgICAgICAgICAgc3Ryb2tlOiAjMDAwOwogICAgICAgIH0KCiAgICAgICAgLmwxIHsKICAgICAgICAgICAgZmlsbDogaHNsKDAsIDgwJSwgODAlKTsKICAgICAgICAgICAgc3Ryb2tlOiBoc2woMCwgODAlLCA3MCUpOwogICAgICAgIH0KCiAgICAgICAgLmwwIHsKICAgICAgICAgICAgZmlsbDogaHNsKDE1MCwgNjUlLCA2NyUpOwogICAgICAgICAgICBzdHJva2U6IGhzbCgxNTAsIDY1JSwgNTclKTsKICAgICAgICB9CgogICAgICAgIEBtZWRpYShwcmVmZXJzLWNvbG9yLXNjaGVtZTogZGFyaykgewogICAgICAgICAgICAubDAgewogICAgICAgICAgICAgICAgZmlsbDogaHNsKDAsIDgwJSwgODAlKTsKICAgICAgICAgICAgICAgIHN0cm9rZTogaHNsKDAsIDgwJSwgNzAlKTsKICAgICAgICAgICAgfQoKICAgICAgICAgICAgLmwxIHsKICAgICAgICAgICAgICAgIGZpbGw6IGhzbCgxNTAsIDY1JSwgNjclKTsKICAgICAgICAgICAgICAgIHN0cm9rZTogaHNsKDE1MCwgNjUlLCA1NyUpOwogICAgICAgICAgICB9CiAgICAgICAgfQogICAgPC9zdHlsZT4KCiAgICA8ZyBpZD0ic3ZnX2NvbnRhaW5lciI+CiAgICAgICAgPGNpcmNsZSBjbGFzcz0ibDAiIHI9IjIuNiIgY3g9IjAuMDAwIiBjeT0iMC4wMDAiIC8+CiAgICAgICAgPGNpcmNsZSBjbGFzcz0ibDEiIHI9IjIuNiIgY3g9IjguMjUwIiBjeT0iMC4wMDAiIC8+CiAgICAgICAgPGNpcmNsZSBjbGFzcz0ibDEiIHI9IjIuNiIgY3g9IjQuMTI1IiBjeT0iLTcuMTQ0IiAvPgogICAgICAgIDxjaXJjbGUgY2xhc3M9ImwxIiByPSIyLjYiIGN4PSItNC4xMjUiIGN5PSItNy4xNDQiIC8+CiAgICAgICAgPGNpcmNsZSBjbGFzcz0ibDEiIHI9IjIuNiIgY3g9Ii04LjI1MCIgY3k9Ii0wLjAwMCIgLz4KICAgIDwvZz4KCgo8L3N2Zz4=">
+    <style>
+        :root {
+            --bg: #fff;
+            --text: #212121;
+            --primary: #1976d2;
+            --secondary: #f5f5f5;
+            --border: #e0e0e0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #212121;
+                --text: #f5f5f5;
+                --primary: #64b5f6;
+                --secondary: #333;
+                --border: #444;
+            }
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        h1 {
+            color: var(--primary);
+        }
+
+        pre {
+            font-size: 16px;
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            overflow-x: auto;
+            min-height: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>• LoRa MailBox •</h1>
+    <pre id="messages">Connecting to WebSocket...</pre>
+
+    <script>
+        const gateway =
+            (window.location.port == ""
+                && window.location.protocol == "http:") ?
+                `ws://${window.location.hostname}/ws` :
+                `ws://192.168.29.98/ws`;
+
+        let websocket;
+
+        function initWebSocket() {
+            websocket = new WebSocket(gateway);
+            websocket.onopen = () => console.log("Connection opened");
+            websocket.onclose = () => {
+                console.log("Connection closed");
+                setTimeout(initWebSocket, 2000);
+            };
+            websocket.onmessage = (event) => {
+                const jsonString = event.data;
+                console.log(jsonString);
+                try { // Sort json elements alphabeticaly by keys and display result.
+                    const obj = JSON.parse(jsonString);
+                    const sortedObj = {};
+                    Object.keys(obj).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).forEach(key => {
+                        sortedObj[key] = obj[key];
+                    });
+                    const sortedJsonString = JSON.stringify(sortedObj, null, 2);
+                    document.getElementById("messages").innerHTML = sortedJsonString;
+                } catch (e) {
+                    document.getElementById("messages").innerHTML =
+                        "Error parsing JSON:\n\n" + e + "\n\n" + jsonString;
+                }
+            };
+        }
+        window.addEventListener("load", initWebSocket);
+    </script>
+</body>
+
+</html>
+)rawliteral";

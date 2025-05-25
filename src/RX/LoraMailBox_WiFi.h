@@ -15,76 +15,8 @@ private:
     AsyncWebServer server{80};
     AsyncWebSocket ws{"/ws"};
     String latestMessage = "";
-    const char *htmlTemplate = R"rawliteral(
-<!DOCTYPE html>
-<html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LoRa MailBox</title>
-    <style>
-        :root {
-            --bg: #fff;
-            --text: #212121;
-            --primary: #1976d2;
-            --secondary: #f5f5f5;
-            --border: #e0e0e0;
-        }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #212121;
-                --text: #f5f5f5;
-                --primary: #64b5f6;
-                --secondary: #333;
-                --border: #444;
-            }
-        }
-        body {
-            font-family: system-ui, sans-serif;
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 1rem;
-            color: var(--text);
-            background: var(--bg);
-        }
-        h1 {
-            color: var(--primary);
-        }
-        pre {
-            background: var(--secondary);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1rem;
-            overflow-x: auto;
-            min-height: 200px;
-        }
-    </style>
-</head>
-<body>
-    <h1>LoRa MailBox</h1>
-    <pre id="messages">Connecting to WebSocket...</pre>
 
-    <script>
-        const gateway = `ws://${window.location.hostname}/ws`;
-        let websocket;
-
-        function initWebSocket() {
-            websocket = new WebSocket(gateway);
-            websocket.onopen = () => console.log('Connection opened');
-            websocket.onclose = () => {
-                console.log('Connection closed');
-                setTimeout(initWebSocket, 2000);
-            };
-            websocket.onmessage = (event) => {
-                document.getElementById('messages').innerHTML = event.data;
-            };
-        }
-
-        window.addEventListener('load', initWebSocket);
-    </script>
-</body>
-</html>
-)rawliteral";
+#include "index.html"
 
 public:
     LoraMailBox_WiFi() {}

@@ -9,45 +9,40 @@
 #include "common/LoraMailBox_Settings.h"
 #include "LoraMailBox_WiFi.h"
 
-#define PAD_LENGTH 20
-
 LoraMailBox_WiFi wifi;
 String jsonString;
 JsonDocument jsonDoc;
 
 void counterCheck()
 {
-    static uint16_t lastCnt = (uint16_t)jsonDoc["cnt"] - 1;
+    uint16_t cnt = jsonDoc["cnt"].as<uint16_t>();
+    static uint16_t lastCnt = cnt - 1;
     static uint16_t errorCount = 0;
+    bool counterStatus = cnt != lastCnt + 1;
+    errorCount += counterStatus;
 
-    if ((uint16_t)jsonDoc["cnt"] != lastCnt + 1)
-    {
-        ++errorCount;
-        jsonDoc["counter status"] = "NOT OK";
-    }
-    else
-        jsonDoc["counter status"] = "OK";
+    jsonDoc.remove("cnt");
+    jsonDoc["COUNTER"]["VALUE"] = cnt;
+    jsonDoc["COUNTER"]["LAST VALUE"] = lastCnt;
+    jsonDoc["COUNTER"]["ERROR COUNT"] = errorCount;
+    jsonDoc["COUNTER"]["STATUS"] = counterStatus ? "NOT OK" : "OK";
 
-    jsonDoc["last counter"] = lastCnt;
-    jsonDoc["error count"] = errorCount;
-    lastCnt = jsonDoc["cnt"];
+    lastCnt = cnt;
 }
 
 void readLoRa()
 {
+    radio.startReceive();
     int state = radio.readData(jsonString);
     deserializeJson(jsonDoc, jsonString);
-    jsonDoc["LoRa state"] = state;
+    jsonDoc["COMPILATION DATE"] = COMPILATION_DATE;
+    jsonDoc["COMPILATION TIME"] = COMPILATION_TIME;
+    jsonDoc["LoRa STATE"] = state;
     if (state != RADIOLIB_ERR_NONE)
         return;
     jsonDoc["RSSI (dBm)"] = radio.getRSSI();
     jsonDoc["SNR (dB)"] = radio.getSNR();
     jsonDoc["IP"] = wifi.getLocalIP();
-}
-
-void startReceive()
-{
-    radio.startReceive();
 }
 
 void setupWiFi()
@@ -60,6 +55,13 @@ void setupLoRaRX()
 {
     radio.setDio1Action(setFlag);
     radio.startReceive();
+}
+
+void broadcastResults()
+{
+    serializeJsonPretty(jsonDoc, jsonString);
+    wifi.sendWsMsg(jsonString);
+    Serial.println(jsonString);
 }
 
 void setup()
@@ -76,11 +78,7 @@ void loop()
     if (!loraEvent)
         return;
     loraEvent = false;
-    startReceive();
     readLoRa();
     counterCheck();
-
-    serializeJsonPretty(jsonDoc, jsonString);
-    wifi.sendWsMsg(jsonString);
-    Serial.println(jsonString);
+    broadcastResults();
 }
