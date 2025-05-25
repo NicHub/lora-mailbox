@@ -9,79 +9,65 @@
 #include "common/LoraMailBox_Settings.h"
 #include "LoraMailBox_WiFi.h"
 
-LoraMailBox_WiFi wifi;
+#define PAD_LENGTH 20
 
-void counterCheck(uint16_t cnt)
+LoraMailBox_WiFi wifi;
+String jsonString;
+JsonDocument jsonDoc;
+
+void counterCheck()
 {
-    static uint16_t lastCnt = cnt - 1;
+    static uint16_t lastCnt = (uint16_t)jsonDoc["cnt"] - 1;
     static uint16_t errorCount = 0;
 
-#define PAD_LENGTH 20
-    Serial.printf("  %-*s", PAD_LENGTH, "counter:");
-    Serial.println(cnt);
-    Serial.printf("  %-*s", PAD_LENGTH, "last counter:");
-    Serial.println(lastCnt);
-    Serial.printf("  %-*s", PAD_LENGTH, "counter status:");
-    if (cnt == lastCnt + 1)
-    {
-        Serial.println("OK!");
-    }
-    else
+    if ((uint16_t)jsonDoc["cnt"] != lastCnt + 1)
     {
         ++errorCount;
-        Serial.println("NOT OK!");
+        jsonDoc["counter status"] = "NOT OK";
     }
-    Serial.printf("  %-*s", PAD_LENGTH, "error count:");
-    Serial.println(errorCount);
-    lastCnt = cnt;
+    else
+        jsonDoc["counter status"] = "OK";
+
+    jsonDoc["last counter"] = lastCnt;
+    jsonDoc["error count"] = errorCount;
+    lastCnt = jsonDoc["cnt"];
 }
 
-uint16_t readLoRa()
+void readLoRa()
 {
-    String msg;
-    int state = radio.readData(msg);
+    int state = radio.readData(jsonString);
+    deserializeJson(jsonDoc, jsonString);
+    jsonDoc["LoRa state"] = state;
     if (state != RADIOLIB_ERR_NONE)
-    {
-        Serial.printf(PREFIX "No packet! state: %d", state);
-        return 0;
-    }
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, msg);
-    wifi.updateMessages(msg);
-
-    uint16_t cnt = doc["cnt"];
-    Serial.printf(PREFIX "Received:\t\t%s", msg.c_str());
-    Serial.printf(PREFIX "cnt:\t\t%d", cnt);
-    Serial.printf(PREFIX "RSSI:\t\t%.2f dBm", radio.getRSSI());
-    Serial.printf(PREFIX "SNR:\t\t%.2f dB", radio.getSNR());
-    return cnt;
+        return;
+    jsonDoc["RSSI (dBm)"] = radio.getRSSI();
+    jsonDoc["SNR (dB)"] = radio.getSNR();
+    jsonDoc["IP"] = wifi.getLocalIP();
 }
 
 void startReceive()
 {
-    Serial.print(F(PREFIX "Start receive"));
     radio.startReceive();
 }
 
 void setupWiFi()
 {
     wifi.begin();
-    wifi.updateMessages("Tchô");
+    wifi.sendWsMsg(PROJECT_NAME);
+}
+
+void setupLoRaRX()
+{
+    radio.setDio1Action(setFlag);
+    radio.startReceive();
 }
 
 void setup()
 {
     setupSerial();
     setupLoRa();
+    setupLoRaRX();
     setupWiFi();
-
-    // Set the function that will be called when new
-    // packet is received.
-    radio.setDio1Action(setFlag);
-    radio.startReceive();
-
-    // setupWifi();
-    // setupMQTT();
 }
 
 void loop()
@@ -91,9 +77,10 @@ void loop()
         return;
     loraEvent = false;
     startReceive();
-    uint16_t cnt = readLoRa();
-    counterCheck(cnt);
+    readLoRa();
+    counterCheck();
 
-    // sendMail();
-    // sendMQTT("Hello from ESP32!");
+    serializeJsonPretty(jsonDoc, jsonString);
+    wifi.sendWsMsg(jsonString);
+    Serial.println(jsonString);
 }

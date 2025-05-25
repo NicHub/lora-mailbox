@@ -136,14 +136,15 @@ public:
         return true;
     }
 
-    void updateMessages(const String &message)
+    void sendWsMsg(const String &message)
     {
         latestMessage = message;
         ws.textAll(latestMessage);
+        // ws.cleanupClients();
     }
 
-    void loop()
+    IPAddress getLocalIP()
     {
-        ws.cleanupClients();
+        return WiFi.localIP();
     }
 };
