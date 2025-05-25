@@ -25,6 +25,8 @@ const char *htmlTemplate = R"rawliteral(
                 --primary: #64b5f6;
                 --secondary: #333;
                 --border: #444;
+                --border_advertize: #666;
+                --border_width: 2px;
             }
         }
 
@@ -45,18 +47,25 @@ const char *htmlTemplate = R"rawliteral(
         pre {
             font-size: 16px;
             background: var(--secondary);
-            border: 1px solid var(--border);
+            border: var(--border_width) solid var(--border);
             border-radius: 10px;
             padding: 1rem;
             overflow-x: auto;
-            min-height: 200px;
+            overflow-y: auto;
+            height: 60vh;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .advertize {
+            border: var(--border_width) solid var(--border_advertize);
         }
     </style>
 </head>
 
 <body>
     <h1>• LoRa MailBox •</h1>
-    <pre id="messages">Connecting to WebSocket...</pre>
+    <pre id="messages"></pre>
 
     <script>
         const gateway =
@@ -65,32 +74,53 @@ const char *htmlTemplate = R"rawliteral(
                 `ws://${window.location.hostname}/ws` :
                 `ws://192.168.29.98/ws`;
 
+        document.getElementById("messages").innerHTML =
+            `Connecting to ${gateway}...`
+
         let websocket;
+        let counter = 0;
 
         function initWebSocket() {
+
             websocket = new WebSocket(gateway);
-            websocket.onopen = () => console.log("Connection opened");
+
+            websocket.onopen = () => {
+                console.log("Connection opened");
+                document.getElementById("messages").innerHTML = "";
+            };
+
             websocket.onclose = () => {
                 console.log("Connection closed");
                 setTimeout(initWebSocket, 2000);
             };
+
             websocket.onmessage = (event) => {
                 const jsonString = event.data;
-                console.log(jsonString);
+                const messagesElem = document.getElementById("messages");
                 try { // Sort json elements alphabeticaly by keys and display result.
                     const obj = JSON.parse(jsonString);
+                    if (obj["COUNTER"])
+                        obj["COUNTER"]["WS"] = counter++;
                     const sortedObj = {};
                     Object.keys(obj).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).forEach(key => {
                         sortedObj[key] = obj[key];
                     });
                     const sortedJsonString = JSON.stringify(sortedObj, null, 2);
-                    document.getElementById("messages").innerHTML = sortedJsonString;
+                    document.getElementById("messages").innerHTML +=
+                        "\n" + sortedJsonString;
+                    console.log(sortedJsonString);
+                    messagesElem.classList.add("advertize");
+                    setTimeout(() => {
+                        messagesElem.classList.remove("advertize");
+                    }, 100);
                 } catch (e) {
-                    document.getElementById("messages").innerHTML =
-                        "Error parsing JSON:\n\n" + e + "\n\n" + jsonString;
+                    document.getElementById("messages").innerHTML +=
+                        "\nError parsing JSON:\n\n" + e + "\n\n" + jsonString;
                 }
+                messagesElem.scrollTop = messagesElem.scrollHeight;
             };
         }
+
         window.addEventListener("load", initWebSocket);
     </script>
 </body>

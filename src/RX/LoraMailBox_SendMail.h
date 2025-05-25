@@ -1,5 +1,5 @@
 /**
- * SEND MAIL
+ * LoRa MailBox — SEND MAIL
  *
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client MQTT - mailboxtest</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 8px;
+            margin-right: 10px;
+        }
+        input {
+            flex-grow: 1;
+        }
+        .topic-info {
+            background-color: #e2f3f8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Client MQTT pour test.mosquitto.org</h1>
+
+    <div class="topic-info">
+        <strong>Topic:</strong> mailboxtest
+    </div>
+
+    <div id="status" class="disconnected">Non connecté</div>
+
+    <div class="controls">
+        <input type="text" id="message" placeholder="Message à publier">
+        <button id="publish">Publier</button>
+    </div>
+
+    <h2>Messages reçus</h2>
+    <div id="messages"></div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const messagesEl = document.getElementById('messages');
+        const messageInput = document.getElementById('message');
+        const publishBtn = document.getElementById('publish');
+
+        // Définir le topic fixe
+        const topic = 'mailboxtest';
+
+        // Générer un ID client aléatoire
+        const clientId = 'clientjs_' + Math.random().toString(16).substr(2, 8);
+        const host = 'wss://test.mosquitto.org:8081'; // WebSocket sécurisé
+
+        console.log('Tentative de connexion à ' + host);
+
+        // Créer une instance du client
+        const client = mqtt.connect(host, {
+            clientId: clientId,
+            clean: true,
+            connectTimeout: 4000,
+            reconnectPeriod: 1000,
+        });
+
+        // Gestion de l'événement de connexion
+        client.on('connect', function () {
+            console.log('Connecté au broker MQTT');
+            statusEl.textContent = 'Connecté à ' + host;
+            statusEl.className = 'connected';
+
+            // Souscrire au topic fixe
+            client.subscribe(topic, function (err) {
+                if (!err) {
+                    console.log('Souscription réussie au topic: ' + topic);
+                    const msgEl = document.createElement('div');
+                    msgEl.innerHTML = `<em>Souscrit au topic: ${topic}</em>`;
+                    messagesEl.appendChild(msgEl);
+                } else {
+                    console.error('Erreur lors de la souscription:', err);
+                }
+            });
+        });
+
+        // Gestion des messages reçus
+        client.on('message', function (receivedTopic, message) {
+            const msg = message.toString();
+            console.log('Message reçu sur ' + receivedTopic + ': ' + msg);
+
+            const msgEl = document.createElement('div');
+            msgEl.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${msg}`;
+            messagesEl.appendChild(msgEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        });
+
+        // Gestion des erreurs
+        client.on('error', function (error) {
+            console.error('Erreur de connexion:', error);
+            statusEl.textContent = 'Erreur: ' + error.message;
+            statusEl.className = 'disconnected';
+        });
+
+        // Gestionnaire d'événement pour publier
+        publishBtn.addEventListener('click', function() {
+            const message = messageInput.value;
+
+            if (!message) return;
+
+            client.publish(topic, message);
+            console.log('Message publié sur ' + topic + ': ' + message);
+
+            const msgEl = document.createElement('div');
+            msgEl.innerHTML = `<em>Envoyé: ${message}</em>`;
+            messagesEl.appendChild(msgEl);
+
+            messageInput.value = '';
+        });
+    </script>
+</body>
+</html>

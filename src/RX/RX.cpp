@@ -1,5 +1,5 @@
 /**
- * LoRa MailBox
+ * LoRa MailBox — RX
  *
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
@@ -7,27 +7,58 @@
 #include <Arduino.h>
 #include "common/common.h"
 #include "common/LoraMailBox_Settings.h"
-#include "LoraMailBox_WiFi.h"
+#include "LoraMailBox_SendWS.h"
+#include "LoraMailBox_SendMQTT.h"
 
-LoraMailBox_WiFi wifi;
+LoraMailBox_SendWS lmb_ws;
+LoraMailBox_SendMQTT lmb_mqtt;
 String jsonString;
 JsonDocument jsonDoc;
+
+void broadcastResults()
+{
+    serializeJsonPretty(jsonDoc, jsonString);
+    lmb_ws.sendMsg(jsonString);
+    lmb_mqtt.sendMsg(jsonDoc);
+    Serial.println(jsonString);
+}
 
 void counterCheck()
 {
     uint16_t cnt = jsonDoc["cnt"].as<uint16_t>();
-    static uint16_t lastCnt = cnt - 1;
+    static uint16_t prevCnt = cnt - 1;
     static uint16_t errorCount = 0;
-    bool counterStatus = cnt != lastCnt + 1;
+    bool counterStatus = cnt != prevCnt + 1;
     errorCount += counterStatus;
 
     jsonDoc.remove("cnt");
     jsonDoc["COUNTER"]["VALUE"] = cnt;
-    jsonDoc["COUNTER"]["LAST VALUE"] = lastCnt;
+    jsonDoc["COUNTER"]["PREVIOUS VALUE"] = prevCnt;
     jsonDoc["COUNTER"]["ERROR COUNT"] = errorCount;
     jsonDoc["COUNTER"]["STATUS"] = counterStatus ? "NOT OK" : "OK";
 
-    lastCnt = cnt;
+    prevCnt = cnt;
+}
+
+void getCurrentTime()
+{
+    time_t now = time(nullptr);
+    struct tm *timeinfo = localtime(&now);
+    char timeStr[25];
+    strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", timeinfo);
+    jsonDoc["CURRENT TIME"] = timeStr;
+}
+
+void heartBeat()
+{
+    unsigned long heartBeat = millis();
+    static unsigned long prevHeartBeat = heartBeat;
+    if (heartBeat - prevHeartBeat < 5000)
+        return;
+    String msg = "{\"HEARTBEAT\":" + String(heartBeat) + "}";
+    Serial.println(msg);
+    lmb_ws.sendMsg(msg);
+    prevHeartBeat = heartBeat;
 }
 
 void readLoRa()
@@ -35,6 +66,7 @@ void readLoRa()
     radio.startReceive();
     int state = radio.readData(jsonString);
     deserializeJson(jsonDoc, jsonString);
+    getCurrentTime();
     jsonDoc["COMPILATION DATE"] = COMPILATION_DATE;
     jsonDoc["COMPILATION TIME"] = COMPILATION_TIME;
     jsonDoc["LoRa STATE"] = state;
@@ -42,13 +74,19 @@ void readLoRa()
         return;
     jsonDoc["RSSI (dBm)"] = radio.getRSSI();
     jsonDoc["SNR (dB)"] = radio.getSNR();
-    jsonDoc["IP"] = wifi.getLocalIP();
+    jsonDoc["IP"] = lmb_ws.getLocalIP();
+    jsonDoc["WS CLIENT COUNT"] = lmb_ws.getWsClientCount();
+}
+
+void setupMQTT()
+{
+    lmb_mqtt.begin();
 }
 
 void setupWiFi()
 {
-    wifi.begin();
-    wifi.sendWsMsg(PROJECT_NAME);
+    lmb_ws.begin();
+    lmb_ws.synchronizeNTPTime();
 }
 
 void setupLoRaRX()
@@ -57,23 +95,18 @@ void setupLoRaRX()
     radio.startReceive();
 }
 
-void broadcastResults()
-{
-    serializeJsonPretty(jsonDoc, jsonString);
-    wifi.sendWsMsg(jsonString);
-    Serial.println(jsonString);
-}
-
 void setup()
 {
     setupSerial();
     setupLoRa();
     setupLoRaRX();
     setupWiFi();
+    setupMQTT();
 }
 
 void loop()
 {
+    heartBeat();
     yield();
     if (!loraEvent)
         return;

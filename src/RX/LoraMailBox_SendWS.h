@@ -1,5 +1,5 @@
 /**
- * LoRa MailBox
+ * LoRa MailBox — WebSocket
  *
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
@@ -9,7 +9,7 @@
 #include <AsyncTCP.h>
 #include "credentials.h"
 
-class LoraMailBox_WiFi
+class LoraMailBox_SendWS
 {
 private:
     AsyncWebServer server{80};
@@ -19,7 +19,7 @@ private:
 #include "index.html"
 
 public:
-    LoraMailBox_WiFi() {}
+    LoraMailBox_SendWS() {}
 
     bool begin()
     {
@@ -39,7 +39,8 @@ public:
         if (WiFi.status() != WL_CONNECTED)
         {
             Serial.println("\nWiFi connection failed!");
-            return false;
+            while (true)
+                yield();
         }
 
         Serial.println("\nConnected to WiFi");
@@ -51,7 +52,8 @@ public:
                           AwsEventType type, void *arg, uint8_t *data, size_t len)
                    {
             if (type == WS_EVT_CONNECT) {
-                Serial.printf("WebSocket client #%u connected\n", client->id());
+                Serial.printf("\nWebSocket client #%u connected\n", client->id());
+                Serial.printf("Number of clients connected: %u\n", ws.count());
                 if (latestMessage.length() > 0) {
                     client->text(latestMessage);
                 }
@@ -68,15 +70,57 @@ public:
         return true;
     }
 
-    void sendWsMsg(const String &message)
+    bool synchronizeNTPTime()
+    {
+        const char *ntpServer = "pool.ntp.org";
+        const long gmtOffset_sec = 3600;     // Adjust for your timezone (e.g., 3600 for GMT+1)
+        const int daylightOffset_sec = 3600; // Daylight saving time offset (if applicable)
+
+        Serial.println("Synchronizing time with NTP server...");
+        configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+        // Wait for time to be set
+        time_t now = 0;
+        struct tm timeinfo;
+        int retry = 0;
+        const int maxRetries = 10;
+
+        while (!getLocalTime(&timeinfo) && retry < maxRetries)
+        {
+            Serial.print(".");
+            delay(500);
+            retry++;
+        }
+
+        if (retry < maxRetries)
+        {
+            time(&now);
+            Serial.println("\nTime synchronized successfully");
+            Serial.print("Current time: ");
+            Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+            return true;
+        }
+        else
+        {
+            Serial.println("\nFailed to synchronize time");
+            return false;
+        }
+    }
+
+    void sendMsg(const String &message)
     {
         latestMessage = message;
         ws.textAll(latestMessage);
-        // ws.cleanupClients();
+        ws.cleanupClients();
     }
 
     IPAddress getLocalIP()
     {
         return WiFi.localIP();
+    }
+
+    uint32_t getWsClientCount()
+    {
+        return ws.count();
     }
 };
