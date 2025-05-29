@@ -32,3 +32,7 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
 esptool.py --chip esp32s3 --port /dev/cu.usbmodem11101 erase_flash
 
 ```
+
+# License
+
+Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com

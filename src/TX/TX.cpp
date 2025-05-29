@@ -27,14 +27,11 @@ void debounce(uint32_t wait)
     delay(wait - millis() % 1000);
 }
 
-void transmitLora(uint16_t cnt)
+void transmitLoRa(uint16_t cnt)
 {
     String msg;
     JsonDocument doc;
     doc["cnt"] = cnt;
-    // doc["millis"] = millis();
-    // doc["from"] = PROJECT_NAME;
-    // doc["CompilationTime"] = __TIME__;
     serializeJson(doc, msg);
 
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
@@ -72,7 +69,7 @@ void setup()
 void loop()
 {
     uint16_t cnt = readMsgCounterFromFile();
-    transmitLora(cnt);
+    transmitLoRa(cnt);
     saveMsgCounterToFile(++cnt);
     debounce(5000);
 

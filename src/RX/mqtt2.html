@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerte Boîte aux lettres</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 8px;
+            margin-right: 10px;
+        }
+        input {
+            flex-grow: 1;
+        }
+        .topic-info {
+            background-color: #e2f3f8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .notification-settings {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .flap-alert {
+            background-color: #dc3545;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .json-display {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 5px;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+        .flap-status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .flap-closed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flap-open {
+            background-color: #f8d7da;
+            color: #721c24;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Surveillance de boîte aux lettres</h1>
+
+    <div class="topic-info">
+        <strong>Topic MQTT:</strong> mailboxtest
+    </div>
+
+    <div class="notification-settings">
+        <button id="enableNotifications">Activer les notifications</button>
+        <p>Activez les notifications pour être alerté lorsque FLAP = 1</p>
+    </div>
+
+    <div class="flap-status" id="flapStatus">
+        Statut de la boîte aux lettres: en attente de données...
+    </div>
+
+    <div class="flap-alert" id="flapAlert">
+        ALERTE! La boîte aux lettres vient d'être ouverte! (FLAP = 1)
+    </div>
+
+    <div id="status" class="disconnected">Non connecté</div>
+
+    <div class="controls">
+        <input type="text" id="message" placeholder="Message à publier (format JSON)">
+        <button id="publish">Publier</button>
+    </div>
+
+    <div class="controls">
+        <button id="testAlert">Tester l'alerte</button>
+        <button id="clearMessages">Effacer les messages</button>
+    </div>
+
+    <h2>Messages reçus</h2>
+    <div id="messages"></div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const messagesEl = document.getElementById('messages');
+        const messageInput = document.getElementById('message');
+        const publishBtn = document.getElementById('publish');
+        const enableNotificationsBtn = document.getElementById('enableNotifications');
+        const testAlertBtn = document.getElementById('testAlert');
+        const clearMessagesBtn = document.getElementById('clearMessages');
+        const flapAlertEl = document.getElementById('flapAlert');
+        const flapStatusEl = document.getElementById('flapStatus');
+
+        // Définir le topic fixe
+        const topic = 'mailboxtest';
+
+        // Créer un élément audio pour l'alerte
+        const alertSound = new Audio();
+        // Utiliser un son système (note.wav présent sur la plupart des systèmes)
+        alertSound.src = 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU';
+
+        // Vérifier si les notifications sont supportées
+        let notificationsEnabled = false;
+
+        // Générer un ID client aléatoire
+        const clientId = 'clientjs_' + Math.random().toString(16).substr(2, 8);
+        const host = 'wss://test.mosquitto.org:8081'; // WebSocket sécurisé
+
+        console.log('Tentative de connexion à ' + host);
+
+        // Créer une instance du client
+        const client = mqtt.connect(host, {
+            clientId: clientId,
+            clean: true,
+            connectTimeout: 4000,
+            reconnectPeriod: 1000,
+        });
+
+        // Gestion de l'événement de connexion
+        client.on('connect', function () {
+            console.log('Connecté au broker MQTT');
+            statusEl.textContent = 'Connecté à ' + host;
+            statusEl.className = 'connected';
+
+            // Souscrire au topic fixe
+            client.subscribe(topic, function (err) {
+                if (!err) {
+                    console.log('Souscription réussie au topic: ' + topic);
+                    const msgEl = document.createElement('div');
+                    msgEl.innerHTML = `<em>Souscrit au topic: ${topic}</em>`;
+                    messagesEl.appendChild(msgEl);
+                    messagesEl.scrollTop = messagesEl.scrollHeight;
+                } else {
+                    console.error('Erreur lors de la souscription:', err);
+                }
+            });
+        });
+
+        // Fonction pour traiter les messages JSON
+        function processJsonMessage(message) {
+            try {
+                const jsonData = JSON.parse(message);
+
+                // Vérifier si le message contient FLAP
+                if ('SNR (dB)' in jsonData) {
+                    const flapValue = jsonData['SNR (dB)'];
+
+                    // Mettre à jour le statut
+                    if (flapValue > 0) {
+                        flapStatusEl.textContent = 'Statut de la boîte aux lettres: OUVERTE';
+                        flapStatusEl.className = 'flap-status flap-open';
+
+                        // Afficher l'alerte
+                        flapAlertEl.style.display = 'block';
+
+                        // Jouer le son d'alerte
+                        alertSound.play().catch(e => console.log('Erreur lors de la lecture du son:', e));
+
+                        // Envoyer une notification si activé
+                        if (notificationsEnabled) {
+                            sendNotification('Boîte aux lettres ouverte!', 'Votre boîte aux lettres vient d\'être ouverte.');
+                        }
+                    } else {
+                        flapStatusEl.textContent = 'Statut de la boîte aux lettres: FERMÉE';
+                        flapStatusEl.className = 'flap-status flap-closed';
+                        flapAlertEl.style.display = 'none';
+                    }
+                }
+
+                return jsonData;
+            } catch (e) {
+                console.log('Message non-JSON:', message);
+                return null;
+            }
+        }
+
+        // Gestion des messages reçus
+        client.on('message', function (receivedTopic, message) {
+            const msg = message.toString();
+            console.log('Message reçu sur ' + receivedTopic + ': ' + msg);
+
+            const msgEl = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+
+            // Essayer de traiter comme JSON
+            const jsonData = processJsonMessage(msg);
+
+            if (jsonData) {
+                // C'est un JSON valide, l'afficher joliment
+                msgEl.innerHTML = `<strong>${timestamp}</strong>: <span class="json-display">${JSON.stringify(jsonData, null, 2)}</span>`;
+            } else {
+                // Message texte simple
+                msgEl.innerHTML = `<strong>${timestamp}</strong>: ${msg}`;
+            }
+
+            messagesEl.appendChild(msgEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        });
+
+        // Gestion des erreurs
+        client.on('error', function (error) {
+            console.error('Erreur de connexion:', error);
+            statusEl.textContent = 'Erreur: ' + error.message;
+            statusEl.className = 'disconnected';
+        });
+
+        // Fonction pour envoyer une notification
+        function sendNotification(title, body) {
+            if (!("Notification" in window)) {
+                alert("Ce navigateur ne supporte pas les notifications desktop");
+                return;
+            }
+
+            // Créer et afficher la notification
+            const notification = new Notification(title, {
+                body: body,
+                icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Letter_box.svg/240px-Letter_box.svg.png',
+                vibrate: [200, 100, 200],
+                requireInteraction: true
+            });
+
+            notification.onclick = function() {
+                window.focus();
+                this.close();
+            };
+        }
+
+        // Activer les notifications
+        enableNotificationsBtn.addEventListener('click', function() {
+            if (!("Notification" in window)) {
+                alert("Ce navigateur ne supporte pas les notifications desktop");
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                notificationsEnabled = true;
+                enableNotificationsBtn.textContent = "Notifications activées";
+                enableNotificationsBtn.disabled = true;
+                return;
+            }
+
+            if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(function (permission) {
+                    if (permission === "granted") {
+                        notificationsEnabled = true;
+                        enableNotificationsBtn.textContent = "Notifications activées";
+                        enableNotificationsBtn.disabled = true;
+                        sendNotification("Notifications activées", "Vous serez alerté lorsque la boîte aux lettres sera ouverte.");
+                    }
+                });
+            }
+        });
+
+        // Gestionnaire d'événement pour publier
+        publishBtn.addEventListener('click', function() {
+            const message = messageInput.value;
+
+            if (!message) return;
+
+            client.publish(topic, message);
+            console.log('Message publié sur ' + topic + ': ' + message);
+
+            const msgEl = document.createElement('div');
+            msgEl.innerHTML = `<em>Envoyé: ${message}</em>`;
+            messagesEl.appendChild(msgEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            messageInput.value = '';
+        });
+
+        // Tester l'alerte
+        testAlertBtn.addEventListener('click', function() {
+            const testMessage = JSON.stringify({ "FLAP": 1, "test": true });
+            processJsonMessage(testMessage);
+        });
+
+        // Effacer les messages
+        clearMessagesBtn.addEventListener('click', function() {
+            messagesEl.innerHTML = '';
+        });
+
+        // Si le navigateur quitte la page, fermer la connexion MQTT proprement
+        window.addEventListener('beforeunload', function() {
+            if (client) {
+                client.end();
+            }
+        });
+    </script>
+</body>
+</html>
