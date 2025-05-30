@@ -33,6 +33,6 @@ esptool.py --chip esp32s3 --port /dev/cu.usbmodem11101 erase_flash
 
 ```
 
-# License
+## License
 
 Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
