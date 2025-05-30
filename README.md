@@ -25,7 +25,7 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
     -   https://code.visualstudio.com/
     -   https://platformio.org/
 
-## Usefull commands
+## Usefull commands
 
 ```zsh
 
