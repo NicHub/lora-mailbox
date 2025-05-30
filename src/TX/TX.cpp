@@ -54,8 +54,14 @@ void setupGPIOs()
     // press LORA_USER_BUTTON, you create a
     // short-circuit between GPIIO21 and GND.
     pinMode(LORA_USER_BUTTON, INPUT);
-    pinMode(PIR_PIN_0, INPUT);
     pinMode(LORA_GREEN_LED, OUTPUT);
+
+    // PIR
+    pinMode(PIR_PIN_0_VCC, OUTPUT);
+    pinMode(PIR_PIN_0, INPUT);
+    pinMode(PIR_PIN_0_GND, OUTPUT);
+    digitalWrite(PIR_PIN_0_VCC, HIGH);
+    digitalWrite(PIR_PIN_0_GND, LOW);
 }
 
 void setup()
@@ -76,7 +82,7 @@ void loop()
     // Set DEEP_SLEEP to false to send messages
     // continuously for example to perform signal
     // quality tests.
-#define DEEP_SLEEP false
+#define DEEP_SLEEP true
 #if DEEP_SLEEP
     setupDeepSleep();
     goToDeepSleep();
