@@ -2,6 +2,13 @@
 
 Detects when mailbox flap is opened using a PIR motion sensor and sends a notification via LoRa.
 
+## Before you start
+
+-   Rename `src/RX/credentials-example.h` to `src/RX/credentials.h`
+    and and update the details with your information.
+-   Optional : rename `platformio_user_preferences-example.ini` to `platformio_user_preferences.ini`
+    if you want to set your parameters like the serial ports.
+
 ## Hardware
 
 -   XIAO ESP32S3 & Wio-SX1262 Kit
@@ -28,8 +35,9 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
 ## Usefull commands
 
 ```zsh
-
-esptool.py --chip esp32s3 --port /dev/cu.usbmodem11101 erase_flash
+# The ESP32S3 is blocked very often.
+alias esptool.py='$HOME/.platformio/packages/tool-esptoolpy/esptool.py'
+esptool.py --chip esp32s3 --port $PORT erase_flash
 
 ```
 

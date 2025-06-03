@@ -88,3 +88,5 @@ if __name__ == "__main__":
 
     flags = main()
     print(flags)
+    with open("flags_nogit.txt", "w") as f:
+        f.write(flags)

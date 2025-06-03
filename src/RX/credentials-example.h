@@ -1,27 +1,32 @@
 /*
-    Rename this file as credentials.h and update the details below with your information.
+ * LoRa MailBox
+ *
+ * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
+ */
+
+/*
+   Rename this file to credentials.h and update the details below with your information.
 */
 
 #pragma once
 
-// Wifi credentials
+// Wifi credentials.
 #define WIFI_SSID "..."
 #define WIFI_PASSWORD "..."
 
-// Mail sender credentials
+// Mail sender credentials.
 #define SMTP_HOST F("smtp.gmail.com")
 #define SMTP_PORT 465
 #define SENDER_NAME F("ESP-")
 #define SENDER_EMAIL F("...@gmail.com")
 #define SENDER_PASSWORD F("...")
 
-// Recipients array
+// Array of mail recipients.
 struct Recipient
 {
     const char *name;
     const char *email;
 };
-
 const Recipient RECIPIENTS[] = {
     {"name 1",
      "mail1@domain.com"},
@@ -30,10 +35,9 @@ const Recipient RECIPIENTS[] = {
     {"name 3",
      "mail3@domain.com"},
 };
-
 #define RECIPIENT_COUNT (sizeof(RECIPIENTS) / sizeof(RECIPIENTS[0]))
 
-// MQTT
+// MQTT credentials.
 #define MQTT_SERVER "test.mosquitto.org"
 #define MQTT_PORT 1883
 #define MQTT_TOPIC "mailboxtest"

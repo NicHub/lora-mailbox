@@ -66,16 +66,15 @@ public:
             reconnect();
 
         JsonDocument mqttDoc;
-        if (!jsonDoc["HEARTBEAT"].isNull())
-            mqttDoc["HEARTBEAT"] = jsonDoc["HEARTBEAT"];
-        else
-        {
-            mqttDoc["CURRENT_TIME"] = jsonDoc["CURRENT TIME"];
-            mqttDoc["RSSI (dBm)"] = jsonDoc["RSSI (dBm)"];
-            mqttDoc["SNR (dB)"] = jsonDoc["SNR (dB)"];
-        }
+        mqttDoc["CURRENT_TIME"] = jsonDoc["CURRENT TIME"];
+        mqttDoc["RSSI (dBm)"] = jsonDoc["RSSI (dBm)"];
+        mqttDoc["SNR (dB)"] = jsonDoc["SNR (dB)"];
         String mqttString;
         serializeJson(mqttDoc, mqttString);
+
+        // Replace the existing publish with the complete JSON
         client.publish(mqtt_topic, mqttString.c_str());
+        Serial.println("MQTT MESSAGE SENT: ");
+        Serial.println(mqttString.c_str());
     }
 };
