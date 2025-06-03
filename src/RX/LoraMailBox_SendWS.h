@@ -21,26 +21,56 @@ private:
 public:
     LoraMailBox_SendWS() {}
 
+    void scanWiFiNetworks()
+    {
+        Serial.println("Scanning for WiFi networks...");
+        int networksFound = WiFi.scanNetworks();
+        if (networksFound == 0)
+        {
+            Serial.println("No networks found!");
+            return;
+        }
+        Serial.print(networksFound);
+        Serial.println(" networks found:");
+        for (int i = 0; i < networksFound; ++i)
+        {
+            // Print SSID and RSSI for each network found
+            Serial.print(i + 1);
+            Serial.print(": ");
+            Serial.print(WiFi.SSID(i));
+            Serial.print(" (");
+            Serial.print(WiFi.RSSI(i));
+            Serial.print(" dBm)");
+            Serial.println((WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " [open]" : " [encrypted]");
+            delay(10);
+        }
+    }
+
     bool begin()
     {
-        // Connect to WiFi.
-        WiFi.mode(WIFI_STA);
-        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-        // Wait for connection.
-        uint8_t attempts = 0;
-        while (WiFi.status() != WL_CONNECTED && attempts < 20)
+        while (WiFi.status() != WL_CONNECTED)
         {
-            delay(500);
-            Serial.print(".");
-            attempts++;
-        }
+            Serial.println("\nConnecting to WiFi");
 
-        if (WiFi.status() != WL_CONNECTED)
-        {
-            Serial.println("\nWiFi connection failed!");
-            while (true)
-                yield();
+            // Connect to WiFi.
+            WiFi.mode(WIFI_STA);
+            WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+            // Wait for connection.
+            uint8_t attempts = 0;
+            while (WiFi.status() != WL_CONNECTED && attempts < 20)
+            {
+                delay(500);
+                Serial.print(".");
+                attempts++;
+            }
+            if (WiFi.status() != WL_CONNECTED)
+            {
+                Serial.println("\nWiFi connection failed");
+                delay(500);
+                scanWiFiNetworks();
+            }
+
         }
 
         Serial.println("\nConnected to WiFi");
