@@ -57,11 +57,7 @@ void setupGPIOs()
     pinMode(LORA_GREEN_LED, OUTPUT);
 
     // PIR
-    pinMode(PIR_PIN_0_VCC, OUTPUT);
     pinMode(PIR_PIN_0, INPUT);
-    pinMode(PIR_PIN_0_GND, OUTPUT);
-    digitalWrite(PIR_PIN_0_VCC, HIGH);
-    digitalWrite(PIR_PIN_0_GND, LOW);
 }
 
 void setup()
@@ -74,14 +70,15 @@ void setup()
 
 void loop()
 {
+    yield();
     uint16_t cnt = readMsgCounterFromFile();
     transmitLoRa(cnt);
     saveMsgCounterToFile(++cnt);
     debounce(5000);
 
-    // Set DEEP_SLEEP to false to send messages
-    // continuously for example to perform signal
-    // quality tests.
+// Set DEEP_SLEEP to false to send messages
+// continuously for example to perform signal
+// quality tests.
 #define DEEP_SLEEP true
 #if DEEP_SLEEP
     setupDeepSleep();
