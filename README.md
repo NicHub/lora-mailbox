@@ -24,6 +24,7 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
 -   3.7 V Lipo Battery
 
     -   https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/#battery-usage
+    -   https://wiki.seeedstudio.com/check_battery_voltage/
 
 ## Software
 
