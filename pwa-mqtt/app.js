@@ -14,19 +14,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Enregistrement du Service Worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      if (registrations.length === 0) {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => {
-            console.log('Service Worker enregistré', reg);
-            swRegistration = reg;
-          })
-          .catch(err => console.error('Erreur d\'enregistrement du SW:', err));
-      } else {
-        console.log('Service Worker déjà enregistré');
-        swRegistration = registrations[0]; // Utiliser l'enregistrement existant
-      }
-    });
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        console.log('Service Worker enregistré', reg);
+        swRegistration = reg;
+
+        // Vérifier si les notifications sont déjà autorisées après l'enregistrement
+        if (Notification.permission === 'granted') {
+          notificationCheckbox.checked = true;
+          connectMQTT();
+        }
+      })
+      .catch(err => console.error('Erreur d\'enregistrement du SW:', err));
   }
 
   // Initialiser l'état de la case à cocher selon la permission actuelle
@@ -64,11 +63,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageDiv = document.createElement('div');
     messageDiv.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
     messageDiv.className = `status ${type}`;
-    log.prepend(messageDiv);
+    log.appendChild(messageDiv); // Utilise appendChild au lieu de prepend pour suivre le comportement de l'original
+
+    // Ajouter un effet d'animation
+    messageDiv.classList.add('advertize');
+    setTimeout(() => {
+        messageDiv.classList.remove('advertize');
+    }, 500);
+
+    // Faire défiler vers le bas automatiquement
+    log.scrollTop = log.scrollHeight;
 
     // Limiter le nombre de messages dans le log (optionnel)
     if (log.children.length > 30) {
-      log.removeChild(log.lastChild);
+      log.removeChild(log.firstChild);
     }
   }
 
@@ -85,29 +93,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (Notification.permission === 'granted') {
-      // Utiliser le service worker pour afficher la notification
-      if (swRegistration) {
-        swRegistration.showNotification(title, {
-          body: body,
-          icon: 'icon-192.png',
-          vibrate: [100, 50, 100]
-        }).catch(err => {
-          addLogMessage(`Erreur de notification: ${err.message}`, 'disconnected');
-        });
-      } else {
-        // Fallback - cette approche pourrait générer l'erreur dans certains contextes
-        try {
-          navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification(title, {
-              body: body,
-              icon: 'icon-192.png',
-              vibrate: [100, 50, 100]
-            });
+      addLogMessage('Tentative d\'envoi de notification', 'message');
+
+      // Attendre que le SW soit prêt
+      navigator.serviceWorker.ready
+        .then(registration => {
+          addLogMessage('Service Worker prêt, envoi de notification', 'connected');
+          return registration.showNotification(title, {
+            body: body,
+            icon: '/icon-192.png',
+            vibrate: [100, 50, 100]
           });
-        } catch (e) {
-          addLogMessage(`Erreur de notification: ${e.message}`, 'disconnected');
-        }
-      }
+        })
+        .then(() => {
+          addLogMessage('Notification envoyée avec succès', 'connected');
+        })
+        .catch(err => {
+          addLogMessage(`Erreur de notification: ${err.message}`, 'disconnected');
+          console.error('Erreur de notification:', err);
+        });
     }
   }
 
@@ -171,8 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           noHeartbeatCount++;
           showNotification(
-            'Alerte MQTT',
-            'Message sans HEARTBEAT détecté: ' + messageStr
+            'Ouverture de boîte aux lettres',
+            'Message FLAP OPENED détecté: ' + messageStr
           );
         }
         // Mettre à jour les compteurs
@@ -200,8 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialiser les compteurs
   updateCounters();
 
-  // Vérifier si les notifications sont déjà autorisées
-  if (Notification.permission === 'granted') {
-    connectMQTT();
-  }
+  // Test de notification (optionnel, peut être retiré en production)
+  window.testNotification = function() {
+    showNotification('Test de notification', 'Ceci est un test de notification');
+  };
 });

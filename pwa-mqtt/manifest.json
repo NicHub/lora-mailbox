@@ -1,10 +1,10 @@
 {
-  "name": "MQTT Monitor PWA",
-  "short_name": "MQTT Monitor",
+  "name": "LoRa MailBox PWA",
+  "short_name": "LoRa MailBox",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2196F3",
+  "background_color": "#fff",
+  "theme_color": "#1976d2",
   "icons": [
     {
       "src": "icon-192.png",

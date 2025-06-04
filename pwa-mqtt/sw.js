@@ -1,10 +1,9 @@
-const CACHE_NAME = 'mqtt-monitor-v1';
+const CACHE_NAME = 'lora-mailbox-v1';
 const urlsToCache = [
   '/',
   '/index.html',
   '/app.js',
   '/manifest.json',
-  '/favicon.ico',
   '/icon-192.png',
   '/icon-512.png',
   'https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js'
@@ -12,25 +11,36 @@ const urlsToCache = [
 
 // Installation du SW
 self.addEventListener('install', event => {
+  console.log('Service Worker: Installation en cours');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
+        console.log('Service Worker: Mise en cache globale');
         return cache.addAll(urlsToCache);
+      })
+      .then(() => {
+        console.log('Service Worker: Installation terminée');
+        return self.skipWaiting();
       })
   );
 });
 
 // Activation du SW
 self.addEventListener('activate', event => {
+  console.log('Service Worker: Activation');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.filter(cacheName => {
           return cacheName !== CACHE_NAME;
         }).map(cacheName => {
+          console.log('Service Worker: Suppression de l\'ancien cache', cacheName);
           return caches.delete(cacheName);
         })
       );
+    }).then(() => {
+      console.log('Service Worker: Activation terminée');
+      return self.clients.claim();
     })
   );
 });
@@ -45,32 +55,13 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Gestion des notifications
-self.addEventListener('push', event => {
-  const data = event.data ? event.data.json() : { title: 'Notification', body: 'Nouvelle notification' };
+// Écoute des événements de notification
+self.addEventListener('notificationclick', event => {
+  console.log('Service Worker: Notification cliquée', event);
+  event.notification.close();
 
-  const options = {
-    body: data.body,
-    icon: 'icon-192.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    }
-  };
-
+  // Ouvrir l'application lorsque l'utilisateur clique sur la notification
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    clients.openWindow('/')
   );
-});
-
-// Pour communiquer avec le client (app.js)
-self.addEventListener('message', event => {
-  if (event.data.action === 'showNotification') {
-    const notificationData = event.data.notification;
-    self.registration.showNotification(notificationData.title, {
-      body: notificationData.body,
-      icon: 'icon-192.png'
-    });
-  }
 });
