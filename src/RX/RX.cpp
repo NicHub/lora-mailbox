@@ -55,9 +55,11 @@ void heartBeat()
     static unsigned long prevHeartBeat = heartBeat;
     if (heartBeat - prevHeartBeat < 5000)
         return;
-    String msg = "{\"HEARTBEAT\":" + String(heartBeat) + "}";
-    Serial.println(msg);
-    lmb_ws.sendMsg(msg);
+    jsonString = "{\"HEARTBEAT\":" + String(heartBeat) + "}";
+    deserializeJson(jsonDoc, jsonString);
+    Serial.println(jsonString);
+    lmb_ws.sendMsg(jsonString);
+    lmb_mqtt.sendMsg(jsonDoc);
     prevHeartBeat = heartBeat;
 }
 
@@ -102,6 +104,7 @@ void setup()
     setupLoRaRX();
     setupWiFi();
     setupMQTT();
+    delay(1000 - millis() % 1000);
 }
 
 void loop()
