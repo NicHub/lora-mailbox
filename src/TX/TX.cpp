@@ -79,7 +79,7 @@ void loop()
 // Set DEEP_SLEEP to false to send messages
 // continuously for example to perform signal
 // quality tests.
-#define DEEP_SLEEP true
+#define DEEP_SLEEP false
 #if DEEP_SLEEP
     setupDeepSleep();
     goToDeepSleep();

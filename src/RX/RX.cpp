@@ -117,4 +117,5 @@ void loop()
     readLoRa();
     counterCheck();
     broadcastResults();
+    blink();
 }

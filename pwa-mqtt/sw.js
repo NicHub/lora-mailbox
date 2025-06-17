@@ -34,7 +34,7 @@ self.addEventListener('activate', event => {
         cacheNames.filter(cacheName => {
           return cacheName !== CACHE_NAME;
         }).map(cacheName => {
-          console.log('Service Worker: Suppression de l\'ancien cache', cacheName);
+          console.log('Service Worker: Suppression de l’ancien cache', cacheName);
           return caches.delete(cacheName);
         })
       );

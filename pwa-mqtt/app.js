@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
           connectMQTT();
         }
       })
-      .catch(err => console.error('Erreur d\'enregistrement du SW:', err));
+      .catch(err => console.error('Erreur d’enregistrement du SW:', err));
   }
 
   // Initialiser l'état de la case à cocher selon la permission actuelle
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       // Désactivation des notifications (ne peut pas révoquer la permission,
       // mais peut arrêter d'en envoyer)
-      addLogMessage('Notifications désactivées par l\'utilisateur', 'message');
+      addLogMessage('Notifications désactivées par l’utilisateur', 'message');
     }
   });
 
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function showNotification(title, body) {
     // Vérifier si les notifications sont activées (case cochée)
     if (!notificationCheckbox.checked) {
-      addLogMessage('Notification supprimée (désactivée par l\'utilisateur)', 'message');
+      addLogMessage('Notification supprimée (désactivée par l’utilisateur)', 'message');
       return;
     }
 
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (Notification.permission === 'granted') {
-      addLogMessage('Tentative d\'envoi de notification', 'message');
+      addLogMessage('Tentative d’envoi de notification', 'message');
 
       // Attendre que le SW soit prêt
       navigator.serviceWorker.ready
