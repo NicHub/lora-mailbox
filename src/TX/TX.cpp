@@ -43,9 +43,9 @@ void transmitLoRa(uint16_t cnt)
 
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
 
-    // Don’t use the non blocking function `startTransmit()`.
-    // It makes it difficult to know how much time you need
-    // wait before sending a new message.
+    // Don’t use the non-blocking `startTransmit()` function.
+    // It makes it difficult to estimate the necessary delay
+    // before sending a new message.
     int state = radio.transmit(msg.c_str());
 
     if (state != RADIOLIB_ERR_NONE)
