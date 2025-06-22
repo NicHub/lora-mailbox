@@ -22,7 +22,6 @@ void goToDeepSleep()
 
     setupDeepSleep();
     debounce(1000);
-    digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(LORA_LED_GREEN, LOW);
     esp_deep_sleep_start();
 }
@@ -30,7 +29,6 @@ void goToDeepSleep()
 void stayAwake()
 {
     debounce(1000);
-    digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(LORA_LED_GREEN, LOW);
 }
 
@@ -47,9 +45,7 @@ void transmitLoRa(uint16_t cnt)
     // It makes it difficult to estimate the necessary delay
     // before sending a new message.
     digitalWrite(LORA_LED_GREEN, HIGH);
-    digitalWrite(LED_BUILTIN, LOW);
     int state = radio.transmit(msg.c_str());
-    digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(LORA_LED_GREEN, LOW);
 
     if (state != RADIOLIB_ERR_NONE)
@@ -69,11 +65,10 @@ void setupGPIOs()
     // OUTPUT and you set LED_BUILTIN to HIGH and you
     // press LORA_USER_BUTTON, you create a
     // short-circuit between GPIIO21 and GND.
+
+    // pinMode(LED_BUILTIN, OUTPUT); => Too dangerous to use!
     pinMode(LORA_USER_BUTTON, INPUT);
     pinMode(LORA_LED_GREEN, OUTPUT);
-    pinMode(LED_BUILTIN, OUTPUT);
-    // switchOffAllLEDs();
-
     pinMode(WAKEUP_PIN, INPUT);
     pinMode(STAY_AWAKE_PIN, INPUT_PULLDOWN);
 }

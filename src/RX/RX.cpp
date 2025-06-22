@@ -112,10 +112,10 @@ void setupGPIOs()
     // OUTPUT and you set LED_BUILTIN to HIGH and you
     // press LORA_USER_BUTTON, you create a
     // short-circuit between GPIIO21 and GND.
+
+    // pinMode(LED_BUILTIN, OUTPUT); => Too dangerous to use!
     pinMode(LORA_USER_BUTTON, INPUT);
     pinMode(LORA_LED_GREEN, OUTPUT);
-    pinMode(LED_BUILTIN, OUTPUT);
-
     pinMode(NO_HEARTBEAT_PIN, INPUT_PULLUP);
 }
 
@@ -137,10 +137,8 @@ void loop()
     yield();
     if (!loraEvent)
         return;
-    digitalWrite(LED_BUILTIN, LOW);
     loraEvent = false;
     readLoRa();
     counterCheck();
     broadcastResults();
-    digitalWrite(LED_BUILTIN, HIGH);
 }
