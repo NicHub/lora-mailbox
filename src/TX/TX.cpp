@@ -8,8 +8,14 @@
 #include "common/common.h"
 #include "common/LoraMailBox_Settings.h"
 
+void setupDeepSleep()
+{
+    esp_sleep_enable_ext1_wakeup(MASK, ESP_EXT1_WAKEUP_ANY_HIGH);
+}
+
 void goToDeepSleep()
 {
+    setupDeepSleep();
     Serial.printf(PREFIX "Compilation date %s", COMPILATION_DATE);
     Serial.printf(PREFIX "Compilation time %s", COMPILATION_TIME);
     Serial.print(F(PREFIX "Going to deep sleep\n"));
@@ -17,9 +23,10 @@ void goToDeepSleep()
     esp_deep_sleep_start();
 }
 
-void setupDeepSleep()
+void stayAwake()
 {
-    esp_sleep_enable_ext1_wakeup(MASK, ESP_EXT1_WAKEUP_ANY_HIGH);
+    yield();
+    blink();
 }
 
 void debounce(uint32_t wait)
@@ -35,7 +42,29 @@ void transmitLoRa(uint16_t cnt)
     serializeJson(doc, msg);
 
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
-    int state = radio.startTransmit(msg.c_str());
+
+    // Don’t use the non blocking function `startTransmit()`.
+    // It makes it difficult to know how much time you need
+    // wait before sending a new message.
+    int state = radio.transmit(msg.c_str());
+
+    if (state != RADIOLIB_ERR_NONE)
+    {
+        Serial.printf(PREFIX "Failed, code %d", state);
+        return;
+    }
+    Serial.print(F(PREFIX "Transmission finished!"));
+}
+
+void transmitLoRa2(uint16_t cnt)
+{
+    String msg;
+    JsonDocument doc;
+    doc["cnt"] = cnt;
+    serializeJson(doc, msg);
+
+    Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
+    int state = radio.transmit(msg.c_str());
     if (state != RADIOLIB_ERR_NONE)
     {
         Serial.printf(PREFIX "Failed, code %d", state);
@@ -56,8 +85,8 @@ void setupGPIOs()
     pinMode(LORA_USER_BUTTON, INPUT);
     pinMode(LORA_GREEN_LED, OUTPUT);
 
-    // PIR
     pinMode(PIR_PIN_0, INPUT);
+    pinMode(STAY_AWAKE_PIN, INPUT_PULLDOWN);
 }
 
 void setup()
@@ -70,24 +99,14 @@ void setup()
 
 void loop()
 {
-    yield();
+    digitalWrite(LORA_GREEN_LED, HIGH);
     uint16_t cnt = readMsgCounterFromFile();
     transmitLoRa(cnt);
     saveMsgCounterToFile(++cnt);
-    debounce(5000);
-
-// Set DEEP_SLEEP to false to send messages
-// continuously for example to perform signal
-// quality tests.
-#define DEEP_SLEEP false
-#if DEEP_SLEEP
-    setupDeepSleep();
-    goToDeepSleep();
-#endif
-
-    // If the module goes to deep sleep, the code below
-    // is never executed because the ESP restarts upon
-    // waking up.
-    blink();
+    digitalWrite(LORA_GREEN_LED, LOW);
     debounce(1000);
+    if (digitalRead(STAY_AWAKE_PIN))
+        stayAwake();
+    else
+        goToDeepSleep();
 }

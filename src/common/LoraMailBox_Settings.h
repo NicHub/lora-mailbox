@@ -4,6 +4,7 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
+#define STAY_AWAKE_PIN D0
 #define LORA_GREEN_LED GPIO_NUM_48
 #define LORA_USER_BUTTON GPIO_NUM_21
 #define PIR_PIN_0_VCC GPIO_NUM_1

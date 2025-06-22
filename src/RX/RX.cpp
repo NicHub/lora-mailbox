@@ -78,6 +78,8 @@ void readLoRa()
     jsonDoc["SNR (dB)"] = radio.getSNR();
     jsonDoc["IP"] = lmb_ws.getLocalIP();
     jsonDoc["WS CLIENT COUNT"] = lmb_ws.getWsClientCount();
+    jsonDoc["state"] = state;
+    jsonDoc["jsonString"] = jsonString;
 }
 
 void setupMQTT()
