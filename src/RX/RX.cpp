@@ -40,13 +40,13 @@ void counterCheck()
     prevCnt = cnt;
 }
 
-void getCurrentTime()
+String getCurrentTime()
 {
     time_t now = time(nullptr);
     struct tm *timeinfo = localtime(&now);
     char timeStr[25];
     strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", timeinfo);
-    jsonDoc["CURRENT TIME"] = timeStr;
+    return String(timeStr);
 }
 
 void heartBeat()
@@ -55,25 +55,26 @@ void heartBeat()
     static unsigned long prevHeartBeat = heartBeat;
     if (heartBeat - prevHeartBeat < 5000)
         return;
-    jsonString = "{\"HEARTBEAT\":" + String(heartBeat) + "}";
+    prevHeartBeat = heartBeat;
+    String timeStr = getCurrentTime();
+    jsonString = "{\"HEARTBEAT\":" + timeStr + "}";
     deserializeJson(jsonDoc, jsonString);
     Serial.println(jsonString);
     lmb_ws.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
-    prevHeartBeat = heartBeat;
 }
 
 void readLoRa()
 {
     radio.startReceive();
     int state = radio.readData(jsonString);
-    deserializeJson(jsonDoc, jsonString);
-    getCurrentTime();
-    jsonDoc["COMPILATION DATE"] = COMPILATION_DATE;
-    jsonDoc["COMPILATION TIME"] = COMPILATION_TIME;
     jsonDoc["LoRa STATE"] = state;
     if (state != RADIOLIB_ERR_NONE)
         return;
+    deserializeJson(jsonDoc, jsonString);
+    jsonDoc["CURRENT TIME"] = getCurrentTime();
+    jsonDoc["COMPILATION DATE"] = COMPILATION_DATE;
+    jsonDoc["COMPILATION TIME"] = COMPILATION_TIME;
     jsonDoc["RSSI (dBm)"] = radio.getRSSI();
     jsonDoc["SNR (dB)"] = radio.getSNR();
     jsonDoc["IP"] = lmb_ws.getLocalIP();
