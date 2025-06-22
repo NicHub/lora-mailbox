@@ -1,5 +1,5 @@
 /**
-* LoRa MailBox
+ * LoRa MailBox
  *
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
@@ -36,17 +36,22 @@ void setFlag(void)
     loraEvent = true;
 }
 
+void debounce(uint32_t wait)
+{
+    delay(wait - millis() % 1000);
+}
+
 void blink(
     unsigned long on_duration_ms = 10,
     unsigned long total_duration_ms = 100,
     unsigned long repeat = 10)
 {
-    pinMode(LORA_GREEN_LED, OUTPUT);
+    pinMode(LORA_LED_GREEN, OUTPUT);
     for (size_t i = 0; i < repeat; i++)
     {
-        digitalWrite(LORA_GREEN_LED, HIGH);
+        digitalWrite(LORA_LED_GREEN, HIGH);
         delay(on_duration_ms);
-        digitalWrite(LORA_GREEN_LED, LOW);
+        digitalWrite(LORA_LED_GREEN, LOW);
         delay(total_duration_ms - on_duration_ms);
     }
 }
@@ -91,7 +96,22 @@ void saveMsgCounterToFile(uint16_t cnt)
 
 void setupLittleFS()
 {
-    LittleFS.begin(true);
+    bool state = LittleFS.begin(true);
+    while (!state)
+    {
+        Serial.println("LittleFS.begin() failed");
+        delay(1000);
+    }
+
+    if (digitalRead(FORMAT_LITTLEFS_PIN))
+    {
+        digitalWrite(LORA_LED_GREEN, HIGH);
+        LittleFS.format();
+        digitalWrite(LORA_LED_GREEN, LOW);
+        while (digitalRead(FORMAT_LITTLEFS_PIN))
+            yield();
+    }
+
     if (!LittleFS.exists(CNT_LOG_FILENAME))
         saveMsgCounterToFile(0);
 }
@@ -104,4 +124,10 @@ void setupSerial(size_t printCnt = 0)
         Serial.println(i);
         delay(1000);
     }
+}
+
+void switchOffAllLEDs()
+{
+    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(LORA_LED_GREEN, LOW);
 }

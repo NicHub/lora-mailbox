@@ -66,8 +66,11 @@ void heartBeat()
 
 void readLoRa()
 {
+    digitalWrite(LORA_LED_GREEN, HIGH);
     radio.startReceive();
     int state = radio.readData(jsonString);
+    digitalWrite(LORA_LED_GREEN, LOW);
+
     jsonDoc["LoRa STATE"] = state;
     if (state != RADIOLIB_ERR_NONE)
         return;
@@ -100,8 +103,25 @@ void setupLoRaRX()
     radio.startReceive();
 }
 
+void setupGPIOs()
+{
+    // Beware that if you use XIAO ESP32S3 with LoRa
+    // shield SX1262, LORA_USER_BUTTON on LoRa shield
+    // and LED_BUILTIN on ESP module are both connected
+    // on GPIO21! So if you set LED_BUILTIN pinMode to
+    // OUTPUT and you set LED_BUILTIN to HIGH and you
+    // press LORA_USER_BUTTON, you create a
+    // short-circuit between GPIIO21 and GND.
+    pinMode(LORA_USER_BUTTON, INPUT);
+    pinMode(LORA_LED_GREEN, OUTPUT);
+    pinMode(LED_BUILTIN, OUTPUT);
+
+    pinMode(NO_HEARTBEAT_PIN, INPUT_PULLUP);
+}
+
 void setup()
 {
+    setupGPIOs();
     setupSerial();
     setupLoRa();
     setupLoRaRX();
@@ -112,13 +132,15 @@ void setup()
 
 void loop()
 {
-    heartBeat();
+    if(digitalRead(NO_HEARTBEAT_PIN))
+        heartBeat();
     yield();
     if (!loraEvent)
         return;
+    digitalWrite(LED_BUILTIN, LOW);
     loraEvent = false;
     readLoRa();
     counterCheck();
     broadcastResults();
-    blink();
+    digitalWrite(LED_BUILTIN, HIGH);
 }
