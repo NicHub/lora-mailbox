@@ -57,7 +57,7 @@ void heartBeat()
         return;
     prevHeartBeat = heartBeat;
     String timeStr = getCurrentTime();
-    jsonString = "{\"HEARTBEAT\":" + timeStr + "}";
+    jsonString = "{\"HEARTBEAT\":\"" + timeStr + "\"}";
     deserializeJson(jsonDoc, jsonString);
     Serial.println(jsonString);
     lmb_ws.sendMsg(jsonString);

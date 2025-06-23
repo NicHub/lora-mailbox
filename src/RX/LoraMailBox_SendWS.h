@@ -70,7 +70,6 @@ public:
                 delay(500);
                 scanWiFiNetworks();
             }
-
         }
 
         Serial.println("\nConnected to WiFi");
