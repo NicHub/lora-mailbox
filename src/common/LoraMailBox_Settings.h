@@ -14,6 +14,8 @@
 
 #define LORA_MODULE_PINOUT 0
 #if LORA_MODULE_PINOUT == 0
+// https://github.com/radiolib-org/RadioBoards/blob/main/src/maintained/SeeedStudio/XIAO_ESP32S3.h
+// https://github.com/Seeed-Studio/one_channel_hub/blob/4cc771ac02da1bd18be67509f6b52d21bb0feabd/components/smtc_ral/bsp/sx126x/seeed_xiao_esp32s3_devkit_sx1262.c#L358-L369
 #define CS 41
 #define IRQ 39
 #define RST 42
