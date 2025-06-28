@@ -5,13 +5,19 @@
  */
 
 #include <Arduino.h>
-#include <LittleFS.h>
 #include <RadioLib.h>
-#include <common/LoraMailBox_Settings.h>
 #include <ArduinoJson.h>
+#include "common/LoraMailBox_Settings.h"
 
-#define PREFIX "\n[" PROJECT_NAME "] "
+// #if defined(ESP32)
+// #include "common/common_ESP32.h"
+// #elif defined(NRF52840_XXAA)
+// #include "common/common_nRF52.h"
+// #endif
+
+
 #define CNT_LOG_FILENAME "/cnt.log"
+#define PREFIX "\n[" PROJECT_NAME "] "
 
 SX1262 radio = nullptr;
 
@@ -44,9 +50,10 @@ void debounce(uint32_t wait)
 void blink(
     unsigned long on_duration_ms = 10,
     unsigned long total_duration_ms = 100,
-    unsigned long repeat = 10)
+    unsigned long repeat = 10,
+    uint32_t led_pin = LORA_LED_GREEN)
 {
-    pinMode(LORA_LED_GREEN, OUTPUT);
+    pinMode(led_pin, OUTPUT);
     for (size_t i = 0; i < repeat; i++)
     {
         digitalWrite(LORA_LED_GREEN, HIGH);
@@ -56,9 +63,36 @@ void blink(
     }
 }
 
+void transmitLoRa(uint8_t board_id, uint16_t cnt, uint16_t battery_voltage, bool stayAwake)
+{
+    String msg;
+    JsonDocument doc;
+    doc["cnt"] = cnt;
+    doc["board id"] = board_id;
+    doc["volt"] = battery_voltage;
+    doc["stay awake"] = stayAwake;
+    serializeJson(doc, msg);
+
+    Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
+
+    // Don’t use the non-blocking `startTransmit()` function.
+    // It makes it difficult to estimate the necessary delay
+    // before sending a new message.
+    digitalWrite(LORA_LED_GREEN, HIGH);
+    int state = radio.transmit(msg.c_str());
+    digitalWrite(LORA_LED_GREEN, LOW);
+
+    if (state != RADIOLIB_ERR_NONE)
+    {
+        Serial.printf(PREFIX "Failed, code %d", state);
+        return;
+    }
+    Serial.print(F(PREFIX "Transmission finished!"));
+}
+
 void setupLoRa()
 {
-    radio = new Module(CS, IRQ, RST, GPIO);
+    radio = new Module(CS, IRQ, RST, LORA_GPIO_PIN);
     Serial.print(F(PREFIX "Initializing LoRa..."));
     int state = radio.begin(
         FREQ,
@@ -79,41 +113,22 @@ void setupLoRa()
     Serial.print(F(" success"));
 }
 
-uint16_t readMsgCounterFromFile()
+void printSplashScreen()
 {
-    File file = LittleFS.open(CNT_LOG_FILENAME, "r");
-    uint16_t cnt = file.readString().toInt();
-    file.close();
-    return cnt;
-}
-
-void saveMsgCounterToFile(uint16_t cnt)
-{
-    File file = LittleFS.open(CNT_LOG_FILENAME, "w");
-    file.print(cnt);
-    file.close();
-}
-
-void setupLittleFS()
-{
-    bool state = LittleFS.begin(true);
-    while (!state)
-    {
-        Serial.println("LittleFS.begin() failed");
-        delay(1000);
-    }
-
-    if (digitalRead(FORMAT_LITTLEFS_PIN))
-    {
-        digitalWrite(LORA_LED_GREEN, HIGH);
-        LittleFS.format();
-        digitalWrite(LORA_LED_GREEN, LOW);
-        while (digitalRead(FORMAT_LITTLEFS_PIN))
-            yield();
-    }
-
-    if (!LittleFS.exists(CNT_LOG_FILENAME))
-        saveMsgCounterToFile(0);
+    Serial.println("\n\n##########################");
+    Serial.print(F("# PROJECT PATH:     "));
+    Serial.println(PROJECT_PATH);
+    Serial.print(F("# PROJECT NAME:     "));
+    Serial.println(PROJECT_NAME);
+    Serial.print(F("# COMPILATION DATE: "));
+    Serial.println(COMPILATION_DATE);
+    Serial.print(F("# COMPILATION TIME: "));
+    Serial.println(COMPILATION_TIME);
+    Serial.print(F("# F_CPU:            "));
+    Serial.println(F_CPU);
+    Serial.print(F("# LAST_COMMIT_ID:   "));
+    Serial.println(LAST_COMMIT_ID);
+    Serial.println("##########################\n\n");
 }
 
 void setupSerial(size_t printCnt = 0)
@@ -124,10 +139,4 @@ void setupSerial(size_t printCnt = 0)
         Serial.println(i);
         delay(1000);
     }
-}
-
-void switchOffAllLEDs()
-{
-    digitalWrite(LED_BUILTIN, HIGH);
-    digitalWrite(LORA_LED_GREEN, LOW);
 }

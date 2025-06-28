@@ -7,7 +7,7 @@
 /*
   Rui Santos
   Complete project details at:
-   - ESP32: https://RandomNerdTutorials.com/esp32-send-email-smtp-server-arduino-ide/
+   - ESP32: https://RandomNerdTutorials.cFom/esp32-send-email-smtp-server-arduino-ide/
    - ESP8266: https://RandomNerdTutorials.com/esp8266-nodemcu-send-email-smtp-server-arduino/
 
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files.
@@ -17,7 +17,6 @@
 
 #pragma once
 
-#if (RXorTX == 0)
 #include <Arduino.h>
 #if defined(ESP32)
 #include <WiFi.h>
@@ -197,31 +196,6 @@ void setupWifi()
     Serial.println();
 }
 
-void printSplashScreen()
-{
-    Serial.println("\n\n##########################");
-    Serial.print(F("# PROJECT PATH:     "));
-    Serial.println(PROJECT_PATH);
-    Serial.print(F("# COMPILATION DATE: "));
-    Serial.println(COMPILATION_DATE);
-    Serial.print(F("# COMPILATION TIME: "));
-    Serial.println(COMPILATION_TIME);
-    Serial.print(F("# F_CPU:            "));
-    Serial.println(F_CPU);
-    Serial.print(F("# LAST_COMMIT_ID:   "));
-    Serial.println(LAST_COMMIT_ID);
-    Serial.println("##########################\n\n");
-}
-
-// void setupSerial()
-// {
-//     Serial.begin(BAUD_RATE);
-//     delay(2000);
-//     Serial.print("\n\n\n");
-//     Serial.flush();
-//     printSplashScreen();
-// }
-
 void waitNextPeriod(uint64_t period_us)
 {
     now_us = micros();
@@ -235,18 +209,3 @@ void waitNextPeriod(uint64_t period_us)
     // setupWifi();
     Serial.printf("#### NOW AFTER DELAY  = %14lu\n", now_us);
 }
-
-// void setup()
-// {
-//     // while(true) yield();
-//     setupSerial();
-//     setupWifi();
-// }
-
-// void loop()
-// {
-//     sendMail();
-// #define PERIOD_us (5ULL * 60000ULL * 1000ULL)
-//     waitNextPeriod(PERIOD_us);
-// }
-#endif

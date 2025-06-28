@@ -4,24 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#define STAY_AWAKE_PIN D0
-#define NO_HEARTBEAT_PIN D0
-#define FORMAT_LITTLEFS_PIN D1
-#define LORA_LED_GREEN GPIO_NUM_48
-#define LORA_USER_BUTTON GPIO_NUM_21
-#define WAKEUP_PIN GPIO_NUM_9
-#define MASK (1ULL << WAKEUP_PIN)
-
-#define LORA_MODULE_PINOUT 0
-#if LORA_MODULE_PINOUT == 0
-// https://github.com/radiolib-org/RadioBoards/blob/main/src/maintained/SeeedStudio/XIAO_ESP32S3.h
-// https://github.com/Seeed-Studio/one_channel_hub/blob/4cc771ac02da1bd18be67509f6b52d21bb0feabd/components/smtc_ral/bsp/sx126x/seeed_xiao_esp32s3_devkit_sx1262.c#L358-L369
-#define CS 41
-#define IRQ 39
-#define RST 42
-#define GPIO 40
-#endif
-
 #define LORA_SETTINGS 1
 #if LORA_SETTINGS == 0
 // Default parameters defined in SX1262.h.
