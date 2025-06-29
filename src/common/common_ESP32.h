@@ -10,15 +10,24 @@
 #include <LittleFS.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
-#include "common/LoraMailBox_Settings.h"
 
-#define STAY_AWAKE_PIN D0
-#define NO_HEARTBEAT_PIN D0
-#define FORMAT_LITTLEFS_PIN D1
-#define LORA_USER_BUTTON GPIO_NUM_21
-#define WAKEUP_PIN GPIO_NUM_9
 #define MASK (1ULL << WAKEUP_PIN)
 
+// https://github.com/radiolib-org/RadioBoards/blob/main/src/maintained/SeeedStudio/XIAO_ESP32S3.h
+// https://github.com/Seeed-Studio/one_channel_hub/blob/4cc771ac02da1bd18be67509f6b52d21bb0feabd/components/smtc_ral/bsp/sx126x/seeed_xiao_esp32s3_devkit_sx1262.c#L358-L369
+#define CS 41            /* GPIO4 */
+#define IRQ 39           /* DIO1 */
+#define RST 42           /* GPIO3 */
+#define LORA_GPIO_PIN 40 /* GPIO2 */
+
+#define LORA_LED_GREEN GPIO_NUM_48
+#define LORA_USER_BUTTON GPIO_NUM_21
+
+#define CNT_LOG_FILENAME "/cnt.log"
+
+#define PREFIX "\n[" PROJECT_NAME "] "
+
+void debounce(uint32_t);
 
 void setupDeepSleep()
 {
@@ -63,14 +72,13 @@ void setupLittleFS()
         delay(1000);
     }
 
-    if (digitalRead(FORMAT_LITTLEFS_PIN))
-    {
-        digitalWrite(LORA_LED_GREEN, HIGH);
-        LittleFS.format();
-        digitalWrite(LORA_LED_GREEN, LOW);
-        while (digitalRead(FORMAT_LITTLEFS_PIN))
-            yield();
-    }
+#if defined(FORMAT_LITTLEFS) && FORMAT_LITTLEFS == 1
+    digitalWrite(LORA_LED_GREEN, HIGH);
+    LittleFS.format();
+    digitalWrite(LORA_LED_GREEN, LOW);
+    while (true)
+        yield();
+#endif
 
     if (!LittleFS.exists(CNT_LOG_FILENAME))
         saveMsgCounterToFile(0);
@@ -80,22 +88,6 @@ void switchOffAllLEDs()
 {
     digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(LORA_LED_GREEN, LOW);
-}
-
-void setupGPIOs()
-{
-    // Beware that if you use XIAO ESP32S3 with LoRa
-    // shield SX1262, LORA_USER_BUTTON on LoRa shield
-    // and LED_BUILTIN on ESP module are both connected
-    // on GPIO21! So if you set LED_BUILTIN pinMode to
-    // OUTPUT and you set LED_BUILTIN to HIGH and you
-    // press LORA_USER_BUTTON, you create a
-    // short-circuit between GPIIO21 and GND.
-
-    // pinMode(LED_BUILTIN, OUTPUT); => Too dangerous to use!
-    pinMode(LORA_USER_BUTTON, INPUT);
-    pinMode(LORA_LED_GREEN, OUTPUT);
-    pinMode(NO_HEARTBEAT_PIN, INPUT);
 }
 
 uint16_t readBatteryVoltage()

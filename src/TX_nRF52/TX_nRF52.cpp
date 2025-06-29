@@ -10,25 +10,33 @@ Deep sleep from
 https://forum.seeedstudio.com/t/xiao-sense-accelerometer-examples-and-low-power/270801
 
 */
-
-// https://github.com/meshtastic/firmware/blob/master/variants/seeed_xiao_nrf52840_kit/variant.h
-// Wio-SX1262 for XIAO (standalone SKU 113010003 or nRF52840 kit SKU 102010710)
-// https://files.seeedstudio.com/products/SenseCAP/Wio_SX1262/Wio-SX1262%20for%20XIAO%20V1.0_SCH.pdf
-#define CS D4
-#define IRQ D1
-#define RST D2
-#define LORA_GPIO_PIN D3
-#define LORA_LED_GREEN LED_GREEN
 #define BOARD_ID 1
+#define WAKEUP_PIN D5
+
+// To format the flash:
+// - Set FORMAT_LITTLEFS to 1.
+// - Flash the microcontroler.
+// - Set FORMAT_LITTLEFS back to 0.
+// - Flash the microcontroler again.
+#define FORMAT_LITTLEFS 0
 
 #include <Arduino.h>
-#include "common/common.h"
 #include "common/common_nRF52.h"
+#include "common/common.h"
+
+void setupGPIOs()
+{
+    pinMode(LED_RED, OUTPUT);
+    pinMode(LED_GREEN, OUTPUT);
+    pinMode(LED_BLUE, OUTPUT);
+    switchOffAllLEDs();
+    pinMode(WAKEUP_PIN, INPUT_SENSE_HIGH);
+}
 
 void setup()
 {
-    setupGPIOs();
     setupSerial();
+    setupGPIOs();
     setupLittleFS();
     setupLoRa();
 }
@@ -38,12 +46,8 @@ void loop()
     uint16_t cnt = readMsgCounterFromFile();
     saveMsgCounterToFile(++cnt);
     uint16_t battery_voltage = readBatteryVoltage();
-    bool stayAwake = digitalRead(STAY_AWAKE_PIN);
-    Serial.print("\nstayAwake = ");
-    Serial.println(stayAwake);
-    transmitLoRa(BOARD_ID, cnt, battery_voltage, stayAwake);
-    if (stayAwake)
-        delay(3000);
-    else
+    transmitLoRa(BOARD_ID, cnt, battery_voltage);
+    delay(3000);
+    if (!digitalRead(WAKEUP_PIN))
         goToDeepSleep();
 }

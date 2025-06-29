@@ -15,10 +15,6 @@
 // #include "common/common_nRF52.h"
 // #endif
 
-
-#define CNT_LOG_FILENAME "/cnt.log"
-#define PREFIX "\n[" PROJECT_NAME "] "
-
 SX1262 radio = nullptr;
 
 // Save transmission states between loops.
@@ -63,14 +59,13 @@ void blink(
     }
 }
 
-void transmitLoRa(uint8_t board_id, uint16_t cnt, uint16_t battery_voltage, bool stayAwake)
+void transmitLoRa(uint8_t board_id, uint16_t cnt, uint16_t battery_voltage)
 {
     String msg;
     JsonDocument doc;
     doc["cnt"] = cnt;
     doc["board id"] = board_id;
     doc["volt"] = battery_voltage;
-    doc["stay awake"] = stayAwake;
     serializeJson(doc, msg);
 
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());

@@ -11,19 +11,27 @@
 #include <InternalFileSystem.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
-#include "common/LoraMailBox_Settings.h"
+
+// https://github.com/meshtastic/firmware/blob/master/variants/seeed_xiao_nrf52840_kit/variant.h
+// Wio-SX1262 for XIAO (standalone SKU 113010003 or nRF52840 kit SKU 102010710)
+// https://files.seeedstudio.com/products/SenseCAP/Wio_SX1262/Wio-SX1262%20for%20XIAO%20V1.0_SCH.pdf
+#define CS D4
+#define IRQ D1
+#define RST D2
+#define LORA_GPIO_PIN D3
+#define LORA_LED_GREEN LED_GREEN
 
 using namespace Adafruit_LittleFS_Namespace;
 
-#define STAY_AWAKE_PIN D6
 #define NO_HEARTBEAT_PIN D0
-#define FORMAT_LITTLEFS_PIN D1
 #define LORA_USER_BUTTON GPIO_NUM_21
-#define WAKEUP_PIN D10
-#define MASK (1ULL << WAKEUP_PIN)
+
+#define CNT_LOG_FILENAME "/cnt.log"
 
 File file(InternalFS);
 Adafruit_LittleFS littleFS;
+
+void debounce(uint32_t);
 
 void goToDeepSleep()
 {
@@ -56,12 +64,11 @@ void setupLittleFS()
         delay(1000);
     }
 
-    if (digitalRead(FORMAT_LITTLEFS_PIN))
-    {
-        InternalFS.format();
-        while (digitalRead(FORMAT_LITTLEFS_PIN))
-            yield();
-    }
+#if defined(FORMAT_LITTLEFS) && FORMAT_LITTLEFS == 1
+    InternalFS.format();
+    while (true)
+        yield();
+#endif
 
     if (!InternalFS.exists(CNT_LOG_FILENAME))
         saveMsgCounterToFile(0);
@@ -73,19 +80,6 @@ void switchOffAllLEDs()
     digitalWrite(LED_RED, HIGH);
     digitalWrite(LED_GREEN, HIGH);
     digitalWrite(LED_BLUE, HIGH);
-}
-
-void setupGPIOs()
-{
-    pinMode(LED_RED, OUTPUT);
-    pinMode(LED_GREEN, OUTPUT);
-    pinMode(LED_BLUE, OUTPUT);
-    switchOffAllLEDs();
-
-    pinMode(WAKEUP_PIN, INPUT_SENSE_HIGH);
-
-    pinMode(STAY_AWAKE_PIN, INPUT);
-    pinMode(FORMAT_LITTLEFS_PIN, INPUT);
 }
 
 uint16_t readBatteryVoltage()
