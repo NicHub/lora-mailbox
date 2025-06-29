@@ -7,7 +7,7 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
-#include "credentials.h"
+#include "../common/credentials.h"
 
 class LoraMailBox_SendWS
 {

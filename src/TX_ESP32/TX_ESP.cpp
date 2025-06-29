@@ -5,7 +5,7 @@
  */
 
 #define BOARD_ID 0
-#define WAKEUP_PIN D10
+#define WAKEUP_PIN D5
 
 // To format the flash:
 // - Set FORMAT_LITTLEFS to 1.
@@ -15,8 +15,8 @@
 #define FORMAT_LITTLEFS 0
 
 #include <Arduino.h>
-#include "common/common.h"
 #include "common/common_ESP32.h"
+#include "common/common.h"
 
 void setupGPIOs()
 {
@@ -31,7 +31,7 @@ void setupGPIOs()
     // pinMode(LED_BUILTIN, OUTPUT); => Too dangerous to use!
     pinMode(LORA_USER_BUTTON, INPUT);
     pinMode(LORA_LED_GREEN, OUTPUT);
-    pinMode(STAY_AWAKE_PIN, INPUT);
+    pinMode(WAKEUP_PIN, INPUT);
 }
 
 void setup()

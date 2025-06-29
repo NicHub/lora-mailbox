@@ -117,7 +117,7 @@ void setupGPIOs()
     // short-circuit between GPIIO21 and GND.
 
     // pinMode(LED_BUILTIN, OUTPUT); => Too dangerous to use!
-    pinMode(NO_HEARTBEAT_PIN, INPUT);
+    pinMode(NO_HEARTBEAT_PIN, INPUT_PULLUP);
 }
 
 void setup()

@@ -14,7 +14,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include "credentials.h"
+#include "../common/credentials.h"
 
 class LoraMailBox_SendMQTT
 {
