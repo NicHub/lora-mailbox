@@ -4,10 +4,10 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
 
 ## Before you start
 
--   Rename `src/common/credentials-example.h` to `src/common/credentials.h`
-    and and update the details with your information.
--   Rename `platformio_user_preferences-example.ini` to `platformio_user_preferences.ini`
-    and and update the details with your information.
+-   Copy `src/common/credentials-example.h` to `src/common/credentials.h`
+    and update the details with your information.
+-   Copy `platformio_user_preferences-example.ini` to `platformio_user_preferences.ini`
+    and update the details with your information.
 
 ## Hardware
 
