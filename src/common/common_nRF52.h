@@ -28,6 +28,8 @@ using namespace Adafruit_LittleFS_Namespace;
 
 #define CNT_LOG_FILENAME "/cnt.log"
 
+#define PREFIX "\n[" PROJECT_NAME "] "
+
 File file(InternalFS);
 Adafruit_LittleFS littleFS;
 
