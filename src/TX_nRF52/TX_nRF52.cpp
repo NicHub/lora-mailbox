@@ -21,8 +21,8 @@ https://forum.seeedstudio.com/t/xiao-sense-accelerometer-examples-and-low-power/
 #define FORMAT_LITTLEFS 0
 
 #include <Arduino.h>
-#include "common/common_nRF52.h"
-#include "common/common.h"
+#include "../common/common_nRF52.h"
+#include "../common/common.h"
 
 void setupGPIOs()
 {
@@ -35,19 +35,22 @@ void setupGPIOs()
 
 void setup()
 {
-    setupSerial();
     setupGPIOs();
+    digitalWrite(LED_BLUE, LOW);
+    setupSerial();
     setupLittleFS();
     setupLoRa();
+    switchOffAllLEDs();
 }
 
 void loop()
 {
     uint16_t cnt = readMsgCounterFromFile();
-    saveMsgCounterToFile(++cnt);
     uint16_t battery_voltage = readBatteryVoltage();
     transmitLoRa(BOARD_ID, cnt, battery_voltage);
-    delay(3000);
+    saveMsgCounterToFile(++cnt);
+    delay(5000 - millis() % 1000);
+    blink(10, 100, 5, LED_GREEN, true);
     if (!digitalRead(WAKEUP_PIN))
         goToDeepSleep();
 }

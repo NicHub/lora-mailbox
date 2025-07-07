@@ -51,11 +51,29 @@ uint16_t readMsgCounterFromFile()
 
 void saveMsgCounterToFile(uint16_t cnt)
 {
-    InternalFS.remove(CNT_LOG_FILENAME);
+    // This function is awkwardly slow, it takes 383 ms to save a number to
+    // a file. So it must be executed after the message is sent via LoRa.
+
+    // For whatever reason, the built in LED is switched on by the functions below.
+    // So we’ll bring it back to its initial state.
+    uint32_t t1 = millis();
+    bool initialLEDstate = digitalRead(LED_BUILTIN);
+    if (InternalFS.exists(CNT_LOG_FILENAME))
+        InternalFS.remove(CNT_LOG_FILENAME);
+    digitalWrite(LED_BUILTIN, initialLEDstate);
     file = InternalFS.open(CNT_LOG_FILENAME, FILE_O_WRITE);
+    digitalWrite(LED_BUILTIN, initialLEDstate);
     file.print(cnt, 10);
+    digitalWrite(LED_BUILTIN, initialLEDstate);
     file.close();
+    digitalWrite(LED_BUILTIN, initialLEDstate);
+    Serial.print("\n\nmillis(), Time elapsed to saveMsgCounterToFile = ");
+    Serial.print(millis());
+    Serial.print("\t");
+    Serial.print(millis() - t1);
 }
+
+void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
 
 void setupLittleFS()
 {
@@ -63,13 +81,19 @@ void setupLittleFS()
     while (!state)
     {
         Serial.println("InternalFS.begin() failed");
-        delay(1000);
+        blink(10, 100, 10, LED_RED, true);
     }
 
 #if defined(FORMAT_LITTLEFS) && FORMAT_LITTLEFS == 1
+    digitalWrite(LED_GREEN, LOW);
     InternalFS.format();
+    digitalWrite(LED_GREEN, HIGH);
     while (true)
-        yield();
+    {
+        Serial.println("Format LittleFS done.");
+        Serial.println("Set FORMAT_LITTLEFS to 0 and reflash the board.\n");
+        blink(10, 100, 10, LED_BLUE, true);
+    }
 #endif
 
     if (!InternalFS.exists(CNT_LOG_FILENAME))

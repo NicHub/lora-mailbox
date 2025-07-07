@@ -116,7 +116,8 @@ void setupGPIOs()
     // press LORA_USER_BUTTON, you create a
     // short-circuit between GPIIO21 and GND.
 
-    // pinMode(LED_BUILTIN, OUTPUT); => Too dangerous to use!
+    // pinMode(LED_BUILTIN, OUTPUT); // => Too dangerous to use!
+    pinMode(LORA_LED_GREEN, OUTPUT);
     pinMode(NO_HEARTBEAT_PIN, INPUT_PULLUP);
 }
 
@@ -128,12 +129,11 @@ void setup()
     setupLoRaRX();
     setupWiFi();
     setupMQTT();
-    delay(1000 - millis() % 1000);
 }
 
 void loop()
 {
-    if(digitalRead(NO_HEARTBEAT_PIN))
+    if (digitalRead(NO_HEARTBEAT_PIN))
         heartBeat();
     yield();
     if (!loraEvent)

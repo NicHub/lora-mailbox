@@ -47,20 +47,23 @@ void blink(
     unsigned long on_duration_ms = 10,
     unsigned long total_duration_ms = 100,
     unsigned long repeat = 10,
-    uint32_t led_pin = LORA_LED_GREEN)
+    uint32_t led_pin = LORA_LED_GREEN,
+    bool invert = false)
 {
     pinMode(led_pin, OUTPUT);
     for (size_t i = 0; i < repeat; i++)
     {
-        digitalWrite(LORA_LED_GREEN, HIGH);
+        digitalWrite(led_pin, invert ? LOW : HIGH);
         delay(on_duration_ms);
-        digitalWrite(LORA_LED_GREEN, LOW);
+        digitalWrite(led_pin, invert ? HIGH : LOW);
         delay(total_duration_ms - on_duration_ms);
     }
 }
 
 void transmitLoRa(uint8_t board_id, uint16_t cnt, uint16_t battery_voltage)
 {
+    digitalWrite(LED_BUILTIN, LOW);
+
     String msg;
     JsonDocument doc;
     doc["cnt"] = cnt;
@@ -73,16 +76,15 @@ void transmitLoRa(uint8_t board_id, uint16_t cnt, uint16_t battery_voltage)
     // Don’t use the non-blocking `startTransmit()` function.
     // It makes it difficult to estimate the necessary delay
     // before sending a new message.
-    digitalWrite(LORA_LED_GREEN, HIGH);
     int state = radio.transmit(msg.c_str());
-    digitalWrite(LORA_LED_GREEN, LOW);
-
     if (state != RADIOLIB_ERR_NONE)
     {
         Serial.printf(PREFIX "Failed, code %d", state);
         return;
     }
     Serial.print(F(PREFIX "Transmission finished!"));
+    
+    digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void setupLoRa()

@@ -15,8 +15,8 @@
 #define FORMAT_LITTLEFS 0
 
 #include <Arduino.h>
-#include "common/common_ESP32.h"
-#include "common/common.h"
+#include "../common/common_ESP32.h"
+#include "../common/common.h"
 
 void setupGPIOs()
 {
@@ -38,6 +38,11 @@ void setup()
 {
     setupGPIOs();
     setupSerial();
+    for (size_t i = 0; i < 4; i++)
+    {
+        delay(1000);
+        Serial.println(i);
+    }
     setupLittleFS();
     setupLoRa();
 }

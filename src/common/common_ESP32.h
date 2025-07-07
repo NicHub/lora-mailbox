@@ -58,10 +58,19 @@ uint16_t readMsgCounterFromFile()
 
 void saveMsgCounterToFile(uint16_t cnt)
 {
+    uint32_t t1 = millis();
+    if (LittleFS.exists(CNT_LOG_FILENAME))
+        LittleFS.remove(CNT_LOG_FILENAME);
     File file = LittleFS.open(CNT_LOG_FILENAME, "w");
     file.print(cnt);
     file.close();
+    Serial.print("\n\nmillis(), Time elapsed to saveMsgCounterToFile = ");
+    Serial.print(millis());
+    Serial.print("\t");
+    Serial.print(millis() - t1);
 }
+
+void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
 
 void setupLittleFS()
 {
@@ -69,15 +78,19 @@ void setupLittleFS()
     while (!state)
     {
         Serial.println("LittleFS.begin() failed");
-        delay(1000);
+        blink(10, 100, 10, LORA_LED_GREEN, true);
     }
 
 #if defined(FORMAT_LITTLEFS) && FORMAT_LITTLEFS == 1
-    digitalWrite(LORA_LED_GREEN, HIGH);
-    LittleFS.format();
     digitalWrite(LORA_LED_GREEN, LOW);
+    LittleFS.format();
+    digitalWrite(LORA_LED_GREEN, HIGH);
     while (true)
-        yield();
+    {
+        Serial.println("Format LittleFS done.");
+        Serial.println("Set FORMAT_LITTLEFS to 0 and reflash the board.\n");
+        blink(10, 100, 10, LED_BLUE, true);
+    }
 #endif
 
     if (!LittleFS.exists(CNT_LOG_FILENAME))
