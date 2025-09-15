@@ -41,3 +41,6 @@ const Recipient RECIPIENTS[] = {
 #define MQTT_SERVER "test.mosquitto.org"
 #define MQTT_PORT 1883
 #define MQTT_TOPIC "mailboxtest"
+
+// NTFY credentials.
+#define NTFY_TOPIC "ntfy_topic"

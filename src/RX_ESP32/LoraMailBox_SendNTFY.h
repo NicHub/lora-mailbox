@@ -27,7 +27,7 @@ public:
 
     // Send a plaintext notification to ntfy.sh via HTTPS.
     // Returns true on HTTP 2xx success, false otherwise.
-    bool sendMsg(const JsonDocument &jsonDoc, const String &topic = "mbx-nj")
+    bool sendMsg(const JsonDocument &jsonDoc, const String &topic = NTFY_TOPIC)
     {
         if (WiFi.status() != WL_CONNECTED)
             return false;
