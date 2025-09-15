@@ -12,9 +12,11 @@
 #include "common/common.h"
 #include "LoraMailBox_SendWS.h"
 #include "LoraMailBox_SendMQTT.h"
+#include "LoraMailBox_SendNTFY.h"
 
 LoraMailBox_SendWS lmb_ws;
 LoraMailBox_SendMQTT lmb_mqtt;
+LoraMailBox_SendNTFY lmb_ntfy;
 String jsonString;
 JsonDocument jsonDoc;
 
@@ -23,6 +25,7 @@ void broadcastResults()
     serializeJsonPretty(jsonDoc, jsonString);
     lmb_ws.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
+    lmb_ntfy.sendMsg(jsonDoc);
     Serial.println(jsonString);
 }
 
@@ -64,6 +67,7 @@ void heartBeat()
     deserializeJson(jsonDoc, jsonString);
     Serial.println(jsonString);
     lmb_ws.sendMsg(jsonString);
+    // lmb_ntfy.sendMsg(jsonDoc);
     lmb_mqtt.sendMsg(jsonDoc);
 }
 

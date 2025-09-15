@@ -71,7 +71,7 @@ const char *htmlTemplate = R"rawliteral(
             (window.location.port == ""
                 && window.location.protocol == "http:") ?
                 `ws://${window.location.hostname}/ws` :
-                `ws://192.168.29.98/ws`;
+                `ws://172.20.10.4/ws`;
 
         document.getElementById("messages").innerHTML =
             `Connecting to ${gateway}...`
