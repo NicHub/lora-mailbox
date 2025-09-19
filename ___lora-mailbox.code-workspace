@@ -1,24 +1,12 @@
 {
-        "folders": [
-            {
-                "path": "."
-            }
-        ],
-        "settings": {
-            "files.associations": {
-                "*.embeddedhtml": "html",
-                "*.liquid": "html",
-                "*.txt": "html",
-                "*.pde": "cpp",
-                "*.m": "matlab",
-                "array": "cpp",
-                "deque": "cpp",
-                "list": "cpp",
-                "string": "cpp",
-                "unordered_map": "cpp",
-                "vector": "cpp",
-                "string_view": "cpp",
-                "initializer_list": "cpp"
-            }
+    "folders": [
+        {
+            "path": "."
         }
+    ],
+    "settings": {
+        "search.useParentIgnoreFiles": false,
+        "search.useGlobalIgnoreFiles": false,
+        "search.useIgnoreFiles": false
     }
+}

@@ -5,3 +5,4 @@
 .vscode/ipch
 credentials.h
 platformio_user_preferences.ini
+*.jsonl

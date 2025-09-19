@@ -42,3 +42,20 @@ for ((i=1E6; i <= 10E6; i+=1E6)); do
     mosquitto_pub -h test.mosquitto.org -t stringlengthtest -m "$message"
 done
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+```bash
+mosquitto_sub -h test.mosquitto.org -t "mailboxtest"
+
+pio device monitor -e seeed_xiao_esp32s3-rx
+````

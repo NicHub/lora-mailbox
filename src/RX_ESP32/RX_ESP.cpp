@@ -22,7 +22,7 @@ JsonDocument jsonDoc;
 
 void broadcastResults()
 {
-    serializeJsonPretty(jsonDoc, jsonString);
+    serializeJson(jsonDoc, jsonString);
     lmb_ws.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
     lmb_ntfy.sendMsg(jsonDoc);
