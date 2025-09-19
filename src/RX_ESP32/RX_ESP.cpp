@@ -96,6 +96,7 @@ void readLoRa()
 void setupMQTT()
 {
     lmb_mqtt.begin();
+    lmb_mqtt.sendMsg(jsonDoc);
 }
 
 void setupWiFi()

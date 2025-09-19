@@ -72,9 +72,9 @@ public:
         {
             // Reduce string size because knolleary/PubSubClient doesn’t
             // send strings longer than 233 characters on ESP32S3.
-            mqttDoc["CURRENT_TIME"] = jsonDoc["CURRENT TIME"];
             mqttDoc["RSSI (dBm)"] = jsonDoc["RSSI (dBm)"];
             mqttDoc["SNR (dB)"] = jsonDoc["SNR (dB)"];
+            mqttDoc["COUNTER"]["VALUE"] = jsonDoc["COUNTER"]["VALUE"];
             mqttDoc["COUNTER"]["ERROR COUNT"] = jsonDoc["COUNTER"]["ERROR COUNT"];
         }
         String mqttString;
