@@ -65,7 +65,7 @@ def write_to_file(data):
     """___"""
     try:
         json.loads(data)
-        jsonl_data = data + "\n"
+        jsonl_data = data.strip()
     except json.JSONDecodeError as _e:
         global ERR_COUNT
         ERR_COUNT += 1
@@ -74,10 +74,10 @@ def write_to_file(data):
         print(data)
         print(jsonl_data)
         print("=======/ JSONDecodeError\n")
-        jsonl_data = f'{{"#":{ERR_COUNT},"msg":"{_e}"}}\n'
+        jsonl_data = f'{{"#":{ERR_COUNT},"msg":"{_e}"}}'
 
     with open(FILENAME, "a") as file:
-        file.write(jsonl_data)
+        file.write(jsonl_data + "\n")
         file.flush()
 
 
