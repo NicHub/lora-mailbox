@@ -31,6 +31,9 @@ void setupGPIOs()
     pinMode(LED_BLUE, OUTPUT);
     switchOffAllLEDs();
     pinMode(WAKEUP_PIN, INPUT_SENSE_HIGH);
+    pinMode(VBAT_ENABLE, OUTPUT);
+    digitalWrite(VBAT_ENABLE, LOW);
+    pinMode(PIN_VBAT, INPUT);
 }
 
 void setup()

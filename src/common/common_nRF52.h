@@ -116,6 +116,5 @@ void switchOffAllLEDs()
 
 uint16_t readBatteryVoltage()
 {
-    // TODO
-    return 0;
+    return analogRead(PIN_VBAT);
 }
