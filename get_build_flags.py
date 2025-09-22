@@ -53,13 +53,13 @@ def main():
     utc_now = datetime.datetime.now()
     compilation_date = utc_now.strftime("%Y-%m-%d")
     compilation_time = utc_now.strftime("%H:%M:%S")
-    project_path = os.getcwd()
+    project_path = os.getcwd().replace("\\", "\\\\")
     python_version = (
         f"{sys.version_info.major}"
         f".{sys.version_info.minor}"
         f".{sys.version_info.micro}"
     )
-    python_path = os.path.realpath(sys.executable)
+    python_path = os.path.realpath(sys.executable).replace("\\", "\\\\")
     last_commit_id = get_last_commit_id()
     uncommitted_files_count = (
         0 if last_commit_id == NO_GIT_COMMIT_YET else get_uncommitted_files_count()

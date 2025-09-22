@@ -6,3 +6,6 @@
 credentials.h
 platformio_user_preferences.ini
 *.jsonl
+*ajeter*
+*nogit*
+extensions.json
