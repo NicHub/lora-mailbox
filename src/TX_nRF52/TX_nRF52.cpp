@@ -4,12 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-/*
-
-Deep sleep from
-https://forum.seeedstudio.com/t/xiao-sense-accelerometer-examples-and-low-power/270801
-
-*/
 #define BOARD_ID 1
 #define WAKEUP_PIN D5
 
@@ -30,16 +24,20 @@ void setupGPIOs()
     pinMode(LED_GREEN, OUTPUT);
     pinMode(LED_BLUE, OUTPUT);
     switchOffAllLEDs();
-    pinMode(WAKEUP_PIN, INPUT_SENSE_HIGH);
-    pinMode(VBAT_ENABLE, OUTPUT);
-    digitalWrite(VBAT_ENABLE, LOW);
-    pinMode(PIN_VBAT, INPUT);
+
+    // PIN_CHARGING_CURRENT
+    // - LOW: High charging current (100 mA)
+    // - HIGH: Low charging current (50 mA)
+    pinMode(PIN_CHARGING_CURRENT, OUTPUT);
+    digitalWrite(PIN_CHARGING_CURRENT, HIGH);
 }
 
 void setup()
 {
     setupGPIOs();
+#if DEBUG
     digitalWrite(LED_BLUE, LOW);
+#endif
     setupSerial();
     setupLittleFS();
     setupLoRa();
@@ -55,5 +53,6 @@ void loop()
     delay(5000 - millis() % 1000);
     blink(10, 100, 5, LED_GREEN, true);
     if (!digitalRead(WAKEUP_PIN))
-        goToDeepSleep();
+        return;
+    goToDeepSleep();
 }

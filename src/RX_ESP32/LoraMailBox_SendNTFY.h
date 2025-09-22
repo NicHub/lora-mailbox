@@ -29,6 +29,7 @@ public:
     // Returns true on HTTP 2xx success, false otherwise.
     bool sendMsg(const JsonDocument &jsonDoc, const String &topic = NTFY_TOPIC)
     {
+#if SENDTO_NTFY
         if (WiFi.status() != WL_CONNECTED)
             return false;
 
@@ -54,5 +55,8 @@ public:
         https.end();
 
         return ok;
+#else
+        return true;
+#endif
     }
 };

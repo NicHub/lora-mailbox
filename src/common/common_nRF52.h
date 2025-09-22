@@ -41,8 +41,13 @@ Adafruit_LittleFS littleFS;
 
 void debounce(uint32_t);
 
+/*
+ * Deep sleep from
+ * https://forum.seeedstudio.com/t/xiao-sense-accelerometer-examples-and-low-power/270801
+ */
 void goToDeepSleep()
 {
+    pinMode(WAKEUP_PIN, INPUT_SENSE_HIGH);
     debounce(1000);
     NRF_POWER->SYSTEMOFF = 1;
 }
@@ -116,5 +121,24 @@ void switchOffAllLEDs()
 
 uint16_t readBatteryVoltage()
 {
-    return analogRead(PIN_VBAT);
+    // Set VBAT_ENABLE to OUTPUT LOW to read VBAT.
+    // Never set it HIGH during charging (risk of damaging PIN_VBAT).
+    // See: https://wiki.seeedstudio.com/XIAO_BLE/#q3-what-are-the-considerations-when-using-xiao-nrf52840-sense-for-battery-charging
+    pinMode(VBAT_ENABLE, OUTPUT);
+    digitalWrite(VBAT_ENABLE, LOW);
+    pinMode(PIN_VBAT, INPUT);
+
+    uint32_t vbat = 0;
+    uint32_t sum = 0;
+#define CNT_MAX 10
+    for (int i = 0; i < CNT_MAX; ++i)
+    {
+        sum += analogRead(PIN_VBAT);
+        delay(10);
+    }
+    vbat = sum / CNT_MAX;
+
+    // Reset to INPUT after reading to avoid current draw through the resistor divider.
+    pinMode(VBAT_ENABLE, INPUT);
+    return vbat;
 }

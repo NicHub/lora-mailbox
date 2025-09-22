@@ -1,3 +1,38 @@
+https://wiki.seeedstudio.com/XIAO_BLE/
+
+Hi,
+
+In your schematic, P0.17_CHG drives the RED_CHG LED but is also tied to the PRETERM pin of the BQ25100.
+According to the datasheet, PRETERM should only be connected to a resistor to GND to set pre-charge and termination currents.
+
+Could you clarify why P0.17_CHG is connected in both places?
+
+Thanks!
+
+Set P0.14 to output Sink only to enable BAT voltage read
+
+## Pinout
+
+| schematics¹    | variant.h                 | pin mode | state                                          |
+| -------------- | ------------------------- | -------- | ---------------------------------------------- |
+| P0.13_HICHG    | PIN_CHARGING_CURRENT (22) | OUTPUT   | LOW: High charging current (100 mA)            |
+|                |                           |          | HIGH: Low charging current (50 mA)             |
+|                |                           |          |                                                |
+| P0.14_READ_BAT | VBAT_ENABLE (14)          | OUTPUT   | Must be set to HIGH when charging              |
+|                |                           | INPUT    | Pin mode INPUT ensure lowest current           |
+|                |                           |          | consumption when battery reading is not needed |
+|                |                           |          |                                                |
+| P0.17_CHG      | ?                         | INPUT    | LOW: charging in progress                      |
+|                |                           |          | HIGH: not charging or fully charged            |
+|                |                           |          |                                                |
+| P0.31_AIN7_BAT | PIN_VBAT (32)             | INPUT    | Analog read                                    |
+
+¹ https://files.seeedstudio.com/wiki/XIAO-BLE/Seeed-Studio-XIAO-nRF52840-Sense-v1.1.pdf
+
+BQ25100 https://www.ti.com/lit/ds/symlink/bq25100a.pdf
+
+---
+
 ```cpp
     // Check the maximum number of character that can be sent with knolleary/PubSubClient on ESP32S3
     // The answer is 233.
@@ -43,19 +78,8 @@ for ((i=1E6; i <= 10E6; i+=1E6)); do
 done
 ```
 
-
-
-
-
-
-
-
-
-
-
-
 ```bash
 mosquitto_sub -h test.mosquitto.org -t "mailboxtest"
 
 pio device monitor -e seeed_xiao_esp32s3-rx
-````
+```

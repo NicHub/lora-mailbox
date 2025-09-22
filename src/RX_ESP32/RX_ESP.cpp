@@ -67,7 +67,6 @@ void heartBeat()
     deserializeJson(jsonDoc, jsonString);
     Serial.println(jsonString);
     lmb_ws.sendMsg(jsonString);
-    // lmb_ntfy.sendMsg(jsonDoc);
     lmb_mqtt.sendMsg(jsonDoc);
 }
 
@@ -91,6 +90,7 @@ void readLoRa()
     jsonDoc["WS CLIENT COUNT"] = lmb_ws.getWsClientCount();
     jsonDoc["STATE"] = state;
     jsonDoc["jsonString"] = jsonString;
+    jsonDoc["DEBUG"] = DEBUG;
 }
 
 void setupMQTT()
