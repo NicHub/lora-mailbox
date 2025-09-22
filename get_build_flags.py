@@ -64,13 +64,12 @@ def main():
     uncommitted_files_count = (
         0 if last_commit_id == NO_GIT_COMMIT_YET else get_uncommitted_files_count()
     )
-
     flag_list = (
         ("COMPILATION_DATE", compilation_date),
         ("COMPILATION_TIME", compilation_time),
-        # ("PROJECT_PATH", project_path),
+        ("PROJECT_PATH", project_path),
         ("PYTHON_VERSION", python_version),
-        # ("PYTHON_PATH", python_path),
+        ("PYTHON_PATH", python_path),
         (
             "LAST_COMMIT_ID",
             f"{last_commit_id[:7]} ({uncommitted_files_count} uncommitted files)",
