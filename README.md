@@ -42,6 +42,20 @@ esptool.py --chip esp32s3 --port $PORT erase_flash
 
 ```
 
+## Troubleshooting
+
+Mac with ARM architecture can face the following error:
+
+```
+Adafruit_TinyUSB_Arduino arm-none-eabi-g++: Bad CPU type in executable
+```
+
+This can be solved by installing Rosetta:
+
+```
+softwareupdate --install-rosetta --agree-to-license
+```
+
 ## License
 
 Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
