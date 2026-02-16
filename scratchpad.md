@@ -1,3 +1,5 @@
+# Scratchpad LoRa Mailbox
+
 https://wiki.seeedstudio.com/XIAO_BLE/
 
 Hi,
@@ -83,3 +85,25 @@ mosquitto_sub -h test.mosquitto.org -t "mailboxtest"
 
 pio device monitor -e seeed_xiao_esp32s3-rx
 ```
+
+# IoT BMS Requirements
+
+Goal: choose a safe and reliable battery solution for small IoT devices, with long battery life and easy integration.
+
+**Must-have features**
+
+- Prevent battery overcharging
+- Prevent battery from draining too low
+- Protect against short circuits
+- Protect against wrong battery connection (reverse polarity)
+- Very low self-consumption to maximize autonomy
+- Works in outdoor conditions
+- Small size to fit compact products
+- Competitive cost for volume production
+- Available from stable suppliers
+
+**Nice-to-have features**
+
+- USB charging support
+- Solar charging support
+- Ability to power the device while charging
