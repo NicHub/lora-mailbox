@@ -92,18 +92,18 @@ Goal: choose a safe and reliable battery solution for small IoT devices, with lo
 
 **Must-have features**
 
-- Prevent battery overcharging
-- Prevent battery from draining too low
-- Protect against short circuits
-- Protect against wrong battery connection (reverse polarity)
-- Very low self-consumption to maximize autonomy
-- Works in outdoor conditions
-- Small size to fit compact products
-- Competitive cost for volume production
-- Available from stable suppliers
+- Overcharge protection
+- Deep discharge protection
+- Short circuit protection
+- Reverse polarity protection
+- Minimal self-consumption
+- Cost compatible with Arduino 
+- Easily available 
 
 **Nice-to-have features**
 
-- USB charging support
+- Outdoor use compliant
 - Solar charging support
+- USB charging support
 - Ability to power the device while charging
+
