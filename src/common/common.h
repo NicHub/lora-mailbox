@@ -62,8 +62,6 @@ void blink(
 
 void transmitLoRa(uint8_t board_id, uint16_t cnt, uint16_t battery_voltage)
 {
-    digitalWrite(LED_BUILTIN, LOW);
-
     String msg;
     JsonDocument doc;
     doc["cnt"] = cnt;
@@ -83,8 +81,6 @@ void transmitLoRa(uint8_t board_id, uint16_t cnt, uint16_t battery_voltage)
         return;
     }
     Serial.print(F(PREFIX "Transmission finished!"));
-
-    digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void setupLoRa()

@@ -142,3 +142,41 @@ uint16_t readBatteryVoltage()
     pinMode(VBAT_ENABLE, INPUT);
     return vbat;
 }
+
+void testAllLEDs()
+{
+    Serial.println("\n================");
+    uint32_t wait_1 = 5000;
+    uint32_t wait_2 = 1000;
+
+#define LED_ON LOW
+#define LED_OFF HIGH
+
+    digitalWrite(LED_BUILTIN, LED_ON);
+    Serial.println("\nLED_BUILTIN, LED_ON");
+    delay(wait_1);
+    digitalWrite(LED_BUILTIN, LED_OFF);
+    Serial.println("LED_BUILTIN, LED_OFF");
+    delay(wait_2);
+
+    digitalWrite(LED_RED, LED_ON);
+    Serial.println("\nLED_RED, LED_ON");
+    delay(wait_1);
+    digitalWrite(LED_RED, LED_OFF);
+    Serial.println("LED_RED, LED_OFF");
+    delay(wait_2);
+
+    digitalWrite(LED_GREEN, LED_ON);
+    Serial.println("\nLED_GREEN, LED_ON");
+    delay(wait_1);
+    digitalWrite(LED_GREEN, LED_OFF);
+    Serial.println("LED_GREEN, LED_OFF");
+    delay(wait_2);
+
+    digitalWrite(LED_BLUE, LED_ON);
+    Serial.println("\nLED_BLUE, LED_ON");
+    delay(wait_1);
+    digitalWrite(LED_BLUE, LED_OFF);
+    Serial.println("LED_BLUE, LED_OFF");
+    delay(wait_2);
+}

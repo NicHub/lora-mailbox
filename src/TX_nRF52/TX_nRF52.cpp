@@ -14,12 +14,18 @@
 // - Flash the microcontroler again.
 #define FORMAT_LITTLEFS 0
 
+// If the linter does not recognize the paths below,
+// or the constants like `LED_RED` :
+//    -    open `platformio_user_preferences.ini`
+//    -    in `default_envs`
+//    -    make sure `seeed_xiao_nrf52840-tx` is the first `default_envs`
 #include <Arduino.h>
 #include "../common/common_nRF52.h"
 #include "../common/common.h"
 
 void setupGPIOs()
 {
+    pinMode(LED_BUILTIN, OUTPUT);
     pinMode(LED_RED, OUTPUT);
     pinMode(LED_GREEN, OUTPUT);
     pinMode(LED_BLUE, OUTPUT);
@@ -39,20 +45,40 @@ void setup()
     digitalWrite(LED_BLUE, LOW);
 #endif
     setupSerial();
+    // while (true)
+    //     testAllLEDs();
     setupLittleFS();
     setupLoRa();
-    switchOffAllLEDs();
 }
 
 void loop()
 {
+#if DEBUG
+    switchOffAllLEDs();
+    digitalWrite(LED_GREEN, LOW);
+#endif
     uint16_t cnt = readMsgCounterFromFile();
     uint16_t battery_voltage = readBatteryVoltage();
+
+#if DEBUG
+    switchOffAllLEDs();
+    digitalWrite(LED_RED, LOW);
+#endif
     transmitLoRa(BOARD_ID, cnt, battery_voltage);
+
+#if DEBUG
+    switchOffAllLEDs();
+    digitalWrite(LED_GREEN, LOW);
+#endif
     saveMsgCounterToFile(++cnt);
     delay(5000 - millis() % 1000);
-    blink(10, 100, 5, LED_GREEN, true);
-    if (!digitalRead(WAKEUP_PIN))
+
+    pinMode(WAKEUP_PIN, INPUT);
+    if (digitalRead(WAKEUP_PIN))
         return;
+
+#if DEBUG
+    switchOffAllLEDs();
+#endif
     goToDeepSleep();
 }
