@@ -26,7 +26,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--port", default="/dev/cu.usbmodem311101", help="Serial port to connect to"
+    "--port", default="/dev/cu.usbmodem2011101", help="Serial port to connect to"
 )
 args = parser.parse_args()
 PORT = args.port
@@ -63,18 +63,22 @@ def read_serial(ser, stop_event):
 
 def write_to_file(data):
     """___"""
+    jsonl_data = ""
     try:
-        json.loads(data)
-        jsonl_data = data.strip()
+        candidate = data.strip()
+        json.loads(candidate)
+        jsonl_data = candidate
     except json.JSONDecodeError as _e:
         global ERR_COUNT
         ERR_COUNT += 1
         print("======== JSONDecodeError")
         print(_e)
         print(data)
-        print(jsonl_data)
         print("=======/ JSONDecodeError\n")
-        jsonl_data = f'{{"#":{ERR_COUNT},"msg":"{_e}"}}'
+        jsonl_data = json.dumps(
+            {"#": ERR_COUNT, "msg": str(_e), "raw": data.strip()},
+            ensure_ascii=False,
+        )
 
     with open(FILENAME, "a") as file:
         file.write(jsonl_data + "\n")
