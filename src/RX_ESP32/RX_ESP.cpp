@@ -6,6 +6,7 @@
 
 #define NO_HEARTBEAT_PIN D5
 #define WAKEUP_PIN D10
+#define SERIAL_VERBOSITY 1
 
 #include <Arduino.h>
 #include "common/common_ESP32.h"
@@ -26,7 +27,19 @@ void broadcastResults()
     lmb_ws.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
     lmb_ntfy.sendMsg(jsonDoc);
+#if SERIAL_VERBOSITY == 1
+    uint16_t ctr = jsonDoc["COUNTER"]["VALUE"].as<uint16_t>();
+    static uint16_t first_ctr = ctr;
+    ctr -= first_ctr;
+
+    unsigned long ms = millis();
+    static unsigned long first_ms = ms;
+    ms -= first_ms;
+
+    Serial.printf("- ctr: %3u , ms: %8lu\n", ctr, ms);
+#elif SERIAL_VERBOSITY == 2
     Serial.println(jsonString);
+#endif
 }
 
 void counterCheck()
@@ -65,7 +78,9 @@ void heartBeat()
     String timeStr = getCurrentTime();
     jsonString = "{\"HEARTBEAT\":\"" + timeStr + "\"}";
     deserializeJson(jsonDoc, jsonString);
+#if SERIAL_VERBOSITY == 2
     Serial.println(jsonString);
+#endif
     lmb_ws.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
 }
