@@ -20,6 +20,9 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
 -   PIR AM312
 
     -   https://fr.aliexpress.com/item/1005008067324301.html
+    -   https://www.image.micros.com.pl/_dane_techniczne_auto/cz%20am312.pdf?utm_source=chatgpt.com
+    -   ./docs/AM312-1.pdf
+    -   ./docs/AM312-2.pdf
 
 -   3.7 V Lipo Battery
 
