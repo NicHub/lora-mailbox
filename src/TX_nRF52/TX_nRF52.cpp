@@ -23,6 +23,40 @@
 #include "../common/common_nRF52.h"
 #include "../common/common.h"
 
+#if DEBUG
+namespace
+{
+constexpr uint32_t DEBUG_LED_PULSE_MS = 100;
+
+SoftwareTimer debugLedTimer;
+volatile int32_t activeDebugLedPin = -1;
+
+void debugLedOffCallback(TimerHandle_t)
+{
+    int32_t ledPin = activeDebugLedPin;
+    if (ledPin < 0)
+        return;
+
+    digitalWrite(ledPin, HIGH);
+    activeDebugLedPin = -1;
+}
+
+void setupDebugLedTimer()
+{
+    debugLedTimer.begin(DEBUG_LED_PULSE_MS, debugLedOffCallback, nullptr, false);
+}
+
+void debugPulseLed(uint32_t ledPin)
+{
+    debugLedTimer.stop();
+    switchOffAllLEDs();
+    activeDebugLedPin = static_cast<int32_t>(ledPin);
+    digitalWrite(ledPin, LOW);
+    debugLedTimer.start();
+}
+} // namespace
+#endif
+
 void setupGPIOs()
 {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -42,7 +76,8 @@ void setup()
 {
     setupGPIOs();
 #if DEBUG
-    digitalWrite(LED_BLUE, LOW);
+    setupDebugLedTimer();
+    debugPulseLed(LED_BLUE);
 #endif
     setupSerial();
     // while (true)
@@ -54,21 +89,18 @@ void setup()
 void loop()
 {
 #if DEBUG
-    switchOffAllLEDs();
-    digitalWrite(LED_GREEN, LOW);
+    debugPulseLed(LED_GREEN);
 #endif
     uint16_t cnt = readMsgCounterFromFile();
     uint16_t battery_voltage = readBatteryVoltage();
 
 #if DEBUG
-    switchOffAllLEDs();
-    digitalWrite(LED_RED, LOW);
+    debugPulseLed(LED_RED);
 #endif
     transmitLoRa(BOARD_ID, cnt, battery_voltage);
 
 #if DEBUG
-    switchOffAllLEDs();
-    digitalWrite(LED_GREEN, LOW);
+    debugPulseLed(LED_GREEN);
 #endif
     saveMsgCounterToFile(++cnt);
     delay(5000 - millis() % 1000);
