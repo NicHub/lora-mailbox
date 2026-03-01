@@ -128,13 +128,18 @@ uint16_t readBatteryVoltage()
     digitalWrite(VBAT_ENABLE, LOW);
     pinMode(PIN_VBAT, INPUT);
 
+    // Let the analog node settle (RC + ADC input)
+    delay(2); // ms (paranoid but cheap)
+    // Discard first sample (often "dirty" after switching)
+    (void)analogRead(PIN_VBAT);
+
     uint32_t vbat = 0;
     uint32_t sum = 0;
 #define CNT_MAX 10
     for (int i = 0; i < CNT_MAX; ++i)
     {
         sum += analogRead(PIN_VBAT);
-        delay(10);
+        delayMicroseconds(200);
     }
     vbat = sum / CNT_MAX;
 

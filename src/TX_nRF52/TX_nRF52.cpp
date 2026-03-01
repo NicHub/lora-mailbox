@@ -36,6 +36,14 @@ void setupGPIOs()
     // - HIGH: Low charging current (50 mA)
     pinMode(PIN_CHARGING_CURRENT, OUTPUT);
     digitalWrite(PIN_CHARGING_CURRENT, HIGH);
+
+    // VBAT_ENABLE
+    // - Must be LOW for battery voltage reading.
+    // - Must be LOW during charging otherwise there is a risk of burning out the P0.31 pin.
+    // - Should be HIGH during sleep to avoid current consumption.
+    // https://wiki.seeedstudio.com/XIAO_BLE/#q3-what-are-the-considerations-when-using-xiao-nrf52840-sense-for-battery-charging
+    pinMode(VBAT_ENABLE, OUTPUT);
+    digitalWrite(VBAT_ENABLE, LOW);
 }
 
 void setup()

@@ -6,7 +6,9 @@
 
 #define NO_HEARTBEAT_PIN D5
 #define WAKEUP_PIN D10
+#ifndef SERIAL_VERBOSITY
 #define SERIAL_VERBOSITY 1
+#endif
 
 #include <Arduino.h>
 #include "common/common_ESP32.h"
