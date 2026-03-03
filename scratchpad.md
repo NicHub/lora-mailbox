@@ -64,7 +64,7 @@ BQ25100 https://www.ti.com/lit/ds/symlink/bq25100a.pdf
     }
 ```
 
-With ZSH and mosquitto_pub the limit 10E6 characters
+With ZSH and mosquitto_pub the limit is 10E6 characters
 
 zsh: argument list too long: mosquitto_pub
 
@@ -97,8 +97,8 @@ Goal: choose a safe and reliable battery solution for small IoT devices, with lo
 - Short circuit protection
 - Reverse polarity protection
 - Minimal self-consumption
-- Cost compatible with Arduino 
-- Easily available 
+- Cost compatible with Arduino
+- Easily available
 
 **Nice-to-have features**
 
@@ -106,4 +106,3 @@ Goal: choose a safe and reliable battery solution for small IoT devices, with lo
 - Solar charging support
 - USB charging support
 - Ability to power the device while charging
-
