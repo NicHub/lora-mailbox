@@ -60,7 +60,7 @@ void blink(
     }
 }
 
-void transmitLoRa(uint8_t board_id, uint16_t cnt, uint16_t battery_voltage)
+void transmitLoRa(uint64_t board_id, uint16_t cnt, uint16_t battery_voltage)
 {
     String msg;
     JsonDocument doc;

@@ -41,6 +41,13 @@ Adafruit_LittleFS littleFS;
 
 void debounce(uint32_t);
 
+static inline uint64_t getBoardUid()
+{
+    static const uint64_t uid =
+        ((uint64_t)NRF_FICR->DEVICEID[1] << 32) | NRF_FICR->DEVICEID[0];
+    return uid;
+}
+
 /*
  * Deep sleep from
  * https://forum.seeedstudio.com/t/xiao-sense-accelerometer-examples-and-low-power/270801
@@ -184,6 +191,7 @@ static inline void writeRgbLeds(
     uint32_t LED_GREEN_STATE,
     uint32_t LED_BLUE_STATE)
 {
+    // Note that on XIAO nRF52, LED_BUILTIN == LED_RED.
     digitalWrite(LED_RED, !LED_RED_STATE);
     digitalWrite(LED_GREEN, !LED_GREEN_STATE);
     digitalWrite(LED_BLUE, !LED_BLUE_STATE);

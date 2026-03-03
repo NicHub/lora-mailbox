@@ -4,7 +4,7 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#define BOARD_ID 0
+#define BOARD_ID 0ULL
 #define WAKEUP_PIN D5
 
 // To format the flash:

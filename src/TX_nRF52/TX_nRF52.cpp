@@ -4,7 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#define BOARD_ID 1
 #define WAKEUP_PIN D5
 
 // To format the flash:
@@ -62,12 +61,12 @@ void loop()
     uint16_t cnt = readMsgCounterFromFile();
 
     writeRgbLeds(1, 0, 0);
-    transmitLoRa(BOARD_ID, cnt, battery_voltage);
+    transmitLoRa(getBoardUid(), cnt, battery_voltage);
 
     writeRgbLeds(0, 1, 0);
     saveMsgCounterToFile(++cnt);
-    delay(5000 - millis() % 1000);
 
+    delay(5000 - millis() % 1000);
     pinMode(WAKEUP_PIN, INPUT);
     if (digitalRead(WAKEUP_PIN))
         return;
