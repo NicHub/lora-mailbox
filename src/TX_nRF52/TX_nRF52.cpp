@@ -29,7 +29,7 @@ void setupGPIOs()
     pinMode(LED_RED, OUTPUT);
     pinMode(LED_GREEN, OUTPUT);
     pinMode(LED_BLUE, OUTPUT);
-    switchOffAllLEDs();
+    writeRgbLeds(0, 0, 0);
 
     // PIN_CHARGING_CURRENT
     // - LOW: High charging current (100 mA)
@@ -49,35 +49,22 @@ void setupGPIOs()
 void setup()
 {
     setupGPIOs();
-#if DEBUG
-    digitalWrite(LED_BLUE, LOW);
-#endif
+    writeRgbLeds(0, 0, 1);
     setupSerial();
-    // while (true)
-    //     testAllLEDs();
     setupLittleFS();
     setupLoRa();
 }
 
 void loop()
 {
-#if DEBUG
-    switchOffAllLEDs();
-    digitalWrite(LED_GREEN, LOW);
-#endif
-    uint16_t cnt = readMsgCounterFromFile();
+    writeRgbLeds(0, 1, 0);
     uint16_t battery_voltage = readBatteryVoltage();
+    uint16_t cnt = readMsgCounterFromFile();
 
-#if DEBUG
-    switchOffAllLEDs();
-    digitalWrite(LED_RED, LOW);
-#endif
+    writeRgbLeds(1, 0, 0);
     transmitLoRa(BOARD_ID, cnt, battery_voltage);
 
-#if DEBUG
-    switchOffAllLEDs();
-    digitalWrite(LED_GREEN, LOW);
-#endif
+    writeRgbLeds(0, 1, 0);
     saveMsgCounterToFile(++cnt);
     delay(5000 - millis() % 1000);
 
@@ -85,8 +72,6 @@ void loop()
     if (digitalRead(WAKEUP_PIN))
         return;
 
-#if DEBUG
-    switchOffAllLEDs();
-#endif
+    writeRgbLeds(0, 0, 0);
     goToDeepSleep();
 }

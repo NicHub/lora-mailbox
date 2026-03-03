@@ -111,14 +111,6 @@ void setupLittleFS()
         saveMsgCounterToFile(0);
 }
 
-void switchOffAllLEDs()
-{
-    digitalWrite(LED_BUILTIN, HIGH);
-    digitalWrite(LED_RED, HIGH);
-    digitalWrite(LED_GREEN, HIGH);
-    digitalWrite(LED_BLUE, HIGH);
-}
-
 uint16_t readBatteryVoltage()
 {
     // Set VBAT_ENABLE to OUTPUT LOW to read VBAT.
@@ -185,3 +177,17 @@ void testAllLEDs()
     Serial.println("LED_BLUE, LED_OFF");
     delay(wait_2);
 }
+
+#if DEBUG
+static inline void writeRgbLeds(
+    uint32_t LED_RED_STATE,
+    uint32_t LED_GREEN_STATE,
+    uint32_t LED_BLUE_STATE)
+{
+    digitalWrite(LED_RED, !LED_RED_STATE);
+    digitalWrite(LED_GREEN, !LED_GREEN_STATE);
+    digitalWrite(LED_BLUE, !LED_BLUE_STATE);
+}
+#else
+static inline void writeRgbLeds(uint32_t, uint32_t, uint32_t) {}
+#endif
