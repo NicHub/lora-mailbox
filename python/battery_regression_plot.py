@@ -154,6 +154,7 @@ def build_calibration_plot() -> tuple[figure, float, float]:
     x_max = max(nrf_values) + 5
     reg_xs = [x_min, x_max]
     reg_ys = [inverse_slope_mv * x + inverse_intercept_mv for x in reg_xs]
+    guide_ys = [10.0 * x + 250.0 for x in reg_xs]
     counter_slope, counter_intercept = get_counter_fit(JSONL_PATH)
     counter_start = counter_slope * x_min + counter_intercept
     counter_end = counter_slope * x_max + counter_intercept
@@ -174,6 +175,14 @@ def build_calibration_plot() -> tuple[figure, float, float]:
         legend_label="Vmultimeter vs Vgpio",
     )
     plot.line(reg_xs, reg_ys, line_width=3, color="#c1121f", legend_label="Fit")
+    plot.line(
+        reg_xs,
+        guide_ys,
+        line_width=2,
+        line_dash="dotted",
+        color="#1d3557",
+        legend_label="Vgpio * 10 + 250",
+    )
     plot.add_layout(
         Span(location=TARGET_NRF_VOLT, dimension="height", line_dash="dashed", line_color="#1d3557")
     )

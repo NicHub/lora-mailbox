@@ -35,6 +35,14 @@ BQ25100 https://www.ti.com/lit/ds/symlink/bq25100a.pdf
 
 ---
 
+## MQTT charcter count limit
+
+-   [knolleary/PubSubClient] character count per message is limited to 233.
+-   [PsychicMqttClient] character count per message is limited by hardware.
+
+[knolleary/PubSubClient]: https://registry.platformio.org/libraries/knolleary/PubSubClient
+[PsychicMqttClient]: https://github.com/theelims/PsychicMqttClient.git
+
 ```cpp
     // Check the maximum number of character that can be sent with knolleary/PubSubClient on ESP32S3
     // The answer is 233.
@@ -86,23 +94,33 @@ mosquitto_sub -h test.mosquitto.org -t "mailboxtest"
 pio device monitor -e seeed_xiao_esp32s3-rx
 ```
 
+```
+
+mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mailboxtestnj"
+
+```
+
 # IoT BMS Requirements
 
 Goal: choose a safe and reliable battery solution for small IoT devices, with long battery life and easy integration.
 
 **Must-have features**
 
-- Overcharge protection
-- Deep discharge protection
-- Short circuit protection
-- Reverse polarity protection
-- Minimal self-consumption
-- Cost compatible with Arduino
-- Easily available
+-   Overcharge protection
+-   Deep discharge protection
+-   Short circuit protection
+-   Reverse polarity protection
+-   Minimal self-consumption
+-   Cost compatible with Arduino
+-   Easily available
 
 **Nice-to-have features**
 
-- Outdoor use compliant
-- Solar charging support
-- USB charging support
-- Ability to power the device while charging
+-   Outdoor use compliant
+-   Solar charging support
+-   USB charging support
+-   Ability to power the device while charging
+
+
+# TODO
+
