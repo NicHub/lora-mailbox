@@ -10,37 +10,49 @@
 
 #pragma once
 
-// Wifi credentials.
-#define WIFI_SSID "..."
-#define WIFI_PASSWORD "..."
+#define CONFIG_ID 0
 
-// Mail sender credentials.
-#define SMTP_HOST F("smtp.gmail.com")
-#define SMTP_PORT 465
-#define SENDER_NAME F("ESP-")
-#define SENDER_EMAIL F("...@gmail.com")
-#define SENDER_PASSWORD F("...")
+#if CONFIG_ID == 0
 
-// Array of mail recipients.
-struct Recipient
-{
-    const char *name;
-    const char *email;
-};
-const Recipient RECIPIENTS[] = {
-    {"name 1",
-     "mail1@domain.com"},
-    {"name 2",
-     "mail@domain.com"},
-    {"name 3",
-     "mail3@domain.com"},
-};
-#define RECIPIENT_COUNT (sizeof(RECIPIENTS) / sizeof(RECIPIENTS[0]))
+// Miscellaneous.
+#define DEBUG true
+#define SERIAL_VERBOSITY 2
+#define HEARTBEATS_PER_DAY 86400 //  0..86400 (0 = disabled)
 
-// MQTT credentials.
+// Wifi.
+#define WIFI_SSID ""
+#define WIFI_PASSWORD ""
+
+// MQTT.
+/*
+mosquitto_sub -h test.mosquitto.org -t "mbx-test"
+mosquitto_pub -h test.mosquitto.org -t "mbx-test" -m '{"DATE":"'"$(date "+%Y-%m-%dT%H:%M:%S%z")"'"}'
+*/
+#define MQTT_ENABLED true // TODO implement MQTT_ENABLED
 #define MQTT_SERVER "test.mosquitto.org"
 #define MQTT_PORT 1883
-#define MQTT_TOPIC "mailboxtest"
+#define MQTT_USE_TLS false
+#define MQTT_TOPIC "mbx-test"
+#define MQTT_USERNAME ""
+#define MQTT_PASSWORD ""
 
-// NTFY credentials.
-#define NTFY_TOPIC "ntfy_topic"
+// NTFY.
+/*
+curl -fsSL \
+    -H 'Title: Test with curl' \
+    -d '{"DATE":"'"$(date "+%Y-%m-%dT%H:%M:%S%z")"'"}' \
+    https://ntfy.sh/mbx-test
+*/
+#define NTFY_ENABLED true
+#define NTFY_SERVER "https://ntfy.sh/"
+#define NTFY_TOPIC "mbx-test"
+#define NTFY_USERNAME ""
+#define NTFY_PASSWORD ""
+
+#elif CONFIG_ID == 1
+
+/*
+...
+ */
+
+ #endif
