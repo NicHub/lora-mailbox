@@ -2,11 +2,6 @@
  * LoRa MailBox — MQTT
  *
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
- *
- * # Test mosquitto
- * mosquitto_sub -h test.mosquitto.org -t "mailboxtest"
- * mosquitto_pub -h test.mosquitto.org -t "mailboxtest" -m '{"DATE":"'"`date "+%Y-%m-%dT%H:%M:%S+02:00"`"'"}'
- *
  */
 
 #pragma once
@@ -84,9 +79,9 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
             return false;
         }
 
-        Serial.printf("MQTT publish ok: msgId=%d payload=%u\n",
-                      publishResult,
-                      static_cast<unsigned>(payload.length()));
+        // Serial.printf("MQTT publish ok: msgId=%d payload=%u\n",
+        //               publishResult,
+        //               static_cast<unsigned>(payload.length()));
         return true;
     }
 

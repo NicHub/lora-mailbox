@@ -29,7 +29,7 @@ public:
     // Returns true on HTTP 2xx success, false otherwise.
     bool sendMsg(const JsonDocument &jsonDoc, const String &topic = NTFY_TOPIC)
     {
-#if SENDTO_NTFY
+#if NTFY_ENABLED
         if (WiFi.status() != WL_CONNECTED)
             return false;
 
@@ -39,7 +39,7 @@ public:
         client.setInsecure();
 
         HTTPClient https;
-        String url = String("https://ntfy.sh/") + topic;
+        String url = String(NTFY_SERVER) + topic;
 
         bool ok = false;
         if (!https.begin(client, url))
@@ -47,6 +47,9 @@ public:
 
         String message;
         serializeJson(jsonDoc, message);
+
+        if (String(NTFY_USERNAME).length() > 0 || String(NTFY_PASSWORD).length() > 0)
+            https.setAuthorization(NTFY_USERNAME, NTFY_PASSWORD);
 
         https.addHeader("Content-Type", "application/json");
         int httpCode = https.POST(message);
