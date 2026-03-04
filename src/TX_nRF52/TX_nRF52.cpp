@@ -5,6 +5,8 @@
  */
 
 #define WAKEUP_PIN D5
+// 868.0 MHz: respect legal duty-cycle constraints (typically 1%), so avoid short intervals.
+#define SLEEP_TIMEOUT_SECONDS (20 * 60)
 
 // To format the flash:
 // - Set FORMAT_LITTLEFS to 1.
@@ -19,8 +21,83 @@
 //    -    in `default_envs`
 //    -    make sure `seeed_xiao_nrf52840-tx` is the first `default_envs`
 #include <Arduino.h>
+#include <nrf.h>
 #include "../common/common_nRF52.h"
 #include "../common/common.h"
+
+static volatile bool rtcTimeoutElapsed = false;
+static volatile bool wakeupPinEvent = false;
+static const char* wakeupReason = "BOOT";
+
+static constexpr uint32_t RTC_PRESCALER = 4095; // 32768 / (4095 + 1) = 8 Hz
+static constexpr uint32_t RTC_TICKS_PER_SECOND = 8;
+
+extern "C" void RTC2_IRQHandler(void)
+{
+    if (NRF_RTC2->EVENTS_COMPARE[0])
+    {
+        NRF_RTC2->EVENTS_COMPARE[0] = 0;
+        rtcTimeoutElapsed = true;
+    }
+}
+
+void onWakeupPinRise()
+{
+    wakeupPinEvent = true;
+}
+
+void setupRtcWakeup()
+{
+    pinMode(WAKEUP_PIN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(WAKEUP_PIN), onWakeupPinRise, RISING);
+
+    if ((NRF_CLOCK->LFCLKSTAT & CLOCK_LFCLKSTAT_STATE_Msk) == 0)
+    {
+        NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
+        NRF_CLOCK->TASKS_LFCLKSTART = 1;
+        while (!NRF_CLOCK->EVENTS_LFCLKSTARTED)
+            ;
+    }
+}
+
+const char* sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
+{
+    pinMode(WAKEUP_PIN, INPUT);
+    if (digitalRead(WAKEUP_PIN))
+        return "WAKEUP_PIN_HIGH";
+
+    rtcTimeoutElapsed = false;
+    wakeupPinEvent = false;
+
+    uint32_t timeout_ticks = timeout_seconds * RTC_TICKS_PER_SECOND;
+    if (timeout_ticks == 0)
+        timeout_ticks = 1;
+    if (timeout_ticks > 0x00FFFFFFUL)
+        timeout_ticks = 0x00FFFFFFUL;
+
+    NRF_RTC2->TASKS_STOP = 1;
+    NRF_RTC2->TASKS_CLEAR = 1;
+    NRF_RTC2->PRESCALER = RTC_PRESCALER;
+    NRF_RTC2->CC[0] = timeout_ticks;
+    NRF_RTC2->EVENTS_COMPARE[0] = 0;
+    NRF_RTC2->INTENSET = RTC_INTENSET_COMPARE0_Msk;
+    NVIC_ClearPendingIRQ(RTC2_IRQn);
+    NVIC_EnableIRQ(RTC2_IRQn);
+    NRF_RTC2->TASKS_START = 1;
+
+    while (!rtcTimeoutElapsed && !wakeupPinEvent)
+    {
+        __SEV();
+        __WFE();
+        __WFE();
+    }
+
+    NRF_RTC2->TASKS_STOP = 1;
+    NRF_RTC2->INTENCLR = RTC_INTENCLR_COMPARE0_Msk;
+    if (wakeupPinEvent)
+        return "WAKEUP_PIN_HIGH";
+    return "TIMEOUT";
+}
 
 void setupGPIOs()
 {
@@ -48,6 +125,7 @@ void setupGPIOs()
 void setup()
 {
     setupGPIOs();
+    setupRtcWakeup();
     writeRgbLeds(0, 0, 1);
     setupSerial();
     setupLittleFS();
@@ -61,7 +139,7 @@ void loop()
     uint16_t cnt = readMsgCounterFromFile();
 
     writeRgbLeds(1, 0, 0);
-    transmitLoRa(getBoardUid(), cnt, battery_voltage);
+    transmitLoRa(getBoardUid(), cnt, battery_voltage, wakeupReason);
 
     writeRgbLeds(0, 1, 0);
     saveMsgCounterToFile(++cnt);
@@ -69,8 +147,11 @@ void loop()
     delay(5000 - millis() % 1000);
     pinMode(WAKEUP_PIN, INPUT);
     if (digitalRead(WAKEUP_PIN))
+    {
+        wakeupReason = "WAKEUP_PIN_HIGH";
         return;
+    }
 
     writeRgbLeds(0, 0, 0);
-    goToDeepSleep();
+    wakeupReason = sleepUntilWakeupPinOrTimeout(SLEEP_TIMEOUT_SECONDS);
 }

@@ -60,13 +60,18 @@ void blink(
     }
 }
 
-void transmitLoRa(uint64_t board_id, uint16_t cnt, uint16_t battery_voltage)
+void transmitLoRa(
+    uint64_t board_id,
+    uint16_t cnt,
+    uint16_t battery_voltage,
+    const char* wakeup_reason)
 {
     String msg;
     JsonDocument doc;
     doc["cnt"] = cnt;
     doc["board id"] = board_id;
     doc["volt"] = battery_voltage;
+    doc["wakeup"] = wakeup_reason;
     serializeJson(doc, msg);
 
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
