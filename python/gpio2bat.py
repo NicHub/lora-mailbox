@@ -25,6 +25,7 @@ if __name__ == "__main__":
         373,
         353,
         400,
+        377,
     ]
     for Vgpio_meas in Vgpio_meas_s:
         Vbat_calc_mV_1 = Vgpio2Vbat(Vgpio_meas)
