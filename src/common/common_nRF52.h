@@ -41,6 +41,10 @@ Adafruit_LittleFS littleFS;
 
 void debounce(uint32_t);
 
+/*
+ * 64 bit-long BOARD ID
+ *   => 20 digit-long in DEC
+ */
 static inline uint64_t getBoardUidDec()
 {
     static const uint64_t uid =
@@ -48,6 +52,10 @@ static inline uint64_t getBoardUidDec()
     return uid;
 }
 
+/*
+ * 64 bit-long BOARD ID
+ *   => 16 digit-long in HEX
+ */
 static inline String getBoardUidHex()
 {
     static char uid_hex[17];
@@ -56,12 +64,16 @@ static inline String getBoardUidHex()
     if (initialized)
         return String(uid_hex);
 
-    uint64_t uid = getBoardUidDec();
+    // Avoid %llX on embedded printf/nano-libc:
+    // format the two 32-bit words directly.
+    uint32_t uid_hi = NRF_FICR->DEVICEID[1];
+    uint32_t uid_lo = NRF_FICR->DEVICEID[0];
     snprintf(
         uid_hex,
         sizeof(uid_hex),
-        "%016llX",
-        (unsigned long long)uid);
+        "%08lX%08lX",
+        (unsigned long)uid_hi,
+        (unsigned long)uid_lo);
     initialized = true;
 
     return String(uid_hex);

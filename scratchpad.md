@@ -122,5 +122,12 @@ Goal: choose a safe and reliable battery solution for small IoT devices, with lo
 -   Ability to power the device while charging
 
 
+## Vérifier platformio.ini
+
+```bash
+pio project config
+```
+
 # TODO
 
+...
