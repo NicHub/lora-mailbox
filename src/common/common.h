@@ -26,6 +26,28 @@ bool transmitFlag = false;
 // Flag to indicate that a packet was sent or received.
 volatile bool loraEvent = false;
 
+enum class WakeupReason : uint8_t
+{
+    Boot,
+    WakeupPinHigh,
+    HeartbeatTx,
+};
+
+static inline const char* wakeupReasonToString(WakeupReason reason)
+{
+    switch (reason)
+    {
+    case WakeupReason::Boot:
+        return "BOOT";
+    case WakeupReason::WakeupPinHigh:
+        return "WAKEUP_PIN_HIGH";
+    case WakeupReason::HeartbeatTx:
+        return "HEARTBEAT_TX";
+    default:
+        return "BOOT";
+    }
+}
+
 // The `setFlag` function is called when a complete
 // packet is transmitted or received by the module
 // IMPORTANT: this function MUST be 'void' type and
@@ -64,14 +86,14 @@ void transmitLoRa(
     const String& board_id_hex,
     uint16_t cnt,
     uint16_t battery_voltage,
-    const char* wakeup_reason)
+    WakeupReason wakeup_reason)
 {
     String msg;
     JsonDocument doc;
+    doc["board_id_hex"] = board_id_hex;
     doc["cnt"] = cnt;
-    doc["board id"] = board_id_hex;
-    doc["volt"] = battery_voltage;
-    doc["wakeup"] = wakeup_reason;
+    doc["volt_gpio"] = battery_voltage;
+    doc["wakeup"] = wakeupReasonToString(wakeup_reason);
     serializeJson(doc, msg);
 
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());

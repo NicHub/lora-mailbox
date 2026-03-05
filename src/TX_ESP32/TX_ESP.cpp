@@ -52,7 +52,7 @@ void loop()
     uint16_t cnt = readMsgCounterFromFile();
     saveMsgCounterToFile(++cnt);
     uint16_t battery_voltage = readBatteryVoltage();
-    transmitLoRa(BOARD_ID_HEX, cnt, battery_voltage, "N/A");
+    transmitLoRa(BOARD_ID_HEX, cnt, battery_voltage, WakeupReason::Boot);
     delay(3000);
     if (!digitalRead(WAKEUP_PIN))
         goToDeepSleep();

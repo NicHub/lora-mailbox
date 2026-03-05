@@ -27,7 +27,7 @@
 
 static volatile bool rtcTimeoutElapsed = false;
 static volatile bool wakeupPinEvent = false;
-static const char* wakeupReason = "BOOT";
+static WakeupReason wakeupReason = WakeupReason::Boot;
 
 static constexpr uint32_t RTC_PRESCALER = 4095; // 32768 / (4095 + 1) = 8 Hz
 static constexpr uint32_t RTC_TICKS_PER_SECOND = 8;
@@ -60,11 +60,11 @@ void setupRtcWakeup()
     }
 }
 
-const char* sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
+WakeupReason sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
 {
     pinMode(WAKEUP_PIN, INPUT);
     if (digitalRead(WAKEUP_PIN))
-        return "WAKEUP_PIN_HIGH";
+        return WakeupReason::WakeupPinHigh;
 
     rtcTimeoutElapsed = false;
     wakeupPinEvent = false;
@@ -95,8 +95,8 @@ const char* sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
     NRF_RTC2->TASKS_STOP = 1;
     NRF_RTC2->INTENCLR = RTC_INTENCLR_COMPARE0_Msk;
     if (wakeupPinEvent)
-        return "WAKEUP_PIN_HIGH";
-    return "TIMEOUT";
+        return WakeupReason::WakeupPinHigh;
+    return WakeupReason::HeartbeatTx;
 }
 
 void setupGPIOs()
@@ -148,7 +148,7 @@ void loop()
     pinMode(WAKEUP_PIN, INPUT);
     if (digitalRead(WAKEUP_PIN))
     {
-        wakeupReason = "WAKEUP_PIN_HIGH";
+        wakeupReason = WakeupReason::WakeupPinHigh;
         return;
     }
 
