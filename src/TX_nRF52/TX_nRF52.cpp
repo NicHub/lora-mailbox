@@ -6,7 +6,8 @@
 
 #define WAKEUP_PIN D5
 // 868.0 MHz: respect legal duty-cycle constraints (typically 1%), so avoid short intervals.
-#define SLEEP_TIMEOUT_SECONDS (20 * 60)
+#define HEARTBEAT_INTERVAL_SECONDS (20 * 60)
+#define HEARTBEAT_INTERVAL_MS (HEARTBEAT_INTERVAL_SECONDS * 1000UL)
 
 // To format the flash:
 // - Set FORMAT_LITTLEFS to 1.
@@ -28,6 +29,7 @@
 static volatile bool rtcTimeoutElapsed = false;
 static volatile bool wakeupPinEvent = false;
 static WakeupReason wakeupReason = WakeupReason::Boot;
+static uint32_t nextHeartbeatDeadlineMs = 0;
 
 static constexpr uint32_t RTC_PRESCALER = 4095; // 32768 / (4095 + 1) = 8 Hz
 static constexpr uint32_t RTC_TICKS_PER_SECOND = 8;
@@ -99,6 +101,20 @@ WakeupReason sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
     return WakeupReason::HeartbeatTx;
 }
 
+static inline bool isHeartbeatDue(uint32_t now_ms)
+{
+    return (int32_t)(now_ms - nextHeartbeatDeadlineMs) >= 0;
+}
+
+static void advanceHeartbeatDeadline(uint32_t now_ms)
+{
+    // Keep a fixed heartbeat cadence, independent of processing jitter.
+    do
+    {
+        nextHeartbeatDeadlineMs += HEARTBEAT_INTERVAL_MS;
+    } while ((int32_t)(now_ms - nextHeartbeatDeadlineMs) >= 0);
+}
+
 void setupGPIOs()
 {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -126,6 +142,7 @@ void setup()
 {
     setupGPIOs();
     setupRtcWakeup();
+    nextHeartbeatDeadlineMs = millis() + HEARTBEAT_INTERVAL_MS;
     writeRgbLeds(0, 0, 1);
     setupSerial();
     setupLittleFS();
@@ -140,12 +157,20 @@ void loop()
 
     writeRgbLeds(1, 0, 0);
     transmitLoRa(getBoardUidHex(), cnt, battery_voltage, wakeupReason);
+    if (wakeupReason == WakeupReason::HeartbeatTx)
+        advanceHeartbeatDeadline(millis());
 
     writeRgbLeds(0, 1, 0);
     saveMsgCounterToFile(++cnt);
 
     delay(5000 - millis() % 1000);
     pinMode(WAKEUP_PIN, INPUT);
+    uint32_t now_ms = millis();
+    if (isHeartbeatDue(now_ms))
+    {
+        wakeupReason = WakeupReason::HeartbeatTx;
+        return;
+    }
     if (digitalRead(WAKEUP_PIN))
     {
         wakeupReason = WakeupReason::WakeupPinHigh;
@@ -153,5 +178,7 @@ void loop()
     }
 
     writeRgbLeds(0, 0, 0);
-    wakeupReason = sleepUntilWakeupPinOrTimeout(SLEEP_TIMEOUT_SECONDS);
+    uint32_t remaining_ms = nextHeartbeatDeadlineMs - now_ms;
+    uint32_t sleep_seconds = (remaining_ms + 999) / 1000; // ceil(ms/1000)
+    wakeupReason = sleepUntilWakeupPinOrTimeout(sleep_seconds);
 }
