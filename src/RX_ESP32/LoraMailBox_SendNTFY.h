@@ -25,8 +25,12 @@ private:
 public:
     LoraMailBox_SendNTFY() {}
 
-    // Send a plaintext notification to ntfy.sh via HTTPS.
-    // Returns true on HTTP 2xx success, false otherwise.
+    /**
+     * @brief Send a JSON notification to NTFY via HTTPS.
+     * @param jsonDoc JSON payload.
+     * @param topic NTFY topic suffix.
+     * @return true on HTTP 2xx success, false otherwise.
+     */
     bool sendMsg(const JsonDocument &jsonDoc, const String &topic = NTFY_TOPIC)
     {
 #if NTFY_ENABLED
@@ -34,8 +38,6 @@ public:
             return false;
 
         WiFiClientSecure client;
-        // For simplicity in this project we skip certificate validation.
-        // In production, prefer setting a CA cert with client.setCACert(...).
         client.setInsecure();
 
         HTTPClient https;
@@ -53,13 +55,12 @@ public:
 
         https.addHeader("Content-Type", "application/json");
         int httpCode = https.POST(message);
-        // consider 2xx codes as success
         ok = (httpCode >= 200 && httpCode < 300);
         https.end();
 
         return ok;
 #else
-        return true;
+        return false;
 #endif
     }
 };

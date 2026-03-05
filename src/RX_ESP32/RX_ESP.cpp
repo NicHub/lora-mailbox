@@ -26,12 +26,16 @@ JsonDocument jsonDoc;
  */
 bool shouldSendNtfy()
 {
+#if !NTFY_ENABLED
+    return false;
+#else
     bool sendNtfy = false;
     JsonVariant wakeup = jsonDoc["wakeup"];
     if (wakeup.isNull())
         return sendNtfy;
     sendNtfy = String(wakeup.as<const char *>()) == "WAKEUP_PIN_HIGH";
     return sendNtfy;
+#endif
 }
 
 void broadcastResults()
@@ -90,7 +94,7 @@ void heartBeat()
         return;
     prevHeartBeat = heartBeat;
     String timeStr = getCurrentTime();
-    jsonString = "{\"HEARTBEAT\":\"" + timeStr + "\"}";
+    jsonString = "{\"HEARTBEAT_RX\":\"" + timeStr + "\"}";
     deserializeJson(jsonDoc, jsonString);
 #if SERIAL_VERBOSITY == 2
     Serial.println(jsonString);
