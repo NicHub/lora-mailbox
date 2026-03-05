@@ -204,6 +204,7 @@ void setup()
 
 void loop()
 {
+    lmb_ws.ensureWiFiConnected();
     if (digitalRead(NO_HEARTBEAT_PIN))
         heartBeat();
     yield();

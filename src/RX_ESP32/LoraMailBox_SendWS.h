@@ -15,8 +15,54 @@ private:
     AsyncWebServer server{80};
     AsyncWebSocket ws{"/ws"};
     String latestMessage = "";
+    uint32_t lastReconnectAttemptMs = 0;
+    bool serverStarted = false;
 
 #include "index.html"
+
+    /**
+     * @brief Wait for Wi-Fi connection for a bounded amount of time.
+     * @param timeoutMs Timeout in milliseconds.
+     * @return true when connected before timeout.
+     */
+    bool waitForConnection(uint32_t timeoutMs)
+    {
+        uint32_t start = millis();
+        while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeoutMs)
+        {
+            delay(250);
+            Serial.print(".");
+        }
+        return WiFi.status() == WL_CONNECTED;
+    }
+
+    /**
+     * @brief Configure and start the local web server once.
+     */
+    void startServerIfNeeded()
+    {
+        if (serverStarted)
+            return;
+
+        ws.onEvent([this](AsyncWebSocket *server, AsyncWebSocketClient *client,
+                          AwsEventType type, void *arg, uint8_t *data, size_t len)
+                   {
+            if (type == WS_EVT_CONNECT) {
+                Serial.printf("\nWebSocket client #%u connected\n", client->id());
+                Serial.printf("Number of clients connected: %u\n", ws.count());
+                if (latestMessage.length() > 0) {
+                    client->text(latestMessage);
+                }
+            } });
+
+        server.addHandler(&ws);
+
+        server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
+                  { request->send(200, "text/html", htmlTemplate); });
+
+        server.begin();
+        serverStarted = true;
+    }
 
 public:
     LoraMailBox_SendWS() {}
@@ -48,22 +94,16 @@ public:
 
     bool begin()
     {
+        WiFi.mode(WIFI_STA);
+        WiFi.persistent(false);
+        WiFi.setAutoReconnect(true);
+
         while (WiFi.status() != WL_CONNECTED)
         {
             Serial.println("\nConnecting to WiFi");
 
-            // Connect to WiFi.
-            WiFi.mode(WIFI_STA);
             WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-            // Wait for connection.
-            uint8_t attempts = 0;
-            while (WiFi.status() != WL_CONNECTED && attempts < 20)
-            {
-                delay(500);
-                Serial.print(".");
-                attempts++;
-            }
+            waitForConnection(10000);
             if (WiFi.status() != WL_CONNECTED)
             {
                 Serial.println("\nWiFi connection failed");
@@ -76,26 +116,37 @@ public:
         Serial.print("IP address: \nhttp://");
         Serial.println(WiFi.localIP());
 
-        // Set up WebSocket handler.
-        ws.onEvent([this](AsyncWebSocket *server, AsyncWebSocketClient *client,
-                          AwsEventType type, void *arg, uint8_t *data, size_t len)
-                   {
-            if (type == WS_EVT_CONNECT) {
-                Serial.printf("\nWebSocket client #%u connected\n", client->id());
-                Serial.printf("Number of clients connected: %u\n", ws.count());
-                if (latestMessage.length() > 0) {
-                    client->text(latestMessage);
-                }
-            } });
+        startServerIfNeeded();
+        return true;
+    }
 
-        server.addHandler(&ws);
+    /**
+     * @brief Try to restore Wi-Fi connection when disconnected.
+     * @return true when Wi-Fi is connected.
+     */
+    bool ensureWiFiConnected()
+    {
+        if (WiFi.status() == WL_CONNECTED)
+            return true;
 
-        // Route for root / web page.
-        server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
-                  { request->send(200, "text/html", htmlTemplate); });
+        uint32_t now = millis();
+        if ((now - lastReconnectAttemptMs) < 5000)
+            return false;
+        lastReconnectAttemptMs = now;
 
-        // Start server.
-        server.begin();
+        Serial.printf("WiFi disconnected (status=%d), trying reconnect...\n", WiFi.status());
+
+        WiFi.disconnect(false, false);
+        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+        if (!waitForConnection(8000))
+        {
+            Serial.println("WiFi reconnect failed");
+            return false;
+        }
+
+        Serial.print("WiFi reconnected, IP: ");
+        Serial.println(WiFi.localIP());
+        synchronizeNTPTime();
         return true;
     }
 
