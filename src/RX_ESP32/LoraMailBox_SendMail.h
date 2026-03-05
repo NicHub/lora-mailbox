@@ -80,11 +80,10 @@ void sendMail()
     /*  Set the network reconnection option */
     MailClient.networkReconnect(true);
 
-    /** Enable the debug via Serial port
-     * 0 for no debugging
-     * 1 for basic level debugging
-     *
-     * Debug port can be changed via ESP_MAIL_DEFAULT_DEBUG_PORT in ESP_Mail_FS.h
+    /* Enable debug output via Serial:
+     * 0 = no debugging
+     * 1 = basic debugging
+     * Debug port can be changed via ESP_MAIL_DEFAULT_DEBUG_PORT in ESP_Mail_FS.h.
      */
     smtp.debug(1);
 

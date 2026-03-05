@@ -20,12 +20,27 @@ LoraMailBox_SendNTFY lmb_ntfy;
 String jsonString;
 JsonDocument jsonDoc;
 
+/**
+ * @brief Return whether the current LoRa payload should be forwarded to NTFY.
+ * @return true when `wakeup` equals `WAKEUP_PIN_HIGH`, false otherwise.
+ */
+bool shouldSendNtfy()
+{
+    bool sendNtfy = false;
+    JsonVariant wakeup = jsonDoc["wakeup"];
+    if (wakeup.isNull())
+        return sendNtfy;
+    sendNtfy = String(wakeup.as<const char *>()) == "WAKEUP_PIN_HIGH";
+    return sendNtfy;
+}
+
 void broadcastResults()
 {
     serializeJson(jsonDoc, jsonString);
     lmb_ws.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
-    lmb_ntfy.sendMsg(jsonDoc);
+    if (shouldSendNtfy())
+        lmb_ntfy.sendMsg(jsonDoc);
 #if SERIAL_VERBOSITY == 1
     uint16_t ctr = jsonDoc["COUNTER"]["VALUE"].as<uint16_t>();
     static uint16_t first_ctr = ctr;
@@ -125,17 +140,17 @@ void setupLoRaRX()
     radio.startReceive();
 }
 
+/**
+ * @brief Configure GPIO directions for runtime peripherals.
+ */
 void setupGPIOs()
 {
-    // Beware that if you use XIAO ESP32S3 with LoRa
-    // shield SX1262, LORA_USER_BUTTON on LoRa shield
-    // and LED_BUILTIN on ESP module are both connected
-    // on GPIO21! So if you set LED_BUILTIN pinMode to
-    // OUTPUT and you set LED_BUILTIN to HIGH and you
-    // press LORA_USER_BUTTON, you create a
-    // short-circuit between GPIIO21 and GND.
-
-    // pinMode(LED_BUILTIN, OUTPUT); // => Too dangerous to use!
+    /**
+     * @note On XIAO ESP32S3 with SX1262 shield, `LORA_USER_BUTTON` and
+     * `LED_BUILTIN` share GPIO21. Driving `LED_BUILTIN` high while pressing
+     * the user button can create a short-circuit to GND.
+     * @note Keep `pinMode(LED_BUILTIN, OUTPUT);` disabled for safety.
+     */
     pinMode(LORA_LED_GREEN, OUTPUT);
     pinMode(NO_HEARTBEAT_PIN, INPUT_PULLUP);
 }
