@@ -5,7 +5,7 @@
  */
 
 /*
-   Rename this file to credentials.h and update the details below with your information.
+   Rename this file to user_settings.h and update the details below with your information.
 */
 
 #pragma once
@@ -55,4 +55,4 @@ curl -fsSL \
 ...
  */
 
- #endif
+#endif

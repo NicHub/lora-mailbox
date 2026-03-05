@@ -11,7 +11,7 @@
 #include <AsyncTCP.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
-#include "../common/credentials.h"
+#include "../common/user_settings.h"
 
 class LoraMailBox_SendNTFY
 {

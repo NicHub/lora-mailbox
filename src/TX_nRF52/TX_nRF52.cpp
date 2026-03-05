@@ -18,7 +18,7 @@
 
 // If the linter does not recognize the paths below,
 // or the constants like `LED_RED` :
-//    -    open `platformio_user_preferences.ini`
+//    -    open `user_settings.ini`
 //    -    in `default_envs`
 //    -    make sure `seeed_xiao_nrf52840-tx` is the first `default_envs`
 #include <Arduino.h>

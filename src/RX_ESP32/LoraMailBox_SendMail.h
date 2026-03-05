@@ -24,7 +24,7 @@
 #include <ESP8266WiFi.h>
 #endif
 #include <ESP_Mail_Client.h>
-#include "../common/credentials.h"
+#include "../common/user_settings.h"
 
 uint64_t now_us = 0;
 uint32_t MSG_CNT = 0;

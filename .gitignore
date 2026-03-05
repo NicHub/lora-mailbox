@@ -3,8 +3,8 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-credentials.h
-platformio_user_preferences.ini
+src/common/user_settings.h
+user_settings.ini
 *.jsonl
 *ajeter*
 *nogit*
