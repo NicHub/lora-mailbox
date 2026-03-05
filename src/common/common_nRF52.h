@@ -41,11 +41,30 @@ Adafruit_LittleFS littleFS;
 
 void debounce(uint32_t);
 
-static inline uint64_t getBoardUid()
+static inline uint64_t getBoardUidDec()
 {
     static const uint64_t uid =
         ((uint64_t)NRF_FICR->DEVICEID[1] << 32) | NRF_FICR->DEVICEID[0];
     return uid;
+}
+
+static inline String getBoardUidHex()
+{
+    static char uid_hex[17];
+    static bool initialized = false;
+
+    if (initialized)
+        return String(uid_hex);
+
+    uint64_t uid = getBoardUidDec();
+    snprintf(
+        uid_hex,
+        sizeof(uid_hex),
+        "%016llX",
+        (unsigned long long)uid);
+    initialized = true;
+
+    return String(uid_hex);
 }
 
 /*

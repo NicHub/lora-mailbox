@@ -139,7 +139,7 @@ void loop()
     uint16_t cnt = readMsgCounterFromFile();
 
     writeRgbLeds(1, 0, 0);
-    transmitLoRa(getBoardUid(), cnt, battery_voltage, wakeupReason);
+    transmitLoRa(getBoardUidHex(), cnt, battery_voltage, wakeupReason);
 
     writeRgbLeds(0, 1, 0);
     saveMsgCounterToFile(++cnt);

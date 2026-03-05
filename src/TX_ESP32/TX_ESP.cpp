@@ -4,7 +4,7 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#define BOARD_ID 0ULL
+#define BOARD_ID_HEX "0000000000000000"
 #define WAKEUP_PIN D5
 
 // To format the flash:
@@ -52,7 +52,7 @@ void loop()
     uint16_t cnt = readMsgCounterFromFile();
     saveMsgCounterToFile(++cnt);
     uint16_t battery_voltage = readBatteryVoltage();
-    transmitLoRa(BOARD_ID, cnt, battery_voltage, "N/A");
+    transmitLoRa(BOARD_ID_HEX, cnt, battery_voltage, "N/A");
     delay(3000);
     if (!digitalRead(WAKEUP_PIN))
         goToDeepSleep();

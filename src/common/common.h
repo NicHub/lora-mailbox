@@ -61,7 +61,7 @@ void blink(
 }
 
 void transmitLoRa(
-    uint64_t board_id,
+    const String& board_id_hex,
     uint16_t cnt,
     uint16_t battery_voltage,
     const char* wakeup_reason)
@@ -69,7 +69,7 @@ void transmitLoRa(
     String msg;
     JsonDocument doc;
     doc["cnt"] = cnt;
-    doc["board id"] = board_id;
+    doc["board id"] = board_id_hex;
     doc["volt"] = battery_voltage;
     doc["wakeup"] = wakeup_reason;
     serializeJson(doc, msg);
