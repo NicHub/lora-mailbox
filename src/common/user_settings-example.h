@@ -76,6 +76,15 @@
  */
 /** @brief Set to `false` to disable all NTFY notifications. */
 #define NTFY_ENABLED false
+/** @brief Set to `true` to include the current JSONL string in notification body. */
+#define NTFY_INCLUDE_JSONL false
+/** @brief Set to `true` to send NTFY notifications for `HEARTBEAT_TX` events. */
+#define NTFY_NOTIFY_HEARTBEAT_TX true
+#define NTFY_TITLE_PIN_HIGH "📩"
+#define NTFY_TITLE_LOW_BATTERY "🪫"
+#define NTFY_TITLE_PIN_HIGH_LOW_BATTERY "📩 + 🪫"
+#define NTFY_TITLE_HEARTBEAT_TX "🫀"
+#define NTFY_TITLE_HEARTBEAT_TX_LOW_BATTERY "🫀 + 🪫"
 #define NTFY_SERVER "https://ntfy.sh/"
 #define NTFY_TOPIC "mbx_test"
 #define NTFY_USERNAME ""
@@ -146,6 +155,15 @@
  */
 /** @brief Set to `false` to disable all NTFY notifications. */
 #define NTFY_ENABLED false
+/** @brief Set to `true` to include the current JSONL string in notification body. */
+#define NTFY_INCLUDE_JSONL false
+/** @brief Set to `true` to send NTFY notifications for `HEARTBEAT_TX` events. */
+#define NTFY_NOTIFY_HEARTBEAT_TX true
+#define NTFY_TITLE_PIN_HIGH "📩"
+#define NTFY_TITLE_LOW_BATTERY "🪫"
+#define NTFY_TITLE_PIN_HIGH_LOW_BATTERY "📩 + 🪫"
+#define NTFY_TITLE_HEARTBEAT_TX "🫀"
+#define NTFY_TITLE_HEARTBEAT_TX_LOW_BATTERY "🫀 + 🪫"
 #define NTFY_SERVER "https://ntfy.ouilogique.ch/"
 #define NTFY_TOPIC "mbx_nj"
 #define NTFY_USERNAME ""

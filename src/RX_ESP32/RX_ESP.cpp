@@ -21,20 +21,53 @@ String jsonString;
 JsonDocument jsonDoc;
 
 /**
- * @brief Return whether the current LoRa payload should be forwarded to NTFY.
+ * @brief Return whether the current payload reports a mailbox event.
  * @return true when `wakeup` equals `WAKEUP_PIN_HIGH`, false otherwise.
+ */
+bool isPinHighEvent()
+{
+    JsonVariant wakeup = jsonDoc["wakeup"];
+    if (wakeup.isNull())
+        return false;
+    return String(wakeup.as<const char *>()) == "WAKEUP_PIN_HIGH";
+}
+
+/**
+ * @brief Return whether the current payload reports a low battery condition.
+ * @return true when `volt_gpio` is below or equal to the configured threshold.
+ */
+bool isLowBatteryEvent()
+{
+    uint16_t batteryLevel = jsonDoc["volt_gpio"] | 0;
+    return batteryLevel > 0 && batteryLevel <= MQTT_BATTERY_LOW_THRESHOLD_MV;
+}
+
+/**
+ * @brief Return whether the current payload reports a TX heartbeat event.
+ * @return true when `wakeup` equals `HEARTBEAT_TX`, false otherwise.
+ */
+bool isHeartbeatTxEvent()
+{
+    JsonVariant wakeup = jsonDoc["wakeup"];
+    if (wakeup.isNull())
+        return false;
+    return String(wakeup.as<const char *>()) == "HEARTBEAT_TX";
+}
+
+/**
+ * @brief Return whether the current payload should be forwarded to NTFY.
+ * @return true on mailbox event, low battery event, or configured TX heartbeat event.
  */
 bool shouldSendNtfy()
 {
 #if !NTFY_ENABLED
     return false;
 #else
-    bool sendNtfy = false;
-    JsonVariant wakeup = jsonDoc["wakeup"];
-    if (wakeup.isNull())
-        return sendNtfy;
-    sendNtfy = String(wakeup.as<const char *>()) == "WAKEUP_PIN_HIGH";
-    return sendNtfy;
+    bool heartbeatTx = false;
+#if NTFY_NOTIFY_HEARTBEAT_TX
+    heartbeatTx = isHeartbeatTxEvent();
+#endif
+    return isPinHighEvent() || isLowBatteryEvent() || heartbeatTx;
 #endif
 }
 
