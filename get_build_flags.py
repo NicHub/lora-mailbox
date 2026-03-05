@@ -24,7 +24,7 @@ def get_last_commit_id():
             return NO_GIT_COMMIT_YET
     except Exception as e:
         print(f"Exception occurred: {e}")
-        return None
+        return NO_GIT_COMMIT_YET
 
 
 def get_uncommitted_files_count():
@@ -49,7 +49,7 @@ def get_uncommitted_files_count():
         return None
 
 
-def main():
+def get_flag_dict():
     utc_now = datetime.datetime.now()
     compilation_date = utc_now.strftime("%Y-%m-%d")
     compilation_time = utc_now.strftime("%H:%M:%S")
@@ -60,7 +60,7 @@ def main():
         f".{sys.version_info.micro}"
     )
     python_path = os.path.realpath(sys.executable).replace("\\", "\\\\")
-    last_commit_id = get_last_commit_id()
+    last_commit_id = get_last_commit_id() or NO_GIT_COMMIT_YET
     uncommitted_files_count = (
         0 if last_commit_id == NO_GIT_COMMIT_YET else get_uncommitted_files_count()
     )
@@ -76,9 +76,14 @@ def main():
         ),
     )
 
+    return dict(flag_list)
+
+
+def main():
+    flag_dict = get_flag_dict()
     flags = ""
-    for flag in flag_list:
-        flags += f"-D {flag[0]}='\"{flag[1]}\"'\n"
+    for name, value in flag_dict.items():
+        flags += f"-D {name}='\"{value}\"'\n"
 
     return flags
 
