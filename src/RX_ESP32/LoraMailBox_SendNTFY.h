@@ -32,8 +32,12 @@ public:
      */
     String getNotificationText(const JsonDocument &jsonDoc) const
     {
-        const char *wakeup = jsonDoc["wakeup"] | "";
-        uint16_t batteryLevel = jsonDoc["volt_gpio"] | 0;
+        const char *wakeup = jsonDoc["WAKEUP"] | "";
+        if (wakeup[0] == '\0')
+            wakeup = jsonDoc["wakeup"] | "";
+        uint16_t batteryLevel = jsonDoc["VGPIO"] | 0;
+        if (batteryLevel == 0)
+            batteryLevel = jsonDoc["volt_gpio"] | 0;
         bool pinHigh = strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0;
         bool lowBattery = batteryLevel > 0 && batteryLevel <= MQTT_BATTERY_LOW_THRESHOLD_MV;
         bool heartbeatTx = false;
@@ -99,7 +103,9 @@ public:
         message = alertText;
         if (!message.isEmpty())
             message += "\n";
-        if (!jsonDoc["jsonString"].isNull())
+        if (!jsonDoc["JSON_STRING"].isNull())
+            message += String(jsonDoc["JSON_STRING"].as<const char *>());
+        else if (!jsonDoc["jsonString"].isNull())
             message += String(jsonDoc["jsonString"].as<const char *>());
         else
         {

@@ -125,8 +125,12 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
     size_t resolveTopics(const JsonDocument &jsonDoc, const char **topics, size_t maxTopics) const
     {
         size_t topicCount = 0;
-        const char *wakeup = jsonDoc["wakeup"] | "";
-        uint16_t batteryMv = jsonDoc["volt_gpio"] | 0;
+        const char *wakeup = jsonDoc["WAKEUP"] | "";
+        if (wakeup[0] == '\0')
+            wakeup = jsonDoc["wakeup"] | "";
+        uint16_t batteryMv = jsonDoc["VGPIO"] | 0;
+        if (batteryMv == 0)
+            batteryMv = jsonDoc["volt_gpio"] | 0;
 
 #if defined(MQTT_CUSTOM_TOPIC_RESOLVER)
         const char *customTopic = MQTT_CUSTOM_TOPIC_RESOLVER(jsonDoc, wakeup, batteryMv);
@@ -325,7 +329,9 @@ public:
         serializeJson(jsonDoc, mqttString);
         const char *topics[MAX_TOPICS_PER_MESSAGE];
         size_t topicCount = resolveTopics(jsonDoc, topics, MAX_TOPICS_PER_MESSAGE);
-        const char *boardIdHex = jsonDoc["board_id_hex"] | "";
+        const char *boardIdHex = jsonDoc["BOARD_ID_HEX"] | "";
+        if (boardIdHex[0] == '\0')
+            boardIdHex = jsonDoc["board_id_hex"] | "";
 
         String finalTopics[MAX_TOPICS_PER_MESSAGE];
         size_t finalTopicCount = 0;

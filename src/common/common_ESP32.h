@@ -10,6 +10,7 @@
 #include <LittleFS.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
+#include <WiFi.h>
 
 #define MASK (1ULL << WAKEUP_PIN)
 
@@ -107,4 +108,13 @@ uint16_t readBatteryVoltage()
 {
     // TODO
     return 0;
+}
+
+/**
+ * @brief Return ESP32 station MAC address as `XX:XX:XX:XX:XX:XX`.
+ * @return MAC address string.
+ */
+static inline String getMacAddress()
+{
+    return WiFi.macAddress();
 }

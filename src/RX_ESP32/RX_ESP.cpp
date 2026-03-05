@@ -26,7 +26,9 @@ JsonDocument jsonDoc;
  */
 bool isPinHighEvent()
 {
-    JsonVariant wakeup = jsonDoc["wakeup"];
+    JsonVariant wakeup = jsonDoc["WAKEUP"];
+    if (wakeup.isNull())
+        wakeup = jsonDoc["wakeup"];
     if (wakeup.isNull())
         return false;
     return String(wakeup.as<const char *>()) == "WAKEUP_PIN_HIGH";
@@ -38,7 +40,9 @@ bool isPinHighEvent()
  */
 bool isLowBatteryEvent()
 {
-    uint16_t batteryLevel = jsonDoc["volt_gpio"] | 0;
+    uint16_t batteryLevel = jsonDoc["VGPIO"] | 0;
+    if (batteryLevel == 0)
+        batteryLevel = jsonDoc["volt_gpio"] | 0;
     return batteryLevel > 0 && batteryLevel <= MQTT_BATTERY_LOW_THRESHOLD_MV;
 }
 
@@ -48,7 +52,9 @@ bool isLowBatteryEvent()
  */
 bool isHeartbeatTxEvent()
 {
-    JsonVariant wakeup = jsonDoc["wakeup"];
+    JsonVariant wakeup = jsonDoc["WAKEUP"];
+    if (wakeup.isNull())
+        wakeup = jsonDoc["wakeup"];
     if (wakeup.isNull())
         return false;
     return String(wakeup.as<const char *>()) == "HEARTBEAT_TX";
@@ -103,8 +109,8 @@ void counterCheck()
 
     jsonDoc.remove("cnt");
     jsonDoc["COUNTER"]["VALUE"] = cnt;
-    jsonDoc["COUNTER"]["PREVIOUS VALUE"] = prevCnt;
-    jsonDoc["COUNTER"]["ERROR COUNT"] = errorCount;
+    jsonDoc["COUNTER"]["PREVIOUS_VALUE"] = prevCnt;
+    jsonDoc["COUNTER"]["ERROR_COUNT"] = errorCount;
     jsonDoc["COUNTER"]["STATUS"] = counterStatus ? "NOT OK" : "OK";
 
     prevCnt = cnt;
@@ -126,9 +132,13 @@ void heartBeat()
     if (heartBeat - prevHeartBeat < 5000)
         return;
     prevHeartBeat = heartBeat;
-    String timeStr = getCurrentTime();
-    jsonString = "{\"HEARTBEAT_RX\":\"" + timeStr + "\"}";
-    deserializeJson(jsonDoc, jsonString);
+    jsonDoc.clear();
+    jsonDoc["HEARTBEAT_RX"] = getCurrentTime();
+    jsonDoc["BOARD_ID_HEX"] = getMacAddress();
+    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_ws.getLocalIP().toString();
+    jsonDoc["COMPILATION_DATE"] = COMPILATION_DATE;
+    jsonDoc["COMPILATION_TIME"] = COMPILATION_TIME;
+    serializeJson(jsonDoc, jsonString);
 #if SERIAL_VERBOSITY == 2
     Serial.println(jsonString);
 #endif
@@ -143,19 +153,34 @@ void readLoRa()
     int state = radio.readData(jsonString);
     digitalWrite(LORA_LED_GREEN, LOW);
 
-    jsonDoc["LoRa STATE"] = state;
+    jsonDoc["LORA_STATE"] = state;
     if (state != RADIOLIB_ERR_NONE)
         return;
     deserializeJson(jsonDoc, jsonString);
-    jsonDoc["CURRENT TIME"] = getCurrentTime();
-    jsonDoc["COMPILATION DATE"] = COMPILATION_DATE;
-    jsonDoc["COMPILATION TIME"] = COMPILATION_TIME;
-    jsonDoc["RSSI (dBm)"] = radio.getRSSI();
-    jsonDoc["SNR (dB)"] = radio.getSNR();
-    jsonDoc["IP"] = lmb_ws.getLocalIP();
-    jsonDoc["WS CLIENT COUNT"] = lmb_ws.getWsClientCount();
+    if (!jsonDoc["board_id_hex"].isNull())
+    {
+        jsonDoc["BOARD_ID_HEX"] = jsonDoc["board_id_hex"];
+        jsonDoc.remove("board_id_hex");
+    }
+    if (!jsonDoc["wakeup"].isNull())
+    {
+        jsonDoc["WAKEUP"] = jsonDoc["wakeup"];
+        jsonDoc.remove("wakeup");
+    }
+    if (!jsonDoc["volt_gpio"].isNull())
+    {
+        jsonDoc["VGPIO"] = jsonDoc["volt_gpio"];
+        jsonDoc.remove("volt_gpio");
+    }
+    jsonDoc["CURRENT_TIME"] = getCurrentTime();
+    jsonDoc["COMPILATION_DATE"] = COMPILATION_DATE;
+    jsonDoc["COMPILATION_TIME"] = COMPILATION_TIME;
+    jsonDoc["RSSI_DBM"] = radio.getRSSI();
+    jsonDoc["SNR_DB"] = radio.getSNR();
+    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_ws.getLocalIP().toString();
+    jsonDoc["WS_CLIENT_COUNT"] = lmb_ws.getWsClientCount();
     jsonDoc["STATE"] = state;
-    jsonDoc["jsonString"] = jsonString;
+    jsonDoc["JSON_STRING"] = jsonString;
     jsonDoc["DEBUG"] = DEBUG;
 }
 
