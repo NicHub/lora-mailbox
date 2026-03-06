@@ -25,6 +25,7 @@ CALIBRATION_POINTS = [
     (3.88, 363),
     (3.75, 351),
     (3.63, 342),
+#    (1.88, 209), # Zone non linéaire, ne pas prendre en compte pour le fit. Autre batterie que les mesures précédente ?
 ]
 JSONL_PATH = Path(__file__).with_name("lora-receive.jsonl")
 HTML_PATH = Path(__file__).with_name("battery_regression_plot.html")

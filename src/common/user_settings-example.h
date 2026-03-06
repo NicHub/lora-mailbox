@@ -42,7 +42,7 @@
 #define MQTT_TOPIC_WAKEUP_PIN_HIGH "mbx_test/pin"
 #define MQTT_TOPIC_HEARTBEAT_TX "mbx_test/heartbeat"
 #define MQTT_TOPIC_BOOT "mbx_test/boot"
-#define MQTT_BATTERY_LOW_THRESHOLD_MV 320
+#define MQTT_BATTERY_LOW_THRESHOLD_MV 350
 #define MQTT_TOPIC_LOW_BATTERY "mbx_test/low_battery"
 /**
  * @brief Optional hook for extra MQTT topic routing constraints.
@@ -120,7 +120,7 @@
 #define MQTT_TOPIC_WAKEUP_PIN_HIGH "mbx_nj/pin"
 #define MQTT_TOPIC_HEARTBEAT_TX "mbx_nj/heartbeat"
 #define MQTT_TOPIC_BOOT "mbx_nj/boot"
-#define MQTT_BATTERY_LOW_THRESHOLD_MV 320
+#define MQTT_BATTERY_LOW_THRESHOLD_MV 350
 #define MQTT_TOPIC_LOW_BATTERY "mbx_nj/low_battery"
 /**
  * @brief Optional hook for extra MQTT topic routing constraints.
