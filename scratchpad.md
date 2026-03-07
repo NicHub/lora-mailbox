@@ -128,6 +128,16 @@ Goal: choose a safe and reliable battery solution for small IoT devices, with lo
 pio project config
 ```
 
+# IDs
+
+rolf
+18140340520724564038
+FBBF6F978A698846
+nico
+5122412905211900040
+47167765C8083088
+
 # TODO
 
 ...
+
