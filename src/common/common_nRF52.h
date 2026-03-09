@@ -11,6 +11,7 @@
 #include <InternalFileSystem.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
+#include "user_settings.h"
 
 // https://github.com/meshtastic/firmware/blob/master/variants/seeed_xiao_nrf52840_kit/variant.h
 // Wio-SX1262 for XIAO (standalone SKU 113010003 or nRF52840 kit SKU 102010710)
@@ -151,9 +152,23 @@ void setupLittleFS()
 
 uint16_t readBatteryVoltage()
 {
-    // Set VBAT_ENABLE to OUTPUT LOW to read VBAT.
-    // Never set it HIGH during charging (risk of damaging PIN_VBAT).
-    // See: https://wiki.seeedstudio.com/XIAO_BLE/#q3-what-are-the-considerations-when-using-xiao-nrf52840-sense-for-battery-charging
+    /*
+        VBAT_ENABLE controls the VBAT voltage divider for PIN_VBAT.
+        See: https://wiki.seeedstudio.com/XIAO_BLE/#q3-what-are-the-considerations-when-using-xiao-nrf52840-sense-for-battery-charging
+
+        pinMode   digitalWrite   SAFE   USAGE             EFFECT
+        INPUT     LOW            YES    low consumption   Divider off (high-Z)
+        INPUT     HIGH           YES    low consumption   Divider off (high-Z)
+        OUTPUT    LOW            YES    bat read          Divider on → VBAT readable on PIN_VBAT
+        OUTPUT    HIGH           NO     avoid             Forces 3.3V → may exceed 3.6V on PIN_VBAT
+
+        Recommended sequence:
+        pinMode(VBAT_ENABLE, OUTPUT);
+        digitalWrite(VBAT_ENABLE, LOW);   // enable divider
+        int vbat = analogRead(A0);
+        pinMode(VBAT_ENABLE, INPUT);      // disable divider
+    */
+
     pinMode(VBAT_ENABLE, OUTPUT);
     digitalWrite(VBAT_ENABLE, LOW);
     pinMode(PIN_VBAT, INPUT);
@@ -216,7 +231,7 @@ void testAllLEDs()
     delay(wait_2);
 }
 
-#if DEBUG
+#if defined(DEBUG) && DEBUG
 static inline void writeRgbLeds(
     uint32_t LED_RED_STATE,
     uint32_t LED_GREEN_STATE,
