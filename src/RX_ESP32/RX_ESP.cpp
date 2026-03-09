@@ -220,6 +220,7 @@ void setupGPIOs()
 void setup()
 {
     setupGPIOs();
+    blink(8UL, 200UL, 5UL, LORA_LED_GREEN, false);
     setupSerial();
     setupLoRa();
     setupLoRaRX();
@@ -237,6 +238,8 @@ void loop()
         return;
     loraEvent = false;
     readLoRa();
+    blink(8UL, 60UL, 5UL, LORA_LED_GREEN, false);
     counterCheck();
     broadcastResults();
+    blink(8UL, 60UL, 5UL, LORA_LED_GREEN, false);
 }
