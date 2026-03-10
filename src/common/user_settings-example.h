@@ -25,6 +25,9 @@
 #define WIFI_SSID ""
 #define WIFI_PASSWORD ""
 
+/** @brief POSIX timezone string used by NTP/localtime; see https://github.com/nayarsystems/posix_tz_db for timezone values. */
+#define NTP_TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
+
 /** @brief MQTT settings. */
 /**
  * @code
@@ -101,6 +104,9 @@
 /** @brief Wi-Fi credentials. */
 #define WIFI_SSID ""
 #define WIFI_PASSWORD ""
+
+/** @brief POSIX timezone string used by NTP/localtime; see https://github.com/nayarsystems/posix_tz_db for timezone values. */
+#define NTP_TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
 
 /** @brief MQTT settings. */
 /**

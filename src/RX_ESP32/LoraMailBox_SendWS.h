@@ -153,11 +153,9 @@ public:
     bool synchronizeNTPTime()
     {
         const char *ntpServer = "pool.ntp.org";
-        const long gmtOffset_sec = 3600;     // Adjust for your timezone (e.g., 3600 for GMT+1)
-        const int daylightOffset_sec = 3600; // Daylight saving time offset (if applicable)
 
         Serial.println("Synchronizing time with NTP server...");
-        configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+        configTzTime(NTP_TIMEZONE, ntpServer);
 
         // Wait for time to be set
         time_t now = 0;
@@ -178,6 +176,7 @@ public:
             Serial.println("\nTime synchronized successfully");
             Serial.print("Current time: ");
             Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+            Serial.printf("DST active: %s\n", timeinfo.tm_isdst > 0 ? "yes" : "no");
             return true;
         }
         else
