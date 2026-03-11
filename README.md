@@ -59,6 +59,10 @@ This can be solved by installing Rosetta:
 softwareupdate --install-rosetta --agree-to-license
 ```
 
+## See also
+
+-   https://github.com/PricelessToolkit/PirBOX-LITE.git
+
 ## License
 
 Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
