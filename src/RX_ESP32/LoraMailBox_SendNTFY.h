@@ -57,7 +57,11 @@ public:
         else if (lowBattery)
             text = NTFY_TITLE_LOW_BATTERY;
 
-        text += " (Vgpio = " + String(batteryLevel) + ")";
+        text += " (";
+        if (!jsonDoc["VFIT"].isNull())
+            text += "Vfit = " + String(jsonDoc["VFIT"].as<int>()) + "mV, ";
+        text += "Vgpio = " + String(batteryLevel);
+        text += ")";
 
         return text;
     }

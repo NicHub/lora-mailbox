@@ -25,6 +25,12 @@ CALIBRATION_POINTS = [
     (3.88, 363),
     (3.75, 351),
     (3.63, 342),
+    (3.80, 358),
+    (4.07, 381),
+    (3.94, 369),
+    (4.21, 396),
+    (4.15, 390),
+    (3.73, 351),
 #    (1.88, 209), # Zone non linéaire, ne pas prendre en compte pour le fit. Autre batterie que les mesures précédente ?
 ]
 JSONL_PATH = Path(__file__).with_name("lora-receive.jsonl")
@@ -404,6 +410,7 @@ def main() -> None:
     layout = column(summary, calibration_summary, calibration_plot, minutes_plot)
 
     print(f"Calibration: Vgpio = {calibration_slope:.6f} * V + {calibration_intercept:.6f}")
+    print(f"Calibration: Vmultimeter = {battery_mv_slope:.3f} * Vgpio + {battery_mv_intercept:.0f}")
     print(f"Decharge: Vgpio = {time_slope:.6f} * minutes + {time_intercept:.6f}")
     print(f"Heure de debut: {start_dt:%Y-%m-%d %H:%M:%S}")
     print(f"Heure de fin:   {end_dt:%Y-%m-%d %H:%M:%S}")

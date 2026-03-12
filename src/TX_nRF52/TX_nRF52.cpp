@@ -62,6 +62,37 @@ void setupRtcWakeup()
     }
 }
 
+// Low-power sleep using RTC, without pin wakeup (unconditional wait).
+static void sleepSecondsNoPin(uint32_t seconds)
+{
+    uint32_t ticks = seconds * RTC_TICKS_PER_SECOND;
+    if (ticks == 0)
+        ticks = 1;
+    if (ticks > 0x00FFFFFFUL)
+        ticks = 0x00FFFFFFUL;
+
+    rtcTimeoutElapsed = false;
+    NRF_RTC2->TASKS_STOP = 1;
+    NRF_RTC2->TASKS_CLEAR = 1;
+    NRF_RTC2->PRESCALER = RTC_PRESCALER;
+    NRF_RTC2->CC[0] = ticks;
+    NRF_RTC2->EVENTS_COMPARE[0] = 0;
+    NRF_RTC2->INTENSET = RTC_INTENSET_COMPARE0_Msk;
+    NVIC_ClearPendingIRQ(RTC2_IRQn);
+    NVIC_EnableIRQ(RTC2_IRQn);
+    NRF_RTC2->TASKS_START = 1;
+
+    while (!rtcTimeoutElapsed)
+    {
+        __SEV();
+        __WFE();
+        __WFE();
+    }
+
+    NRF_RTC2->TASKS_STOP = 1;
+    NRF_RTC2->INTENCLR = RTC_INTENCLR_COMPARE0_Msk;
+}
+
 WakeupReason sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
 {
     pinMode(WAKEUP_PIN, INPUT);
@@ -156,10 +187,20 @@ void loop()
     if (wakeupReason == WakeupReason::HeartbeatTx)
         advanceHeartbeatDeadline(millis());
 
+    // Put radio to sleep immediately after transmission.
+    // The SX1262 consumes ~1.6 mA in standby vs ~0.9 µA in sleep.
+    // RadioLib wakes it automatically on the next transmit() call (NSS falling edge).
+    radio.sleep();
+
+    // Flush serial before sleeping to avoid UART current draw on buffered data.
+    Serial.flush();
+
     writeRgbLeds(0, 1, 0);
     saveMsgCounterToFile(++cnt);
 
-    delay(5000 - millis() % 1000);
+    // Low-power wait replacing the active-CPU delay (CPU: ~3-4 mA → ~2 µA).
+    sleepSecondsNoPin(5);
+
     pinMode(WAKEUP_PIN, INPUT);
     uint32_t now_ms = millis();
     if (isHeartbeatDue(now_ms))

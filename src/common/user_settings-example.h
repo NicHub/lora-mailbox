@@ -18,8 +18,9 @@
 /** @brief Miscellaneous settings. */
 #define DEBUG true
 #define SERIAL_VERBOSITY 2
-/** @brief Number of heartbeat messages per day (`0..86400`, `0` disables heartbeat). */
-#define HEARTBEATS_PER_DAY 86400
+/** @brief Battery fit coefficients used to compute `VFIT` from `VGPIO`. */
+#define VFIT_SLOPE 10.805f
+#define VFIT_OFFSET -55.f
 
 /** @brief Wi-Fi credentials. */
 #define WIFI_SSID ""
@@ -98,8 +99,9 @@
 /** @brief Miscellaneous settings. */
 #define DEBUG true
 #define SERIAL_VERBOSITY 2
-/** @brief Number of heartbeat messages per day (`0..86400`, `0` disables heartbeat). */
-#define HEARTBEATS_PER_DAY 86400
+/** @brief Battery fit coefficients used to compute `VFIT` from `VGPIO`. */
+#define VFIT_SLOPE 10.805f
+#define VFIT_OFFSET -55.f
 
 /** @brief Wi-Fi credentials. */
 #define WIFI_SSID ""

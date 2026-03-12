@@ -171,6 +171,8 @@ void readLoRa()
     {
         jsonDoc["VGPIO"] = jsonDoc["volt_gpio"];
         jsonDoc.remove("volt_gpio");
+        float vgpio = jsonDoc["VGPIO"].as<float>();
+        jsonDoc["VFIT"] = static_cast<int>(VFIT_SLOPE * vgpio + VFIT_OFFSET);
     }
     jsonDoc["CURRENT_TIME"] = getCurrentTime();
     jsonDoc["COMPILATION_DATE"] = COMPILATION_DATE;
