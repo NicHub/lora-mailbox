@@ -61,20 +61,16 @@ bool isHeartbeatTxEvent()
 }
 
 /**
- * @brief Return whether the current payload should be forwarded to NTFY.
- * @return true on mailbox event, low battery event, or configured TX heartbeat event.
+ * @brief Forward the current payload to NTFY when it matches notification rules.
  */
-bool shouldSendNtfy()
+void broadcastNtfy()
 {
-#if !NTFY_ENABLED
-    return false;
-#else
-    bool heartbeatTx = false;
+    bool shouldNotifyNtfy = isPinHighEvent() || isLowBatteryEvent();
 #if NTFY_NOTIFY_HEARTBEAT_TX
-    heartbeatTx = isHeartbeatTxEvent();
+    shouldNotifyNtfy = shouldNotifyNtfy || isHeartbeatTxEvent();
 #endif
-    return isPinHighEvent() || isLowBatteryEvent() || heartbeatTx;
-#endif
+    if (shouldNotifyNtfy)
+        lmb_ntfy.sendMsg(jsonDoc);
 }
 
 void broadcastResults()
@@ -82,8 +78,7 @@ void broadcastResults()
     serializeJson(jsonDoc, jsonString);
     lmb_wifi.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
-    if (shouldSendNtfy())
-        lmb_ntfy.sendMsg(jsonDoc);
+    broadcastNtfy();
 #if SERIAL_VERBOSITY == 1
     uint16_t ctr = jsonDoc["COUNTER"]["VALUE"].as<uint16_t>();
     static uint16_t first_ctr = ctr;
