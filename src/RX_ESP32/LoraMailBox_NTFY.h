@@ -6,22 +6,20 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
+#pragma once
+
+#include <Arduino.h>
+#include <ArduinoJson.h>
+#include "user_settings/user_settings.h"
+
+#if NTFY_ENABLED
 #include <WiFi.h>
-#include <ESPAsyncWebServer.h>
-#include <AsyncTCP.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
-#include "user_settings/user_settings.h"
+#include <time.h>
 
 class LoraMailBox_NTFY
 {
-private:
-    AsyncWebServer server{80};
-    AsyncWebSocket ws{"/ws"};
-    String latestMessage = "";
-
-#include "index.html"
-
 public:
     LoraMailBox_NTFY() {}
 
@@ -74,7 +72,15 @@ public:
     String getNotificationTitle(const JsonDocument &jsonDoc) const
     {
         (void)jsonDoc;
-        return "LoRa Mailbox";
+        struct tm timeinfo;
+        char timeStr[9] = "";
+        if (getLocalTime(&timeinfo))
+            strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
+
+        String title = String(NTFY_RECIPIENT_NAME) + " got mail";
+        if (timeStr[0] != '\0')
+            title += " @ " + String(timeStr);
+        return title;
     }
 
     /**
@@ -137,3 +143,32 @@ public:
 #endif
     }
 };
+
+#else
+
+class LoraMailBox_NTFY
+{
+public:
+    LoraMailBox_NTFY() {}
+
+    String getNotificationText(const JsonDocument &jsonDoc) const
+    {
+        (void)jsonDoc;
+        return "";
+    }
+
+    String getNotificationTitle(const JsonDocument &jsonDoc) const
+    {
+        (void)jsonDoc;
+        return "";
+    }
+
+    bool sendMsg(const JsonDocument &jsonDoc, const String &topic = "")
+    {
+        (void)jsonDoc;
+        (void)topic;
+        return false;
+    }
+};
+
+#endif

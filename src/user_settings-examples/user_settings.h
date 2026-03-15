@@ -53,4 +53,5 @@
 #define NTFY_TITLE_HEARTBEAT_TX "🔔"
 #define NTFY_TITLE_HEARTBEAT_TX_LOW_BATTERY "🔔 + 🪫"
 #define NTFY_SERVER "https://ntfy.ouilogique.ch/"
+#define NTFY_RECIPIENT_NAME "nico"
 #define NTFY_TOPIC "mbx_nj"
