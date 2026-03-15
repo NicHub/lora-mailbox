@@ -133,26 +133,7 @@ public:
         NotificationStatus status = evaluateNotificationStatus(jsonDoc);
         String title = getNotificationTitle(jsonDoc, status);
         String alertText = getNotificationText(jsonDoc, status);
-
-        String message;
-#if NTFY_INCLUDE_JSONL
-        message = alertText;
-        if (!message.isEmpty())
-            message += "\n\n```json\n";
-        if (!jsonDoc["JSON_STRING"].isNull())
-            message += String(jsonDoc["JSON_STRING"].as<const char *>());
-        else if (!jsonDoc["jsonString"].isNull())
-            message += String(jsonDoc["jsonString"].as<const char *>());
-        else
-        {
-            String jsonPayload;
-            serializeJson(jsonDoc, jsonPayload);
-            message += jsonPayload;
-        }
-        message += "\n```";
-#else
-        message = alertText;
-#endif
+        String message = alertText;
 
         https.addHeader("Title", title);
 
