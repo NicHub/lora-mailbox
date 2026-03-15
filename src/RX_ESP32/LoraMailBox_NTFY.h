@@ -23,7 +23,7 @@ class LoraMailBox_NTFY
 public:
     LoraMailBox_NTFY() {}
 
-    NotificationStatus evaluateNotificationStatus(const JsonDocument &jsonDoc) const
+    NotificationStatus getNotificationStatus(const JsonDocument &jsonDoc) const
     {
         const char *wakeup = jsonDoc["WAKEUP"] | "";
         if (wakeup[0] == '\0')
@@ -130,7 +130,7 @@ public:
         if (!https.begin(client, url))
             return false;
 
-        NotificationStatus status = evaluateNotificationStatus(jsonDoc);
+        NotificationStatus status = getNotificationStatus(jsonDoc);
         String title = getNotificationTitle(jsonDoc, status);
         String alertText = getNotificationText(jsonDoc, status);
         String message = alertText;
@@ -157,7 +157,7 @@ class LoraMailBox_NTFY
 public:
     LoraMailBox_NTFY() {}
 
-    NotificationStatus evaluateNotificationStatus(const JsonDocument &jsonDoc) const
+    NotificationStatus getNotificationStatus(const JsonDocument &jsonDoc) const
     {
         (void)jsonDoc;
         return NotificationStatus::None;
