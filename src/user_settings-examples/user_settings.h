@@ -34,8 +34,8 @@
 /** @brief MQTT settings. */
 #define MQTT_ENABLED true
 #define MQTT_SERVER "mqtt.ouilogique.ch"
-#define MQTT_PORT 1883
 #define MQTT_USE_TLS true
+#define MQTT_PORT (MQTT_USE_TLS ? 8883 : 1883)
 #define MQTT_TOPIC "mbx_nj"
 #define MQTT_TOPIC_HEARTBEAT_RX "mbx_nj/heartbeat_rx"
 #define MQTT_TOPIC_WAKEUP_PIN_HIGH "mbx_nj/pin"

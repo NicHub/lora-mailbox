@@ -14,7 +14,7 @@
 #include "LoraMailBox_MQTT.h"
 #include "LoraMailBox_NTFY.h"
 
-LoraMailBox_WIFI lmb_ws;
+LoraMailBox_WIFI lmb_wifi;
 LoraMailBox_MQTT lmb_mqtt;
 LoraMailBox_NTFY lmb_ntfy;
 String jsonString;
@@ -80,7 +80,7 @@ bool shouldSendNtfy()
 void broadcastResults()
 {
     serializeJson(jsonDoc, jsonString);
-    lmb_ws.sendMsg(jsonString);
+    lmb_wifi.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
     if (shouldSendNtfy())
         lmb_ntfy.sendMsg(jsonDoc);
@@ -135,14 +135,14 @@ void heartBeat()
     jsonDoc.clear();
     jsonDoc["HEARTBEAT_RX"] = getCurrentTime();
     jsonDoc["BOARD_ID_HEX"] = getMacAddress();
-    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_ws.getLocalIP().toString();
+    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
     jsonDoc["COMPILATION_DATE"] = COMPILATION_DATE;
     jsonDoc["COMPILATION_TIME"] = COMPILATION_TIME;
     serializeJson(jsonDoc, jsonString);
 #if SERIAL_VERBOSITY == 2
     Serial.println(jsonString);
 #endif
-    lmb_ws.sendMsg(jsonString);
+    lmb_wifi.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
 }
 
@@ -179,8 +179,8 @@ void readLoRa()
     jsonDoc["COMPILATION_TIME"] = COMPILATION_TIME;
     jsonDoc["RSSI_DBM"] = radio.getRSSI();
     jsonDoc["SNR_DB"] = radio.getSNR();
-    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_ws.getLocalIP().toString();
-    jsonDoc["WS_CLIENT_COUNT"] = lmb_ws.getWsClientCount();
+    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    jsonDoc["WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
     jsonDoc["STATE"] = state;
     jsonDoc["JSON_STRING"] = jsonString;
     jsonDoc["DEBUG"] = DEBUG;
@@ -194,8 +194,8 @@ void setupMQTT()
 
 void setupWiFi()
 {
-    lmb_ws.begin();
-    lmb_ws.synchronizeNTPTime();
+    lmb_wifi.begin();
+    lmb_wifi.synchronizeNTPTime();
 }
 
 void setupLoRaRX()
@@ -232,7 +232,7 @@ void setup()
 
 void loop()
 {
-    lmb_ws.ensureWiFiConnected();
+    lmb_wifi.ensureWiFiConnected();
     if (digitalRead(NO_HEARTBEAT_PIN))
         heartBeat();
     yield();
