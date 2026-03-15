@@ -15,7 +15,9 @@
 /** @brief Battery fit coefficients used to compute `VFIT` from `VGPIO`. */
 #define VFIT_SLOPE 10.805f
 #define VFIT_OFFSET -55.f
-#define VGPIO_BATTERY_LOW_THRESHOLD 350
+#define VBAT_MAX 4100.f
+#define VBAT_MIN 3600.f
+#define VBAT_NO_BATTERY_THRESHOLD (100.f * VFIT_SLOPE + VFIT_OFFSET)
 
 /** @brief POSIX timezone string used by NTP/localtime; see https://github.com/nayarsystems/posix_tz_db for timezone values. */
 #define NTP_TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"

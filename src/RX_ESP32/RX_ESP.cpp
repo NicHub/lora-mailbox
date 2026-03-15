@@ -40,10 +40,10 @@ bool isPinHighEvent()
  */
 bool isLowBatteryEvent()
 {
-    uint16_t batteryLevel = jsonDoc["VGPIO"] | 0;
-    if (batteryLevel == 0)
-        batteryLevel = jsonDoc["volt_gpio"] | 0;
-    return batteryLevel > 0 && batteryLevel <= VGPIO_BATTERY_LOW_THRESHOLD;
+    JsonVariant batteryStatus = jsonDoc["VBAT_STATUS"];
+    if (batteryStatus.isNull())
+        return false;
+    return String(batteryStatus.as<const char *>()) == "LOW";
 }
 
 /**
@@ -166,8 +166,11 @@ void readLoRa()
     {
         jsonDoc["VGPIO"] = jsonDoc["volt_gpio"];
         jsonDoc.remove("volt_gpio");
-        float vgpio = jsonDoc["VGPIO"].as<float>();
-        jsonDoc["VFIT"] = static_cast<int>(VFIT_SLOPE * vgpio + VFIT_OFFSET);
+        BatteryMeasurement battery = Vgpio2Vbat(jsonDoc["VGPIO"].as<uint16_t>());
+        jsonDoc["VBAT"] = battery.vbatMv;
+        jsonDoc["VBAT_PERCENT"] = battery.batteryPercent;
+        jsonDoc["VBAT_GLYPH"] = battery.glyph;
+        jsonDoc["VBAT_STATUS"] = battery.status;
     }
     jsonDoc["CURRENT_TIME"] = getCurrentTime();
     jsonDoc["COMPILATION_DATE"] = COMPILATION_DATE;

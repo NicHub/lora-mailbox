@@ -106,8 +106,9 @@ private:
         addTopicIfUnique(customTopic, topics, topicCount, maxTopics);
 #endif
 
-#if defined(MQTT_TOPIC_LOW_BATTERY) && defined(VGPIO_BATTERY_LOW_THRESHOLD)
-        if (batteryMv > 0 && batteryMv <= VGPIO_BATTERY_LOW_THRESHOLD)
+#if defined(MQTT_TOPIC_LOW_BATTERY)
+        const char *batteryStatus = jsonDoc["VBAT_STATUS"] | "";
+        if (strcmp(batteryStatus, "LOW") == 0)
             addTopicIfUnique(MQTT_TOPIC_LOW_BATTERY, topics, topicCount, maxTopics);
 #endif
 

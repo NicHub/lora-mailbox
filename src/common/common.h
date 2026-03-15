@@ -35,6 +35,61 @@ enum class WakeupReason : uint8_t
     HeartbeatTx,
 };
 
+struct BatteryMeasurement
+{
+    int vbatMv;
+    int batteryPercent;
+    const char *glyph;
+    const char *status;
+};
+
+static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
+{
+    BatteryMeasurement measurement{};
+
+    // Convert the raw GPIO-derived voltage to an estimated battery voltage.
+    measurement.vbatMv = static_cast<int>(VFIT_SLOPE * static_cast<float>(vgpioMv) + VFIT_OFFSET);
+
+    // Map the estimated battery voltage to a 0..100 percent range.
+    if (measurement.vbatMv >= VBAT_MAX)
+        measurement.batteryPercent = 100;
+    else if (measurement.vbatMv <= VBAT_MIN)
+        measurement.batteryPercent = 0;
+    else
+        measurement.batteryPercent = static_cast<int>(
+            (100.f * static_cast<float>(measurement.vbatMv - VBAT_MIN)) /
+                static_cast<float>(VBAT_MAX - VBAT_MIN) +
+            0.5f);
+
+    // Pick a compact battery glyph for quick display in notifications.
+    if (measurement.vbatMv >= VBAT_MAX)
+        measurement.glyph = "⚡";
+    else if (measurement.vbatMv < VBAT_NO_BATTERY_THRESHOLD)
+        measurement.glyph = "🔌";
+    else if (measurement.batteryPercent < 5)
+        measurement.glyph = "▁";
+    else if (measurement.batteryPercent < 25)
+        measurement.glyph = "▂";
+    else if (measurement.batteryPercent < 50)
+        measurement.glyph = "▄";
+    else if (measurement.batteryPercent < 75)
+        measurement.glyph = "▆";
+    else
+        measurement.glyph = "█";
+
+    // Derive the coarse battery status used by MQTT/NTFY routing logic.
+    if (measurement.vbatMv >= VBAT_MAX)
+        measurement.status = "HIGH";
+    else if (measurement.vbatMv >= VBAT_MIN)
+        measurement.status = "OK";
+    else if (measurement.vbatMv >= VBAT_NO_BATTERY_THRESHOLD)
+        measurement.status = "LOW";
+    else
+        measurement.status = "NOBAT";
+
+    return measurement;
+}
+
 static inline const char* wakeupReasonToString(WakeupReason reason)
 {
     switch (reason)

@@ -36,8 +36,12 @@ public:
         uint16_t batteryLevel = jsonDoc["VGPIO"] | 0;
         if (batteryLevel == 0)
             batteryLevel = jsonDoc["volt_gpio"] | 0;
+        int vbat = jsonDoc["VBAT"] | 0;
+        int batteryPercent = jsonDoc["VBAT_PERCENT"] | 0;
+        const char *batteryGlyph = jsonDoc["VBAT_GLYPH"] | "";
+        const char *batteryStatus = jsonDoc["VBAT_STATUS"] | "";
         bool pinHigh = strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0;
-        bool lowBattery = batteryLevel > 0 && batteryLevel <= VGPIO_BATTERY_LOW_THRESHOLD;
+        bool lowBattery = strcmp(batteryStatus, "LOW") == 0;
         bool heartbeatTx = false;
 #if NTFY_NOTIFY_HEARTBEAT_TX
         heartbeatTx = strcmp(wakeup, "HEARTBEAT_TX") == 0;
@@ -55,10 +59,17 @@ public:
         else if (lowBattery)
             text = NTFY_TITLE_LOW_BATTERY;
 
+        text += " ";
+        text += batteryGlyph;
+        text += " ";
+        text += String(batteryPercent);
+        text += "% ";
         text += " (";
-        if (!jsonDoc["VFIT"].isNull())
-            text += "Vfit = " + String(jsonDoc["VFIT"].as<int>()) + "mV, ";
-        text += "Vgpio = " + String(batteryLevel);
+        text += String(vbat);
+        text += "mV, ";
+        text += batteryStatus;
+        text += ", ";
+        text += String(batteryLevel);
         text += ")";
 
         return text;
