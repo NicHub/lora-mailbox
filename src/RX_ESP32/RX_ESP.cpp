@@ -4,9 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#define NO_HEARTBEAT_PIN D5
-#define WAKEUP_PIN D10
-
 #include <Arduino.h>
 #include "common/common_ESP32.h"
 #include "common/common.h"
@@ -131,10 +128,10 @@ void heartBeat()
 
 void readLoRa()
 {
-    digitalWrite(LORA_LED_GREEN, HIGH);
+    digitalWrite(board::hw::lora_led_green, HIGH);
     radio.startReceive();
     int state = radio.readData(jsonString);
-    digitalWrite(LORA_LED_GREEN, LOW);
+    digitalWrite(board::hw::lora_led_green, LOW);
 
     jsonDoc["LORA_STATE"] = state;
     if (state != RADIOLIB_ERR_NONE)
@@ -155,7 +152,7 @@ void readLoRa()
         jsonDoc["VGPIO"] = jsonDoc["volt_gpio"];
         jsonDoc.remove("volt_gpio");
         BatteryMeasurement battery = Vgpio2Vbat(jsonDoc["VGPIO"].as<uint16_t>());
-        jsonDoc["VBAT"] = battery.vbatMv;
+        jsonDoc["VBAT_MV"] = battery.vbatMv;
         jsonDoc["VBAT_PERCENT"] = battery.batteryPercent;
         jsonDoc["VBAT_GLYPH"] = battery.glyph;
         jsonDoc["VBAT_STATUS"] = battery.status;
@@ -196,19 +193,18 @@ void setupLoRaRX()
 void setupGPIOs()
 {
     /**
-     * @note On XIAO ESP32S3 with SX1262 shield, `LORA_USER_BUTTON` and
+     * @note On XIAO ESP32S3 with SX1262 shield, `board::hw::lora_user_button` and
      * `LED_BUILTIN` share GPIO21. Driving `LED_BUILTIN` high while pressing
      * the user button can create a short-circuit to GND.
      * @note Keep `pinMode(LED_BUILTIN, OUTPUT);` disabled for safety.
      */
-    pinMode(LORA_LED_GREEN, OUTPUT);
-    pinMode(NO_HEARTBEAT_PIN, INPUT_PULLUP);
+    pinMode(board::hw::lora_led_green, OUTPUT);
 }
 
 void setup()
 {
     setupGPIOs();
-    blink(8UL, 200UL, 5UL, LORA_LED_GREEN, false);
+    blink(8UL, 200UL, 5UL, board::hw::lora_led_green, false);
     setupSerial();
     setupLoRa();
     setupLoRaRX();
@@ -219,15 +215,14 @@ void setup()
 void loop()
 {
     lmb_wifi.ensureWiFiConnected();
-    if (digitalRead(NO_HEARTBEAT_PIN))
-        heartBeat();
+    heartBeat();
     yield();
     if (!loraEvent)
         return;
     loraEvent = false;
     readLoRa();
-    blink(8UL, 60UL, 5UL, LORA_LED_GREEN, false);
+    blink(8UL, 60UL, 5UL, board::hw::lora_led_green, false);
     counterCheck();
     broadcastResults();
-    blink(8UL, 60UL, 5UL, LORA_LED_GREEN, false);
+    blink(8UL, 60UL, 5UL, board::hw::lora_led_green, false);
 }

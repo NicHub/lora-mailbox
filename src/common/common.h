@@ -35,6 +35,13 @@ enum class WakeupReason : uint8_t
     HeartbeatTx,
 };
 
+enum class NotificationStatus : uint8_t
+{
+    None,
+    MessageReceived,
+    Heartbeat,
+};
+
 struct BatteryMeasurement
 {
     int vbatMv;
@@ -169,7 +176,7 @@ void transmitLoRa(
 
 void setupLoRa()
 {
-    radio = new Module(CS, IRQ, RST, LORA_GPIO_PIN);
+    radio = new Module(board::hw::lora_cs, board::hw::lora_irq, board::hw::lora_rst, board::hw::lora_gpio);
     Serial.print(F(PREFIX "Initializing LoRa..."));
     int state = radio.begin(
         LORA_FREQ,
