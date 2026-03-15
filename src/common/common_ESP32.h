@@ -29,6 +29,7 @@
 #define PREFIX "\n[" PROJECT_NAME "] "
 
 void debounce(uint32_t);
+void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
 
 void setupDeepSleep()
 {
@@ -70,8 +71,6 @@ void saveMsgCounterToFile(uint16_t cnt)
     Serial.print("\t");
     Serial.print(millis() - t1);
 }
-
-void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
 
 void setupLittleFS()
 {

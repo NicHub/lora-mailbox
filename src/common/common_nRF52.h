@@ -42,6 +42,7 @@ File file(InternalFS);
 Adafruit_LittleFS littleFS;
 
 void debounce(uint32_t);
+void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
 
 /*
  * 64 bit-long BOARD ID
@@ -123,8 +124,6 @@ void saveMsgCounterToFile(uint16_t cnt)
     Serial.print("\t");
     Serial.print(millis() - t1);
 }
-
-void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
 
 void setupLittleFS()
 {
