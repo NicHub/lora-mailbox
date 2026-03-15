@@ -11,31 +11,39 @@ import shutil
 Import("env")
 
 project_dir = Path(env["PROJECT_DIR"])
-examples_dir = project_dir / "src" / "user_settings-examples"
-settings_dir = project_dir / "src" / "user_settings"
-
-if not examples_dir.is_dir():
-    raise SystemExit(
-        "[ouilogique.com]\n"
-        f"Missing directory: {examples_dir.relative_to(project_dir)}"
-    )
-
-settings_dir.mkdir(parents=True, exist_ok=True)
+copy_operations = [
+    (
+        project_dir / "src" / "user_settings-examples",
+        project_dir / "src" / "user_settings",
+    ),
+    (
+        project_dir / "user_settings-example.ini",
+        project_dir / "user_settings.ini",
+    ),
+]
 
 copied_files = []
-for source in sorted(examples_dir.iterdir()):
-    if not source.is_file():
-        continue
+for source, destination in copy_operations:
+    if not source.exists():
+        raise SystemExit(
+            "[ouilogique.com]\n"
+            f"Missing path: {source.relative_to(project_dir)}"
+        )
 
-    destination = settings_dir / source.name
     if destination.exists():
         continue
 
-    shutil.copy2(source, destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
+    if source.is_dir():
+        shutil.copytree(source, destination)
+    else:
+        shutil.copy2(source, destination)
+
     copied_files.append(destination.relative_to(project_dir))
 
 if copied_files:
-    print("[ouilogique.com] Created local user settings files:")
+    print("[ouilogique.com] Created local user settings paths:")
     for path in copied_files:
         print(f"  - {path}")
-    print("[ouilogique.com] Update these files with your local configuration.")
+    print("[ouilogique.com] Update these paths with your local configuration.")

@@ -96,7 +96,8 @@ pio device monitor -e seeed_xiao_esp32s3-rx
 
 ```
 
-mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mailboxtestnj"
+mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_nj/#" -v
+mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/#" -v
 
 ```
 
