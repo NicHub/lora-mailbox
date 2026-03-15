@@ -13,5 +13,6 @@ __pycache__/
 #
 # user settings
 #
+user_settings.ini
 src/user_settings*/
 !src/user_settings-examples/
