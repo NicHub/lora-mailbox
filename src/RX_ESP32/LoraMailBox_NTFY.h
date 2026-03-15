@@ -23,7 +23,7 @@ class LoraMailBox_NTFY
 public:
     LoraMailBox_NTFY() {}
 
-    NotificationStatus evaluateNotificationStatus(const JsonDocument &jsonDoc) const
+    NotificationStatus getNotificationStatus(const JsonDocument &jsonDoc) const
     {
         const char *wakeup = jsonDoc["WAKEUP"] | "";
         if (wakeup[0] == '\0')
@@ -130,29 +130,10 @@ public:
         if (!https.begin(client, url))
             return false;
 
-        NotificationStatus status = evaluateNotificationStatus(jsonDoc);
+        NotificationStatus status = getNotificationStatus(jsonDoc);
         String title = getNotificationTitle(jsonDoc, status);
         String alertText = getNotificationText(jsonDoc, status);
-
-        String message;
-#if NTFY_INCLUDE_JSONL
-        message = alertText;
-        if (!message.isEmpty())
-            message += "\n\n```json\n";
-        if (!jsonDoc["JSON_STRING"].isNull())
-            message += String(jsonDoc["JSON_STRING"].as<const char *>());
-        else if (!jsonDoc["jsonString"].isNull())
-            message += String(jsonDoc["jsonString"].as<const char *>());
-        else
-        {
-            String jsonPayload;
-            serializeJson(jsonDoc, jsonPayload);
-            message += jsonPayload;
-        }
-        message += "\n```";
-#else
-        message = alertText;
-#endif
+        String message = alertText;
 
         https.addHeader("Title", title);
 
@@ -176,7 +157,7 @@ class LoraMailBox_NTFY
 public:
     LoraMailBox_NTFY() {}
 
-    NotificationStatus evaluateNotificationStatus(const JsonDocument &jsonDoc) const
+    NotificationStatus getNotificationStatus(const JsonDocument &jsonDoc) const
     {
         (void)jsonDoc;
         return NotificationStatus::None;

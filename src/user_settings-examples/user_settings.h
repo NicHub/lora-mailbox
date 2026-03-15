@@ -46,7 +46,6 @@
 
 /** @brief NTFY settings. */
 #define NTFY_ENABLED true
-#define NTFY_INCLUDE_JSONL false
 #define NTFY_NOTIFY_HEARTBEAT_TX true
 #define NTFY_ICON_PIN_HIGH "📩"
 #define NTFY_ICON_HEARTBEAT_TX "🔔"
