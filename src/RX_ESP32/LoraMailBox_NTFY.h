@@ -11,9 +11,9 @@
 #include <AsyncTCP.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
-#include "../common/user_settings.h"
+#include "user_settings/user_settings.h"
 
-class LoraMailBox_SendNTFY
+class LoraMailBox_NTFY
 {
 private:
     AsyncWebServer server{80};
@@ -23,7 +23,7 @@ private:
 #include "index.html"
 
 public:
-    LoraMailBox_SendNTFY() {}
+    LoraMailBox_NTFY() {}
 
     /**
      * @brief Build notification emoji text from message categories.
@@ -39,7 +39,7 @@ public:
         if (batteryLevel == 0)
             batteryLevel = jsonDoc["volt_gpio"] | 0;
         bool pinHigh = strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0;
-        bool lowBattery = batteryLevel > 0 && batteryLevel <= MQTT_BATTERY_LOW_THRESHOLD_MV;
+        bool lowBattery = batteryLevel > 0 && batteryLevel <= VGPIO_BATTERY_LOW_THRESHOLD;
         bool heartbeatTx = false;
 #if NTFY_NOTIFY_HEARTBEAT_TX
         heartbeatTx = strcmp(wakeup, "HEARTBEAT_TX") == 0;

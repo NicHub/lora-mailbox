@@ -11,7 +11,6 @@
 #include <InternalFileSystem.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
-#include "user_settings.h"
 
 // https://github.com/meshtastic/firmware/blob/master/variants/seeed_xiao_nrf52840_kit/variant.h
 // Wio-SX1262 for XIAO (standalone SKU 113010003 or nRF52840 kit SKU 102010710)
@@ -36,6 +35,8 @@ using namespace Adafruit_LittleFS_Namespace;
 #define CNT_LOG_FILENAME "/cnt.log"
 
 #define PREFIX "\n[" PROJECT_NAME "] "
+
+#include "common/common.h"
 
 File file(InternalFS);
 Adafruit_LittleFS littleFS;

@@ -4,10 +4,10 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
 
 ## Before you start
 
--   Copy `src/common/user_settings-example.h` to `src/common/user_settings.h`
-    and update the details with your information.
--   Copy `example-user_settings.ini` to `user_settings.ini`
-    and update the details with your information.
+-   The first build copies files from `src/user_settings-examples/` to `src/user_settings/` if they are missing.
+-   Update the files in `src/user_settings/` with your information.
+-   Copy `user_settings-example.ini` to `user_settings.ini`
+    and update the serial port details for your machine.
 
 ## Hardware
 
@@ -35,6 +35,10 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
 
     -   https://code.visualstudio.com/
     -   https://platformio.org/
+
+-   Python tools dependencies
+
+    -   `python3 -m pip install -r requirements.txt`
 
 ## Usefull commands
 

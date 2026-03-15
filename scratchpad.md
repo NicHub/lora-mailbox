@@ -141,3 +141,32 @@ nico
 
 ...
 
+# LoRa settings
+
+```cpp
+#define LORA_SETTINGS 1
+
+#if LORA_SETTINGS == 0
+// Default parameters defined in SX1262.h.
+#define LORA_FREQ 434.0 // Seeed XIA SX1262 range is 862 - 930 MHz
+#define LORA_BW 125.0
+#define LORA_SF 9
+#define LORA_CR 7
+#define LORA_SYNCWORD RADIOLIB_SX126X_SYNC_WORD_PRIVATE
+#define LORA_POWER 10
+#define LORA_PREAMBLELENGTH 8
+#define LORA_TCXOVOLTAGE 1.6
+#define LORA_USEREGULATORLDO false
+
+#elif LORA_SETTINGS == 1
+#define LORA_FREQ 868.0
+#define LORA_BW 62.5
+#define LORA_SF 12
+#define LORA_CR 8
+#define LORA_SYNCWORD 0x12
+#define LORA_POWER 14
+#define LORA_PREAMBLELENGTH 12
+#define LORA_TCXOVOLTAGE 1.6
+#define LORA_USEREGULATORLDO false
+#endif
+```

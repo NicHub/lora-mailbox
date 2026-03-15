@@ -10,13 +10,13 @@
 #include <Arduino.h>
 #include "common/common_ESP32.h"
 #include "common/common.h"
-#include "LoraMailBox_SendWS.h"
-#include "LoraMailBox_SendMQTT.h"
-#include "LoraMailBox_SendNTFY.h"
+#include "LoraMailBox_WIFI.h"
+#include "LoraMailBox_MQTT.h"
+#include "LoraMailBox_NTFY.h"
 
-LoraMailBox_SendWS lmb_ws;
-LoraMailBox_SendMQTT lmb_mqtt;
-LoraMailBox_SendNTFY lmb_ntfy;
+LoraMailBox_WIFI lmb_ws;
+LoraMailBox_MQTT lmb_mqtt;
+LoraMailBox_NTFY lmb_ntfy;
 String jsonString;
 JsonDocument jsonDoc;
 
@@ -43,7 +43,7 @@ bool isLowBatteryEvent()
     uint16_t batteryLevel = jsonDoc["VGPIO"] | 0;
     if (batteryLevel == 0)
         batteryLevel = jsonDoc["volt_gpio"] | 0;
-    return batteryLevel > 0 && batteryLevel <= MQTT_BATTERY_LOW_THRESHOLD_MV;
+    return batteryLevel > 0 && batteryLevel <= VGPIO_BATTERY_LOW_THRESHOLD;
 }
 
 /**

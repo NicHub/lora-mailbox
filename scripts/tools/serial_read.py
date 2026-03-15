@@ -6,23 +6,25 @@ It is fairly quiet, so if you want to see messages in
 real-time, you need to use an editor that allows refreshing
 from the end of the file, for example `less`:
 
-    less +F lora-receive.jsonl
+    less +F scripts/tools/output/lora-receive.jsonl
 
 usage:
 
-    python serial_read.py # Default port
-    python serial_read.py --port /dev/cu.usbmodem311101 # Custom port
+    python scripts/tools/serial_read.py # Default port
+    python scripts/tools/serial_read.py --port /dev/cu.usbmodem311101 # Custom port
 
 Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
 
 """
 
+import argparse
+import json
+from pathlib import Path
+import threading
+
+from rich import print
 import serial
 import serial.tools.list_ports
-import threading
-from rich import print
-import json
-import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -31,7 +33,8 @@ parser.add_argument(
 args = parser.parse_args()
 PORT = args.port
 BAUD_RATE = 115200
-FILENAME = "lora-receive.jsonl"
+OUTPUT_DIR = Path(__file__).resolve().parent / "output"
+FILENAME = OUTPUT_DIR / "lora-receive.jsonl"
 ERR_COUNT = 0
 
 
@@ -50,19 +53,20 @@ def read_serial(ser, stop_event):
             data = ser.readline().decode("utf-8")
             if data:
                 write_to_file(data)
-                error_logged = False  # Reset error flag on successful read
+                error_logged = False
         except Exception as _e:
             if not error_logged:
                 error_msg = f"\n# ERROR IN {__file__}: {_e}\n"
                 write_to_file(error_msg)
                 print(f"Serial error: {_e}")
                 error_logged = True
-            # Wait a bit before retrying to avoid busy loop
             stop_event.wait(1.0)
 
 
 def write_to_file(data):
     """___"""
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
     jsonl_data = ""
     try:
         candidate = data.strip()
@@ -80,7 +84,7 @@ def write_to_file(data):
             ensure_ascii=False,
         )
 
-    with open(FILENAME, "a") as file:
+    with FILENAME.open("a") as file:
         file.write(jsonl_data + "\n")
         file.flush()
 

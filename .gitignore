@@ -3,11 +3,15 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-src/common/user_settings.h
-user_settings.ini
 *.jsonl
 *ajeter*
 *nogit*
 extensions.json
 *.pyc
 __pycache__/
+
+#
+# user settings
+#
+src/user_settings*/
+!src/user_settings-examples/

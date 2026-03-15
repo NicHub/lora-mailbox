@@ -4,8 +4,13 @@ get_build_flags.py
 
 import datetime
 import os
-import sys
 import subprocess
+import sys
+
+try:
+    Import("env")
+except Exception:
+    env = None
 
 NO_GIT_COMMIT_YET = "no_git_commit_yet"
 
@@ -88,7 +93,18 @@ def main():
     return flags
 
 
-if __name__ == "__main__":
+def apply_build_flags():
+    if env is None:
+        raise RuntimeError("PlatformIO build environment is not available.")
+
+    env.ProcessFlags(main())
+
+
+if env is not None:
+    apply_build_flags()
+
+
+if __name__ == "__main__" and env is None:
 
     flags = main()
     print(flags)

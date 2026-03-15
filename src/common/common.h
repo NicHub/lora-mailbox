@@ -4,10 +4,12 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
+#pragma once
+
 #include <Arduino.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
-#include "common/LoraMailBox_Settings.h"
+#include "user_settings/user_settings.h"
 
 // #if defined(ESP32)
 // #include "common/common_ESP32.h"
@@ -66,11 +68,11 @@ void debounce(uint32_t wait)
 }
 
 void blink(
-    unsigned long on_duration_ms = 10,
-    unsigned long total_duration_ms = 100,
-    unsigned long repeat = 10,
-    uint32_t led_pin = LORA_LED_GREEN,
-    bool invert = false)
+    unsigned long on_duration_ms,
+    unsigned long total_duration_ms,
+    unsigned long repeat,
+    uint32_t led_pin,
+    bool invert)
 {
     pinMode(led_pin, OUTPUT);
     for (size_t i = 0; i < repeat; i++)
@@ -115,15 +117,15 @@ void setupLoRa()
     radio = new Module(CS, IRQ, RST, LORA_GPIO_PIN);
     Serial.print(F(PREFIX "Initializing LoRa..."));
     int state = radio.begin(
-        FREQ,
-        BW,
-        SF,
-        CR,
-        SYNCWORD,
-        POWER,
-        PREAMBLELENGTH,
-        TCXOVOLTAGE,
-        USEREGULATORLDO);
+        LORA_FREQ,
+        LORA_BW,
+        LORA_SF,
+        LORA_CR,
+        LORA_SYNCWORD,
+        LORA_POWER,
+        LORA_PREAMBLELENGTH,
+        LORA_TCXOVOLTAGE,
+        LORA_USEREGULATORLDO);
     if (state != RADIOLIB_ERR_NONE)
     {
         Serial.printf(" failed, code %d\n", state);
