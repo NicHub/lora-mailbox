@@ -8,6 +8,36 @@
 
 #include "user_settings/user_settings_secrets.h"
 
+#define BOARD_TYPE_SEEED_XIAO_ESP32S3_SX1262 1
+#define BOARD_TYPE_SEEED_XIAO_NRF52840_SX1262 2
+
+namespace board
+{
+#if BOARD_TYPE == BOARD_TYPE_SEEED_XIAO_ESP32S3_SX1262
+namespace hw
+{
+static constexpr uint32_t lora_cs = 41;            // GPIO4
+static constexpr uint32_t lora_irq = 39;           // DIO1
+static constexpr uint32_t lora_rst = 42;           // GPIO3
+static constexpr uint32_t lora_gpio = 40;          // GPIO2
+static constexpr uint32_t lora_led_green = GPIO_NUM_48;
+static constexpr uint32_t lora_user_button = GPIO_NUM_21;
+}
+#elif BOARD_TYPE == BOARD_TYPE_SEEED_XIAO_NRF52840_SX1262
+namespace hw
+{
+static constexpr uint32_t lora_cs = D4;
+static constexpr uint32_t lora_irq = D1;
+static constexpr uint32_t lora_rst = D2;
+static constexpr uint32_t lora_gpio = D3;
+static constexpr uint32_t lora_led_green = LED_GREEN;
+static constexpr uint32_t lora_user_button = PIN_BUTTON1;
+}
+#else
+#error Unsupported BOARD_TYPE
+#endif
+}
+
 /** @brief Miscellaneous settings. */
 #define DEBUG true
 #define SERIAL_VERBOSITY 2

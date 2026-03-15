@@ -131,10 +131,10 @@ void heartBeat()
 
 void readLoRa()
 {
-    digitalWrite(LORA_LED_GREEN, HIGH);
+    digitalWrite(board::hw::lora_led_green, HIGH);
     radio.startReceive();
     int state = radio.readData(jsonString);
-    digitalWrite(LORA_LED_GREEN, LOW);
+    digitalWrite(board::hw::lora_led_green, LOW);
 
     jsonDoc["LORA_STATE"] = state;
     if (state != RADIOLIB_ERR_NONE)
@@ -196,19 +196,19 @@ void setupLoRaRX()
 void setupGPIOs()
 {
     /**
-     * @note On XIAO ESP32S3 with SX1262 shield, `LORA_USER_BUTTON` and
+     * @note On XIAO ESP32S3 with SX1262 shield, `board::hw::lora_user_button` and
      * `LED_BUILTIN` share GPIO21. Driving `LED_BUILTIN` high while pressing
      * the user button can create a short-circuit to GND.
      * @note Keep `pinMode(LED_BUILTIN, OUTPUT);` disabled for safety.
      */
-    pinMode(LORA_LED_GREEN, OUTPUT);
+    pinMode(board::hw::lora_led_green, OUTPUT);
     pinMode(NO_HEARTBEAT_PIN, INPUT_PULLUP);
 }
 
 void setup()
 {
     setupGPIOs();
-    blink(8UL, 200UL, 5UL, LORA_LED_GREEN, false);
+    blink(8UL, 200UL, 5UL, board::hw::lora_led_green, false);
     setupSerial();
     setupLoRa();
     setupLoRaRX();
@@ -226,8 +226,8 @@ void loop()
         return;
     loraEvent = false;
     readLoRa();
-    blink(8UL, 60UL, 5UL, LORA_LED_GREEN, false);
+    blink(8UL, 60UL, 5UL, board::hw::lora_led_green, false);
     counterCheck();
     broadcastResults();
-    blink(8UL, 60UL, 5UL, LORA_LED_GREEN, false);
+    blink(8UL, 60UL, 5UL, board::hw::lora_led_green, false);
 }

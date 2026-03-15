@@ -55,11 +55,11 @@ public:
         const char *vbat_status = jsonDoc["VBAT_STATUS"] | "";
 
         String text;
-        text += "`   bat ";
+        text += "`bat ";
         text += vbat_glyph;
         text += " ";
         text += String(vbat_percent);
-        text += "%  (";
+        text += "% (";
         text += String(vbat_mv);
         text += "mV, ";
         text += vbat_status;
@@ -67,7 +67,7 @@ public:
         text += String(vgpio);
         text += ")`";
         text += "\n";
-        text += "`   ctr ";
+        text += "`ctr ";
         text += String(counterValue);
         text += " (";
         text += counterStatus;

@@ -20,14 +20,7 @@
 // LoRa module SX1262 for ESP32
 // https://files.seeedstudio.com/products/SenseCAP/Wio_SX1262/Schematic_Diagram_Wio-SX1262_for_XIAO.pdf
 
-#define CS D4
-#define IRQ D1
-#define RST D2
-#define LORA_GPIO_PIN D3
-#define LORA_LED_GREEN LED_GREEN
-
 #define NO_HEARTBEAT_PIN D0
-#define LORA_USER_BUTTON GPIO_NUM_21
 
 #define PREFIX "\n[" PROJECT_NAME "] "
 
