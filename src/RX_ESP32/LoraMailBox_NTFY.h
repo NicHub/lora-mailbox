@@ -34,8 +34,6 @@ public:
         if (wakeup[0] == '\0')
             wakeup = jsonDoc["wakeup"] | "";
         uint16_t batteryLevel = jsonDoc["VGPIO"] | 0;
-        if (batteryLevel == 0)
-            batteryLevel = jsonDoc["volt_gpio"] | 0;
         int vbat = jsonDoc["VBAT"] | 0;
         int batteryPercent = jsonDoc["VBAT_PERCENT"] | 0;
         const char *batteryGlyph = jsonDoc["VBAT_GLYPH"] | "";
@@ -52,9 +50,9 @@ public:
         else if (heartbeatTx)
             text = NTFY_TITLE_HEARTBEAT_TX;
 
-        text += " ";
+        text += "  ";
         text += batteryGlyph;
-        text += " ";
+        text += "  ";
         text += String(batteryPercent);
         text += "% ";
         text += " (";
