@@ -4,10 +4,12 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
+#pragma once
+
 #include <Arduino.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
-#include "common/LoraMailBox_Settings.h"
+#include "user_settings/user_settings.h"
 
 // #if defined(ESP32)
 // #include "common/common_ESP32.h"
@@ -32,6 +34,61 @@ enum class WakeupReason : uint8_t
     WakeupPinHigh,
     HeartbeatTx,
 };
+
+struct BatteryMeasurement
+{
+    int vbatMv;
+    int batteryPercent;
+    const char *glyph;
+    const char *status;
+};
+
+static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
+{
+    BatteryMeasurement measurement{};
+
+    // Convert the raw GPIO-derived voltage to an estimated battery voltage.
+    measurement.vbatMv = static_cast<int>(VFIT_SLOPE * static_cast<float>(vgpioMv) + VFIT_OFFSET);
+
+    // Map the estimated battery voltage to a 0..100 percent range.
+    if (measurement.vbatMv >= VBAT_MAX)
+        measurement.batteryPercent = 100;
+    else if (measurement.vbatMv <= VBAT_MIN)
+        measurement.batteryPercent = 0;
+    else
+        measurement.batteryPercent = static_cast<int>(
+            (100.f * static_cast<float>(measurement.vbatMv - VBAT_MIN)) /
+                static_cast<float>(VBAT_MAX - VBAT_MIN) +
+            0.5f);
+
+    // Pick a compact battery glyph for quick display in notifications.
+    if (measurement.vbatMv >= VBAT_MAX)
+        measurement.glyph = "⚡";
+    else if (measurement.vbatMv < VBAT_NO_BATTERY_THRESHOLD)
+        measurement.glyph = "🔌";
+    else if (measurement.batteryPercent < 5)
+        measurement.glyph = "▁";
+    else if (measurement.batteryPercent < 25)
+        measurement.glyph = "▂";
+    else if (measurement.batteryPercent < 50)
+        measurement.glyph = "▄";
+    else if (measurement.batteryPercent < 75)
+        measurement.glyph = "▆";
+    else
+        measurement.glyph = "█";
+
+    // Derive the coarse battery status used by MQTT/NTFY routing logic.
+    if (measurement.vbatMv >= VBAT_MAX)
+        measurement.status = "HIGH";
+    else if (measurement.vbatMv >= VBAT_MIN)
+        measurement.status = "OK";
+    else if (measurement.vbatMv >= VBAT_NO_BATTERY_THRESHOLD)
+        measurement.status = "LOW";
+    else
+        measurement.status = "NOBAT";
+
+    return measurement;
+}
 
 static inline const char* wakeupReasonToString(WakeupReason reason)
 {
@@ -66,11 +123,11 @@ void debounce(uint32_t wait)
 }
 
 void blink(
-    unsigned long on_duration_ms = 10,
-    unsigned long total_duration_ms = 100,
-    unsigned long repeat = 10,
-    uint32_t led_pin = LORA_LED_GREEN,
-    bool invert = false)
+    unsigned long on_duration_ms,
+    unsigned long total_duration_ms,
+    unsigned long repeat,
+    uint32_t led_pin,
+    bool invert)
 {
     pinMode(led_pin, OUTPUT);
     for (size_t i = 0; i < repeat; i++)
@@ -115,15 +172,15 @@ void setupLoRa()
     radio = new Module(CS, IRQ, RST, LORA_GPIO_PIN);
     Serial.print(F(PREFIX "Initializing LoRa..."));
     int state = radio.begin(
-        FREQ,
-        BW,
-        SF,
-        CR,
-        SYNCWORD,
-        POWER,
-        PREAMBLELENGTH,
-        TCXOVOLTAGE,
-        USEREGULATORLDO);
+        LORA_FREQ,
+        LORA_BW,
+        LORA_SF,
+        LORA_CR,
+        LORA_SYNCWORD,
+        LORA_POWER,
+        LORA_PREAMBLELENGTH,
+        LORA_TCXOVOLTAGE,
+        LORA_USEREGULATORLDO);
     if (state != RADIOLIB_ERR_NONE)
     {
         Serial.printf(" failed, code %d\n", state);

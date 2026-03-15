@@ -6,24 +6,22 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
+#pragma once
+
+#include <Arduino.h>
+#include <ArduinoJson.h>
+#include "user_settings/user_settings.h"
+
+#if NTFY_ENABLED
 #include <WiFi.h>
-#include <ESPAsyncWebServer.h>
-#include <AsyncTCP.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
-#include "../common/user_settings.h"
+#include <time.h>
 
-class LoraMailBox_SendNTFY
+class LoraMailBox_NTFY
 {
-private:
-    AsyncWebServer server{80};
-    AsyncWebSocket ws{"/ws"};
-    String latestMessage = "";
-
-#include "index.html"
-
 public:
-    LoraMailBox_SendNTFY() {}
+    LoraMailBox_NTFY() {}
 
     /**
      * @brief Build notification emoji text from message categories.
@@ -38,29 +36,33 @@ public:
         uint16_t batteryLevel = jsonDoc["VGPIO"] | 0;
         if (batteryLevel == 0)
             batteryLevel = jsonDoc["volt_gpio"] | 0;
+        int vbat = jsonDoc["VBAT"] | 0;
+        int batteryPercent = jsonDoc["VBAT_PERCENT"] | 0;
+        const char *batteryGlyph = jsonDoc["VBAT_GLYPH"] | "";
+        const char *batteryStatus = jsonDoc["VBAT_STATUS"] | "";
         bool pinHigh = strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0;
-        bool lowBattery = batteryLevel > 0 && batteryLevel <= MQTT_BATTERY_LOW_THRESHOLD_MV;
         bool heartbeatTx = false;
 #if NTFY_NOTIFY_HEARTBEAT_TX
         heartbeatTx = strcmp(wakeup, "HEARTBEAT_TX") == 0;
 #endif
 
         String text;
-        if (pinHigh && lowBattery)
-            text = NTFY_TITLE_PIN_HIGH_LOW_BATTERY;
-        else if (pinHigh)
+        if (pinHigh)
             text = NTFY_TITLE_PIN_HIGH;
-        else if (heartbeatTx && lowBattery)
-            text = NTFY_TITLE_HEARTBEAT_TX_LOW_BATTERY;
         else if (heartbeatTx)
             text = NTFY_TITLE_HEARTBEAT_TX;
-        else if (lowBattery)
-            text = NTFY_TITLE_LOW_BATTERY;
 
+        text += " ";
+        text += batteryGlyph;
+        text += " ";
+        text += String(batteryPercent);
+        text += "% ";
         text += " (";
-        if (!jsonDoc["VFIT"].isNull())
-            text += "Vfit = " + String(jsonDoc["VFIT"].as<int>()) + "mV, ";
-        text += "Vgpio = " + String(batteryLevel);
+        text += String(vbat);
+        text += "mV, ";
+        text += batteryStatus;
+        text += ", ";
+        text += String(batteryLevel);
         text += ")";
 
         return text;
@@ -74,7 +76,17 @@ public:
     String getNotificationTitle(const JsonDocument &jsonDoc) const
     {
         (void)jsonDoc;
-        return "LoRa Mailbox";
+        struct tm timeinfo;
+        char timeStr[9] = "";
+        if (getLocalTime(&timeinfo))
+            strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
+
+        String title = "";
+        if (timeStr[0] != '\0')
+            title += String(timeStr);
+        title += " @" + String(NTFY_RECIPIENT_NAME);
+
+        return title;
     }
 
     /**
@@ -85,7 +97,6 @@ public:
      */
     bool sendMsg(const JsonDocument &jsonDoc, const String &topic = NTFY_TOPIC)
     {
-#if NTFY_ENABLED
         if (WiFi.status() != WL_CONNECTED)
             return false;
 
@@ -132,8 +143,34 @@ public:
         https.end();
 
         return ok;
-#else
-        return false;
-#endif
     }
 };
+
+#else
+
+class LoraMailBox_NTFY
+{
+public:
+    LoraMailBox_NTFY() {}
+
+    String getNotificationText(const JsonDocument &jsonDoc) const
+    {
+        (void)jsonDoc;
+        return "";
+    }
+
+    String getNotificationTitle(const JsonDocument &jsonDoc) const
+    {
+        (void)jsonDoc;
+        return "";
+    }
+
+    bool sendMsg(const JsonDocument &jsonDoc, const String &topic = "")
+    {
+        (void)jsonDoc;
+        (void)topic;
+        return false;
+    }
+};
+
+#endif

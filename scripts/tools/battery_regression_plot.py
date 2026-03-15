@@ -33,8 +33,9 @@ CALIBRATION_POINTS = [
     (3.73, 351),
 #    (1.88, 209), # Zone non linéaire, ne pas prendre en compte pour le fit. Autre batterie que les mesures précédente ?
 ]
-JSONL_PATH = Path(__file__).with_name("lora-receive.jsonl")
-HTML_PATH = Path(__file__).with_name("battery_regression_plot.html")
+OUTPUT_DIR = Path(__file__).resolve().parent / "output"
+JSONL_PATH = OUTPUT_DIR / "lora-receive-1.jsonl"
+HTML_PATH = OUTPUT_DIR / "battery_regression_plot.html"
 TARGET_NRF_VOLT = 318
 DERIVATIVE_SMOOTHING_WINDOW = 21
 SECOND_PLOT_GUIDE_COUNTER = 1500

@@ -7,9 +7,9 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
-#include "../common/user_settings.h"
+#include "user_settings/user_settings.h"
 
-class LoraMailBox_SendWS
+class LoraMailBox_WIFI
 {
 private:
     AsyncWebServer server{80};
@@ -65,7 +65,7 @@ private:
     }
 
 public:
-    LoraMailBox_SendWS() {}
+    LoraMailBox_WIFI() {}
 
     void scanWiFiNetworks()
     {

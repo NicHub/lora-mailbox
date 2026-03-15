@@ -23,8 +23,8 @@
 //    -    make sure `seeed_xiao_nrf52840-tx` is the first `default_envs`
 #include <Arduino.h>
 #include <nrf.h>
-#include "../common/common_nRF52.h"
-#include "../common/common.h"
+#include "common/common_nRF52.h"
+#include "common/common.h"
 
 static volatile bool rtcTimeoutElapsed = false;
 static volatile bool wakeupPinEvent = false;

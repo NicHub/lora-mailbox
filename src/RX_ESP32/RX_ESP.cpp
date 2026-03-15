@@ -10,13 +10,13 @@
 #include <Arduino.h>
 #include "common/common_ESP32.h"
 #include "common/common.h"
-#include "LoraMailBox_SendWS.h"
-#include "LoraMailBox_SendMQTT.h"
-#include "LoraMailBox_SendNTFY.h"
+#include "LoraMailBox_WIFI.h"
+#include "LoraMailBox_MQTT.h"
+#include "LoraMailBox_NTFY.h"
 
-LoraMailBox_SendWS lmb_ws;
-LoraMailBox_SendMQTT lmb_mqtt;
-LoraMailBox_SendNTFY lmb_ntfy;
+LoraMailBox_WIFI lmb_wifi;
+LoraMailBox_MQTT lmb_mqtt;
+LoraMailBox_NTFY lmb_ntfy;
 String jsonString;
 JsonDocument jsonDoc;
 
@@ -35,18 +35,6 @@ bool isPinHighEvent()
 }
 
 /**
- * @brief Return whether the current payload reports a low battery condition.
- * @return true when `volt_gpio` is below or equal to the configured threshold.
- */
-bool isLowBatteryEvent()
-{
-    uint16_t batteryLevel = jsonDoc["VGPIO"] | 0;
-    if (batteryLevel == 0)
-        batteryLevel = jsonDoc["volt_gpio"] | 0;
-    return batteryLevel > 0 && batteryLevel <= MQTT_BATTERY_LOW_THRESHOLD_MV;
-}
-
-/**
  * @brief Return whether the current payload reports a TX heartbeat event.
  * @return true when `wakeup` equals `HEARTBEAT_TX`, false otherwise.
  */
@@ -61,29 +49,24 @@ bool isHeartbeatTxEvent()
 }
 
 /**
- * @brief Return whether the current payload should be forwarded to NTFY.
- * @return true on mailbox event, low battery event, or configured TX heartbeat event.
+ * @brief Forward the current payload to NTFY when it matches notification rules.
  */
-bool shouldSendNtfy()
+void broadcastNtfy()
 {
-#if !NTFY_ENABLED
-    return false;
-#else
-    bool heartbeatTx = false;
+    bool shouldNotifyNtfy = isPinHighEvent();
 #if NTFY_NOTIFY_HEARTBEAT_TX
-    heartbeatTx = isHeartbeatTxEvent();
+    shouldNotifyNtfy = shouldNotifyNtfy || isHeartbeatTxEvent();
 #endif
-    return isPinHighEvent() || isLowBatteryEvent() || heartbeatTx;
-#endif
+    if (shouldNotifyNtfy)
+        lmb_ntfy.sendMsg(jsonDoc);
 }
 
 void broadcastResults()
 {
     serializeJson(jsonDoc, jsonString);
-    lmb_ws.sendMsg(jsonString);
+    lmb_wifi.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
-    if (shouldSendNtfy())
-        lmb_ntfy.sendMsg(jsonDoc);
+    broadcastNtfy();
 #if SERIAL_VERBOSITY == 1
     uint16_t ctr = jsonDoc["COUNTER"]["VALUE"].as<uint16_t>();
     static uint16_t first_ctr = ctr;
@@ -135,14 +118,14 @@ void heartBeat()
     jsonDoc.clear();
     jsonDoc["HEARTBEAT_RX"] = getCurrentTime();
     jsonDoc["BOARD_ID_HEX"] = getMacAddress();
-    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_ws.getLocalIP().toString();
+    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
     jsonDoc["COMPILATION_DATE"] = COMPILATION_DATE;
     jsonDoc["COMPILATION_TIME"] = COMPILATION_TIME;
     serializeJson(jsonDoc, jsonString);
 #if SERIAL_VERBOSITY == 2
     Serial.println(jsonString);
 #endif
-    lmb_ws.sendMsg(jsonString);
+    lmb_wifi.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
 }
 
@@ -171,16 +154,19 @@ void readLoRa()
     {
         jsonDoc["VGPIO"] = jsonDoc["volt_gpio"];
         jsonDoc.remove("volt_gpio");
-        float vgpio = jsonDoc["VGPIO"].as<float>();
-        jsonDoc["VFIT"] = static_cast<int>(VFIT_SLOPE * vgpio + VFIT_OFFSET);
+        BatteryMeasurement battery = Vgpio2Vbat(jsonDoc["VGPIO"].as<uint16_t>());
+        jsonDoc["VBAT"] = battery.vbatMv;
+        jsonDoc["VBAT_PERCENT"] = battery.batteryPercent;
+        jsonDoc["VBAT_GLYPH"] = battery.glyph;
+        jsonDoc["VBAT_STATUS"] = battery.status;
     }
     jsonDoc["CURRENT_TIME"] = getCurrentTime();
     jsonDoc["COMPILATION_DATE"] = COMPILATION_DATE;
     jsonDoc["COMPILATION_TIME"] = COMPILATION_TIME;
     jsonDoc["RSSI_DBM"] = radio.getRSSI();
     jsonDoc["SNR_DB"] = radio.getSNR();
-    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_ws.getLocalIP().toString();
-    jsonDoc["WS_CLIENT_COUNT"] = lmb_ws.getWsClientCount();
+    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    jsonDoc["WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
     jsonDoc["STATE"] = state;
     jsonDoc["JSON_STRING"] = jsonString;
     jsonDoc["DEBUG"] = DEBUG;
@@ -194,8 +180,8 @@ void setupMQTT()
 
 void setupWiFi()
 {
-    lmb_ws.begin();
-    lmb_ws.synchronizeNTPTime();
+    lmb_wifi.begin();
+    lmb_wifi.synchronizeNTPTime();
 }
 
 void setupLoRaRX()
@@ -232,7 +218,7 @@ void setup()
 
 void loop()
 {
-    lmb_ws.ensureWiFiConnected();
+    lmb_wifi.ensureWiFiConnected();
     if (digitalRead(NO_HEARTBEAT_PIN))
         heartBeat();
     yield();
