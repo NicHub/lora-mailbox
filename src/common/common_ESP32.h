@@ -10,18 +10,9 @@
 #include <RadioLib.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
+#include "user_settings/user_settings.h"
 
-#define MASK (1ULL << WAKEUP_PIN)
-
-// https://github.com/radiolib-org/RadioBoards/blob/main/src/maintained/SeeedStudio/XIAO_ESP32S3.h
-// https://github.com/Seeed-Studio/one_channel_hub/blob/4cc771ac02da1bd18be67509f6b52d21bb0feabd/components/smtc_ral/bsp/sx126x/seeed_xiao_esp32s3_devkit_sx1262.c#L358-L369
-#define CS 41            /* GPIO4 */
-#define IRQ 39           /* DIO1 */
-#define RST 42           /* GPIO3 */
-#define LORA_GPIO_PIN 40 /* GPIO2 */
-
-#define LORA_LED_GREEN GPIO_NUM_48
-#define LORA_USER_BUTTON GPIO_NUM_21
+#define MASK (1ULL << board::hw::wakeup_pin)
 
 #define PREFIX "\n[" PROJECT_NAME "] "
 
@@ -60,14 +51,14 @@ void goToDeepSleep()
 
     setupDeepSleep();
     debounce(1000);
-    digitalWrite(LORA_LED_GREEN, LOW);
+    digitalWrite(board::hw::lora_led_green, LOW);
     esp_deep_sleep_start();
 }
 
 void switchOffAllLEDs()
 {
     digitalWrite(LED_BUILTIN, HIGH);
-    digitalWrite(LORA_LED_GREEN, LOW);
+    digitalWrite(board::hw::lora_led_green, LOW);
 }
 
 uint16_t readBatteryVoltage()
