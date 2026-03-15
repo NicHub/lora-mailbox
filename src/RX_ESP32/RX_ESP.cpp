@@ -4,9 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#define NO_HEARTBEAT_PIN D5
-#define WAKEUP_PIN D10
-
 #include <Arduino.h>
 #include "common/common_ESP32.h"
 #include "common/common.h"
@@ -202,7 +199,6 @@ void setupGPIOs()
      * @note Keep `pinMode(LED_BUILTIN, OUTPUT);` disabled for safety.
      */
     pinMode(board::hw::lora_led_green, OUTPUT);
-    pinMode(NO_HEARTBEAT_PIN, INPUT_PULLUP);
 }
 
 void setup()
@@ -219,8 +215,7 @@ void setup()
 void loop()
 {
     lmb_wifi.ensureWiFiConnected();
-    if (digitalRead(NO_HEARTBEAT_PIN))
-        heartBeat();
+    heartBeat();
     yield();
     if (!loraEvent)
         return;

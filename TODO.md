@@ -1,1 +1,0 @@
-enlever NO_HEARTBEAT_PIN

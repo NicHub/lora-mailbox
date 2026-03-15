@@ -4,7 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#define WAKEUP_PIN D5
 // 868.0 MHz: respect legal duty-cycle constraints (typically 1%), so avoid short intervals.
 #define HEARTBEAT_INTERVAL_SECONDS (20 * 60)
 #define HEARTBEAT_INTERVAL_MS (HEARTBEAT_INTERVAL_SECONDS * 1000UL)
@@ -43,8 +42,8 @@ void onWakeupPinRise()
 
 void setupRtcWakeup()
 {
-    pinMode(WAKEUP_PIN, INPUT);
-    attachInterrupt(digitalPinToInterrupt(WAKEUP_PIN), onWakeupPinRise, RISING);
+    pinMode(board::hw::wakeup_pin, INPUT);
+    attachInterrupt(digitalPinToInterrupt(board::hw::wakeup_pin), onWakeupPinRise, RISING);
 
     if ((NRF_CLOCK->LFCLKSTAT & CLOCK_LFCLKSTAT_STATE_Msk) == 0)
     {
@@ -88,8 +87,8 @@ static void sleepSecondsNoPin(uint32_t seconds)
 
 WakeupReason sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
 {
-    pinMode(WAKEUP_PIN, INPUT);
-    if (digitalRead(WAKEUP_PIN))
+    pinMode(board::hw::wakeup_pin, INPUT);
+    if (digitalRead(board::hw::wakeup_pin))
         return WakeupReason::WakeupPinHigh;
 
     rtcTimeoutElapsed = false;
@@ -194,14 +193,14 @@ void loop()
     // Low-power wait replacing the active-CPU delay (CPU: ~3-4 mA → ~2 µA).
     sleepSecondsNoPin(5);
 
-    pinMode(WAKEUP_PIN, INPUT);
+    pinMode(board::hw::wakeup_pin, INPUT);
     uint32_t now_ms = millis();
     if (isHeartbeatDue(now_ms))
     {
         wakeupReason = WakeupReason::HeartbeatTx;
         return;
     }
-    if (digitalRead(WAKEUP_PIN))
+    if (digitalRead(board::hw::wakeup_pin))
     {
         wakeupReason = WakeupReason::WakeupPinHigh;
         return;

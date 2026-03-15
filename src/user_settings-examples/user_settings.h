@@ -16,6 +16,7 @@ namespace board
 #if BOARD_TYPE == BOARD_TYPE_SEEED_XIAO_ESP32S3_SX1262
 namespace hw
 {
+static constexpr uint32_t wakeup_pin = D10;
 static constexpr uint32_t lora_cs = 41;            // GPIO4
 static constexpr uint32_t lora_irq = 39;           // DIO1
 static constexpr uint32_t lora_rst = 42;           // GPIO3
@@ -26,6 +27,7 @@ static constexpr uint32_t lora_user_button = GPIO_NUM_21;
 #elif BOARD_TYPE == BOARD_TYPE_SEEED_XIAO_NRF52840_SX1262
 namespace hw
 {
+static constexpr uint32_t wakeup_pin = D5;
 static constexpr uint32_t lora_cs = D4;
 static constexpr uint32_t lora_irq = D1;
 static constexpr uint32_t lora_rst = D2;

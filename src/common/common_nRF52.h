@@ -11,17 +11,6 @@
 #include <ArduinoJson.h>
 #include "flash/flash_nrf5x.h"
 
-// https://github.com/meshtastic/firmware/blob/master/variants/seeed_xiao_nrf52840_kit/variant.h
-// Wio-SX1262 for XIAO (standalone SKU 113010003 or nRF52840 kit SKU 102010710)
-
-// LoRa module SX1262 for nRF52
-// https://files.seeedstudio.com/products/SenseCAP/Wio_SX1262/Wio-SX1262%20for%20XIAO%20V1.0_SCH.pdf
-
-// LoRa module SX1262 for ESP32
-// https://files.seeedstudio.com/products/SenseCAP/Wio_SX1262/Schematic_Diagram_Wio-SX1262_for_XIAO.pdf
-
-#define NO_HEARTBEAT_PIN D0
-
 #define PREFIX "\n[" PROJECT_NAME "] "
 
 #include "common/common.h"
@@ -154,7 +143,7 @@ static inline String getBoardUidHex()
  */
 void goToDeepSleep()
 {
-    pinMode(WAKEUP_PIN, INPUT_SENSE_HIGH);
+    pinMode(board::hw::wakeup_pin, INPUT_SENSE_HIGH);
     debounce(1000);
     NRF_POWER->SYSTEMOFF = 1;
 }

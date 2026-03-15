@@ -12,7 +12,7 @@
 #include <WiFi.h>
 #include "user_settings/user_settings.h"
 
-#define MASK (1ULL << WAKEUP_PIN)
+#define MASK (1ULL << board::hw::wakeup_pin)
 
 #define PREFIX "\n[" PROJECT_NAME "] "
 
