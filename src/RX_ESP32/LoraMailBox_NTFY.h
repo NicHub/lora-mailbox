@@ -23,47 +23,55 @@ class LoraMailBox_NTFY
 public:
     LoraMailBox_NTFY() {}
 
-    /**
-     * @brief Build notification emoji text from message categories.
-     * @param jsonDoc JSON payload.
-     * @return Notification text.
-     */
-    String getNotificationText(const JsonDocument &jsonDoc) const
+    NotificationStatus evaluateNotificationStatus(const JsonDocument &jsonDoc) const
     {
         const char *wakeup = jsonDoc["WAKEUP"] | "";
         if (wakeup[0] == '\0')
             wakeup = jsonDoc["wakeup"] | "";
-        uint16_t batteryLevel = jsonDoc["VGPIO"] | 0;
-        if (batteryLevel == 0)
-            batteryLevel = jsonDoc["volt_gpio"] | 0;
-        int vbat = jsonDoc["VBAT"] | 0;
-        int batteryPercent = jsonDoc["VBAT_PERCENT"] | 0;
-        const char *batteryGlyph = jsonDoc["VBAT_GLYPH"] | "";
-        const char *batteryStatus = jsonDoc["VBAT_STATUS"] | "";
-        bool pinHigh = strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0;
-        bool heartbeatTx = false;
+        if (strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0)
+            return NotificationStatus::MessageReceived;
 #if NTFY_NOTIFY_HEARTBEAT_TX
-        heartbeatTx = strcmp(wakeup, "HEARTBEAT_TX") == 0;
+        if (strcmp(wakeup, "HEARTBEAT_TX") == 0)
+            return NotificationStatus::Heartbeat;
 #endif
+        return NotificationStatus::None;
+    }
+
+    /**
+     * @brief Build notification emoji text from message categories.
+     * @param jsonDoc JSON payload.
+     * @param status Precomputed notification status.
+     * @return Notification text.
+     */
+    String getNotificationText(const JsonDocument &jsonDoc, NotificationStatus status) const
+    {
+        (void)status;
+        uint16_t counterValue = jsonDoc["COUNTER"]["VALUE"] | 0;
+        const char *counterStatus = jsonDoc["COUNTER"]["STATUS"] | "";
+        uint16_t vgpio = jsonDoc["VGPIO"] | 0;
+        int vbat_mv = jsonDoc["VBAT_MV"] | 0;
+        int vbat_percent = jsonDoc["VBAT_PERCENT"] | 0;
+        const char *vbat_glyph = jsonDoc["VBAT_GLYPH"] | "";
+        const char *vbat_status = jsonDoc["VBAT_STATUS"] | "";
 
         String text;
-        if (pinHigh)
-            text = NTFY_TITLE_PIN_HIGH;
-        else if (heartbeatTx)
-            text = NTFY_TITLE_HEARTBEAT_TX;
-
+        text += "`   bat ";
+        text += vbat_glyph;
         text += " ";
-        text += batteryGlyph;
-        text += " ";
-        text += String(batteryPercent);
-        text += "% ";
-        text += " (";
-        text += String(vbat);
+        text += String(vbat_percent);
+        text += "%  (";
+        text += String(vbat_mv);
         text += "mV, ";
-        text += batteryStatus;
+        text += vbat_status;
         text += ", ";
-        text += String(batteryLevel);
-        text += ")";
+        text += String(vgpio);
+        text += ")`";
+        text += "\n";
+        text += "`   ctr ";
+        text += String(counterValue);
+        text += " (";
+        text += counterStatus;
+        text += ")`";
 
         return text;
     }
@@ -71,9 +79,10 @@ public:
     /**
      * @brief Build notification title from board identifier.
      * @param jsonDoc JSON payload.
+     * @param status Precomputed notification status.
      * @return Board identifier (`board_id_hex`) when available.
      */
-    String getNotificationTitle(const JsonDocument &jsonDoc) const
+    String getNotificationTitle(const JsonDocument &jsonDoc, NotificationStatus status) const
     {
         (void)jsonDoc;
         struct tm timeinfo;
@@ -81,10 +90,21 @@ public:
         if (getLocalTime(&timeinfo))
             strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
 
-        String title = "";
+        String title;
+        if (status == NotificationStatus::MessageReceived)
+            title = String(NTFY_ICON_PIN_HIGH) + " ";
+        else if (status == NotificationStatus::Heartbeat)
+            title = String(NTFY_ICON_HEARTBEAT_TX) + " ";
         if (timeStr[0] != '\0')
             title += String(timeStr);
         title += " @" + String(NTFY_RECIPIENT_NAME);
+        if (status == NotificationStatus::MessageReceived)
+            title += " got mail";
+        else if (status == NotificationStatus::Heartbeat)
+            title += " got heartbeat";
+        else
+            title += " got undefined notif";
+
 
         return title;
     }
@@ -110,14 +130,15 @@ public:
         if (!https.begin(client, url))
             return false;
 
-        String title = getNotificationTitle(jsonDoc);
-        String alertText = getNotificationText(jsonDoc);
+        NotificationStatus status = evaluateNotificationStatus(jsonDoc);
+        String title = getNotificationTitle(jsonDoc, status);
+        String alertText = getNotificationText(jsonDoc, status);
 
         String message;
 #if NTFY_INCLUDE_JSONL
         message = alertText;
         if (!message.isEmpty())
-            message += "\n";
+            message += "\n\n```json\n";
         if (!jsonDoc["JSON_STRING"].isNull())
             message += String(jsonDoc["JSON_STRING"].as<const char *>());
         else if (!jsonDoc["jsonString"].isNull())
@@ -128,6 +149,7 @@ public:
             serializeJson(jsonDoc, jsonPayload);
             message += jsonPayload;
         }
+        message += "\n```";
 #else
         message = alertText;
 #endif
@@ -137,7 +159,8 @@ public:
         if (String(NTFY_USERNAME).length() > 0 || String(NTFY_PASSWORD).length() > 0)
             https.setAuthorization(NTFY_USERNAME, NTFY_PASSWORD);
 
-        https.addHeader("Content-Type", "text/plain; charset=utf-8");
+        https.addHeader("Markdown", "yes");
+        https.addHeader("Content-Type", "text/markdown; charset=utf-8");
         int httpCode = https.POST(message);
         ok = (httpCode >= 200 && httpCode < 300);
         https.end();
@@ -153,15 +176,23 @@ class LoraMailBox_NTFY
 public:
     LoraMailBox_NTFY() {}
 
-    String getNotificationText(const JsonDocument &jsonDoc) const
+    NotificationStatus evaluateNotificationStatus(const JsonDocument &jsonDoc) const
     {
         (void)jsonDoc;
+        return NotificationStatus::None;
+    }
+
+    String getNotificationText(const JsonDocument &jsonDoc, NotificationStatus status) const
+    {
+        (void)jsonDoc;
+        (void)status;
         return "";
     }
 
-    String getNotificationTitle(const JsonDocument &jsonDoc) const
+    String getNotificationTitle(const JsonDocument &jsonDoc, NotificationStatus status) const
     {
         (void)jsonDoc;
+        (void)status;
         return "";
     }
 

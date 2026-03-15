@@ -9,15 +9,8 @@
 #define HEARTBEAT_INTERVAL_SECONDS (20 * 60)
 #define HEARTBEAT_INTERVAL_MS (HEARTBEAT_INTERVAL_SECONDS * 1000UL)
 
-// To format the flash:
-// - Set FORMAT_LITTLEFS to 1.
-// - Flash the microcontroler.
-// - Set FORMAT_LITTLEFS back to 0.
-// - Flash the microcontroler again.
-#define FORMAT_LITTLEFS 0
-
 // If the linter does not recognize the paths below,
-// or the constants like `LED_RED` :
+// or the constants like `LED_RED` :
 //    -    open `user_settings.ini`
 //    -    in `default_envs`
 //    -    make sure `seeed_xiao_nrf52840-tx` is the first `default_envs`
@@ -172,7 +165,7 @@ void setup()
     setupRtcWakeup();
     nextHeartbeatDeadlineMs = millis() + HEARTBEAT_INTERVAL_MS;
     setupSerial();
-    setupLittleFS();
+    setupMsgCounterStorage();
     setupLoRa();
 }
 
@@ -180,7 +173,7 @@ void loop()
 {
     writeRgbLeds(0, 1, 0);
     uint16_t battery_voltage = readBatteryVoltage();
-    uint16_t cnt = readMsgCounterFromFile();
+    uint16_t cnt = readMsgCounter();
 
     writeRgbLeds(1, 0, 0);
     transmitLoRa(getBoardUidHex(), cnt, battery_voltage, wakeupReason);
@@ -196,7 +189,7 @@ void loop()
     Serial.flush();
 
     writeRgbLeds(0, 1, 0);
-    saveMsgCounterToFile(++cnt);
+    saveMsgCounter(++cnt);
 
     // Low-power wait replacing the active-CPU delay (CPU: ~3-4 mA → ~2 µA).
     sleepSecondsNoPin(5);

@@ -155,7 +155,7 @@ void readLoRa()
         jsonDoc["VGPIO"] = jsonDoc["volt_gpio"];
         jsonDoc.remove("volt_gpio");
         BatteryMeasurement battery = Vgpio2Vbat(jsonDoc["VGPIO"].as<uint16_t>());
-        jsonDoc["VBAT"] = battery.vbatMv;
+        jsonDoc["VBAT_MV"] = battery.vbatMv;
         jsonDoc["VBAT_PERCENT"] = battery.batteryPercent;
         jsonDoc["VBAT_GLYPH"] = battery.glyph;
         jsonDoc["VBAT_STATUS"] = battery.status;

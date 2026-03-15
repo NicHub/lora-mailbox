@@ -99,14 +99,6 @@ private:
         const char *wakeup = jsonDoc["WAKEUP"] | "";
         if (wakeup[0] == '\0')
             wakeup = jsonDoc["wakeup"] | "";
-        uint16_t batteryMv = jsonDoc["VGPIO"] | 0;
-        if (batteryMv == 0)
-            batteryMv = jsonDoc["volt_gpio"] | 0;
-
-#if defined(MQTT_CUSTOM_TOPIC_RESOLVER)
-        const char *customTopic = MQTT_CUSTOM_TOPIC_RESOLVER(jsonDoc, wakeup, batteryMv);
-        addTopicIfUnique(customTopic, topics, topicCount, maxTopics);
-#endif
 
 #if defined(MQTT_TOPIC_HEARTBEAT_RX)
         if (!jsonDoc["HEARTBEAT_RX"].isNull())
@@ -156,7 +148,7 @@ private:
 
     /**
      * @brief Inject `board_id_hex` as second topic level when available.
-     * @param topic Base topic (for example `mbx_nj/low_battery`).
+     * @param topic Base topic (for example `mbx_nj/pin`).
      * @param boardIdHex Board identifier extracted from payload.
      * @return Topic with board id as second level.
      */

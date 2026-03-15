@@ -35,6 +35,13 @@ enum class WakeupReason : uint8_t
     HeartbeatTx,
 };
 
+enum class NotificationStatus : uint8_t
+{
+    None,
+    MessageReceived,
+    Heartbeat,
+};
+
 struct BatteryMeasurement
 {
     int vbatMv;
