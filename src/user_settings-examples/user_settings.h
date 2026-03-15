@@ -17,14 +17,6 @@
 #define VFIT_OFFSET -55.f
 #define VGPIO_BATTERY_LOW_THRESHOLD 350
 
-/** @brief Wi-Fi credentials. */
-#ifndef WIFI_SSID
-#define WIFI_SSID ""
-#endif
-#ifndef WIFI_PASSWORD
-#define WIFI_PASSWORD ""
-#endif
-
 /** @brief POSIX timezone string used by NTP/localtime; see https://github.com/nayarsystems/posix_tz_db for timezone values. */
 #define NTP_TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
 
@@ -41,12 +33,6 @@
 
 /** @brief MQTT settings. */
 #define MQTT_ENABLED true
-#ifndef MQTT_USERNAME
-#define MQTT_USERNAME ""
-#endif
-#ifndef MQTT_PASSWORD
-#define MQTT_PASSWORD ""
-#endif
 #define MQTT_SERVER "mqtt.ouilogique.ch"
 #define MQTT_PORT 1883
 #define MQTT_USE_TLS true
@@ -59,12 +45,6 @@
 
 /** @brief NTFY settings. */
 #define NTFY_ENABLED true
-#ifndef NTFY_USERNAME
-#define NTFY_USERNAME ""
-#endif
-#ifndef NTFY_PASSWORD
-#define NTFY_PASSWORD ""
-#endif
 #define NTFY_INCLUDE_JSONL false
 #define NTFY_NOTIFY_HEARTBEAT_TX true
 #define NTFY_TITLE_PIN_HIGH "📩"
