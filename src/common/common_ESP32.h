@@ -7,7 +7,6 @@
 #pragma once
 
 #include <Arduino.h>
-#include <LittleFS.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
@@ -24,12 +23,27 @@
 #define LORA_LED_GREEN GPIO_NUM_48
 #define LORA_USER_BUTTON GPIO_NUM_21
 
-#define CNT_LOG_FILENAME "/cnt.log"
-
 #define PREFIX "\n[" PROJECT_NAME "] "
 
 void debounce(uint32_t);
 void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
+
+// Platform counter storage API.
+// ESP32 RX does not currently persist a message counter, but we keep the
+// same interface as nRF52 so a future ESP-based TX can reuse the same calls.
+void setupMsgCounterStorage()
+{
+}
+
+uint16_t readMsgCounter()
+{
+    return 0;
+}
+
+void saveMsgCounter(uint16_t cnt)
+{
+    (void)cnt;
+}
 
 void setupDeepSleep()
 {
@@ -48,53 +62,6 @@ void goToDeepSleep()
     debounce(1000);
     digitalWrite(LORA_LED_GREEN, LOW);
     esp_deep_sleep_start();
-}
-
-uint16_t readMsgCounterFromFile()
-{
-    File file = LittleFS.open(CNT_LOG_FILENAME, "r");
-    uint16_t cnt = file.readString().toInt();
-    file.close();
-    return cnt;
-}
-
-void saveMsgCounterToFile(uint16_t cnt)
-{
-    uint32_t t1 = millis();
-    if (LittleFS.exists(CNT_LOG_FILENAME))
-        LittleFS.remove(CNT_LOG_FILENAME);
-    File file = LittleFS.open(CNT_LOG_FILENAME, "w");
-    file.print(cnt);
-    file.close();
-    Serial.print("\n\nmillis(), Time elapsed to saveMsgCounterToFile = ");
-    Serial.print(millis());
-    Serial.print("\t");
-    Serial.print(millis() - t1);
-}
-
-void setupLittleFS()
-{
-    bool state = LittleFS.begin(true);
-    while (!state)
-    {
-        Serial.println("LittleFS.begin() failed");
-        blink(10, 100, 10, LORA_LED_GREEN, true);
-    }
-
-#if defined(FORMAT_LITTLEFS) && FORMAT_LITTLEFS == 1
-    digitalWrite(LORA_LED_GREEN, LOW);
-    LittleFS.format();
-    digitalWrite(LORA_LED_GREEN, HIGH);
-    while (true)
-    {
-        Serial.println("Format LittleFS done.");
-        Serial.println("Set FORMAT_LITTLEFS to 0 and reflash the board.\n");
-        blink(10, 100, 10, LED_BLUE, true);
-    }
-#endif
-
-    if (!LittleFS.exists(CNT_LOG_FILENAME))
-        saveMsgCounterToFile(0);
 }
 
 void switchOffAllLEDs()
