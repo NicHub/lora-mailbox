@@ -35,18 +35,6 @@ bool isPinHighEvent()
 }
 
 /**
- * @brief Return whether the current payload reports a low battery condition.
- * @return true when `volt_gpio` is below or equal to the configured threshold.
- */
-bool isLowBatteryEvent()
-{
-    JsonVariant batteryStatus = jsonDoc["VBAT_STATUS"];
-    if (batteryStatus.isNull())
-        return false;
-    return String(batteryStatus.as<const char *>()) == "LOW";
-}
-
-/**
  * @brief Return whether the current payload reports a TX heartbeat event.
  * @return true when `wakeup` equals `HEARTBEAT_TX`, false otherwise.
  */
@@ -65,7 +53,7 @@ bool isHeartbeatTxEvent()
  */
 void broadcastNtfy()
 {
-    bool shouldNotifyNtfy = isPinHighEvent() || isLowBatteryEvent();
+    bool shouldNotifyNtfy = isPinHighEvent();
 #if NTFY_NOTIFY_HEARTBEAT_TX
     shouldNotifyNtfy = shouldNotifyNtfy || isHeartbeatTxEvent();
 #endif

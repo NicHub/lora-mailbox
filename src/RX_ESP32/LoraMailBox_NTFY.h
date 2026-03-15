@@ -41,23 +41,16 @@ public:
         const char *batteryGlyph = jsonDoc["VBAT_GLYPH"] | "";
         const char *batteryStatus = jsonDoc["VBAT_STATUS"] | "";
         bool pinHigh = strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0;
-        bool lowBattery = strcmp(batteryStatus, "LOW") == 0;
         bool heartbeatTx = false;
 #if NTFY_NOTIFY_HEARTBEAT_TX
         heartbeatTx = strcmp(wakeup, "HEARTBEAT_TX") == 0;
 #endif
 
         String text;
-        if (pinHigh && lowBattery)
-            text = NTFY_TITLE_PIN_HIGH_LOW_BATTERY;
-        else if (pinHigh)
+        if (pinHigh)
             text = NTFY_TITLE_PIN_HIGH;
-        else if (heartbeatTx && lowBattery)
-            text = NTFY_TITLE_HEARTBEAT_TX_LOW_BATTERY;
         else if (heartbeatTx)
             text = NTFY_TITLE_HEARTBEAT_TX;
-        else if (lowBattery)
-            text = NTFY_TITLE_LOW_BATTERY;
 
         text += " ";
         text += batteryGlyph;
@@ -88,9 +81,11 @@ public:
         if (getLocalTime(&timeinfo))
             strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
 
-        String title = String(NTFY_RECIPIENT_NAME) + " got mail";
+        String title = "";
         if (timeStr[0] != '\0')
-            title += " @ " + String(timeStr);
+            title += String(timeStr);
+        title += " @" + String(NTFY_RECIPIENT_NAME);
+
         return title;
     }
 

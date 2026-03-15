@@ -106,12 +106,6 @@ private:
         addTopicIfUnique(customTopic, topics, topicCount, maxTopics);
 #endif
 
-#if defined(MQTT_TOPIC_LOW_BATTERY)
-        const char *batteryStatus = jsonDoc["VBAT_STATUS"] | "";
-        if (strcmp(batteryStatus, "LOW") == 0)
-            addTopicIfUnique(MQTT_TOPIC_LOW_BATTERY, topics, topicCount, maxTopics);
-#endif
-
 #if defined(MQTT_TOPIC_HEARTBEAT_RX)
         if (!jsonDoc["HEARTBEAT_RX"].isNull())
             addTopicIfUnique(MQTT_TOPIC_HEARTBEAT_RX, topics, topicCount, maxTopics);
