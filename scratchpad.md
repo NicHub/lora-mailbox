@@ -94,13 +94,6 @@ mosquitto_sub -h test.mosquitto.org -t "mailboxtest"
 pio device monitor -e seeed_xiao_esp32s3-rx
 ```
 
-```
-
-mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_nj/#" -v
-mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/#" -v
-
-```
-
 # IoT BMS Requirements
 
 Goal: choose a safe and reliable battery solution for small IoT devices, with long battery life and easy integration.
@@ -171,3 +164,11 @@ nico
 #define LORA_USEREGULATORLDO false
 #endif
 ```
+
+```
+
+mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_nj/#" -v
+mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/#" -v
+
+```
+

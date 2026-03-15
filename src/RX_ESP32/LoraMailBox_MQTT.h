@@ -8,9 +8,11 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include "user_settings/user_settings.h"
+
+#if MQTT_ENABLED
 #include <PsychicMqttClient.h>
 #include <WiFi.h>
-#include "user_settings/user_settings.h"
 
 class LoraMailBox_MQTT
 {
@@ -220,9 +222,6 @@ public:
 
     void reconnect()
     {
-#if !MQTT_ENABLED
-        return;
-#endif
         if (!ensureWiFiConnected())
             return;
 
@@ -235,9 +234,6 @@ public:
 
     void begin()
     {
-#if !MQTT_ENABLED
-        return;
-#endif
         client.setServer(mqtt_uri.c_str());
 #if MQTT_USE_TLS
         client.setCACert(MQTT_ROOT_CA);
@@ -282,10 +278,6 @@ public:
 
     void sendMsg(JsonDocument jsonDoc)
     {
-#if !MQTT_ENABLED
-        (void)jsonDoc;
-        return;
-#endif
         if (!ensureWiFiConnected())
             return;
 
@@ -329,3 +321,31 @@ public:
         publishPayloadToTopicList(mqttString, topicList);
     }
 };
+
+#else
+
+class LoraMailBox_MQTT
+{
+public:
+    LoraMailBox_MQTT(const char *server = "", int port = 0, const char *topic = "")
+    {
+        (void)server;
+        (void)port;
+        (void)topic;
+    }
+
+    void reconnect()
+    {
+    }
+
+    void begin()
+    {
+    }
+
+    void sendMsg(JsonDocument jsonDoc)
+    {
+        (void)jsonDoc;
+    }
+};
+
+#endif

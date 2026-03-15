@@ -97,7 +97,6 @@ public:
      */
     bool sendMsg(const JsonDocument &jsonDoc, const String &topic = NTFY_TOPIC)
     {
-#if NTFY_ENABLED
         if (WiFi.status() != WL_CONNECTED)
             return false;
 
@@ -144,9 +143,6 @@ public:
         https.end();
 
         return ok;
-#else
-        return false;
-#endif
     }
 };
 
