@@ -10,7 +10,6 @@
 
 #define BOARD_TYPE_SEEED_XIAO_ESP32S3_SX1262 1
 #define BOARD_TYPE_SEEED_XIAO_NRF52840_SX1262 2
-
 namespace board
 {
 #if BOARD_TYPE == BOARD_TYPE_SEEED_XIAO_ESP32S3_SX1262
@@ -43,6 +42,7 @@ static constexpr uint32_t lora_user_button = PIN_BUTTON1;
 /** @brief Miscellaneous settings. */
 #define DEBUG true
 #define SERIAL_VERBOSITY 2
+#define RESET_MSG_COUNTER_ON_UPLOAD false
 
 /** @brief Battery fit coefficients used to compute `VFIT` from `VGPIO`. */
 #define VFIT_SLOPE 10.805f
@@ -75,6 +75,11 @@ static constexpr uint32_t lora_user_button = PIN_BUTTON1;
 #define MQTT_TOPIC_WAKEUP_PIN_HIGH "mbx_rz/pin"
 #define MQTT_TOPIC_HEARTBEAT_TX "mbx_rz/heartbeat"
 #define MQTT_TOPIC_BOOT "mbx_rz/boot"
+#define SIMULATOR_MQTT_BASE_TOPIC "mbx_rz/simulator"
+#define SIMULATOR_MQTT_ON_TOPIC SIMULATOR_MQTT_BASE_TOPIC "/on"
+#define SIMULATOR_MQTT_OFF_TOPIC SIMULATOR_MQTT_BASE_TOPIC "/off"
+#define SIMULATOR_MQTT_PWM_TOPIC SIMULATOR_MQTT_BASE_TOPIC "/pwm"
+#define SIMULATOR_MQTT_STATUS_TOPIC SIMULATOR_MQTT_BASE_TOPIC "/status"
 
 /** @brief NTFY settings. */
 #define NTFY_ENABLED true
