@@ -41,7 +41,7 @@ JSONL_PATH = OUTPUT_DIR / Path(JSONL_URL).name
 HTML_PATH = OUTPUT_DIR / "battery_regression_plot.html"
 TARGET_NRF_VOLT = 318
 DERIVATIVE_SMOOTHING_WINDOW = 21
-SECOND_PLOT_GUIDE_COUNTER = 1500
+SECOND_PLOT_GUIDE_BATTERY_MV = 3700
 
 
 def ensure_local_jsonl(path: Path, url: str) -> Path:
@@ -266,9 +266,13 @@ def build_time_plot() -> tuple[figure, float, float, datetime, datetime, datetim
     counter_from_minute_slope, counter_from_minute_intercept = linear_regression(linear_minutes, linear_counters)
     target_counter = counter_from_minute_slope * target_minutes + counter_from_minute_intercept
     volt_from_counter_slope, volt_from_counter_intercept = linear_regression(linear_counters, linear_volts)
+    battery_slope_mv, battery_intercept_mv = get_battery_fit_mv()
     second_plot_guide_volt = (
-        volt_from_counter_slope * SECOND_PLOT_GUIDE_COUNTER + volt_from_counter_intercept
-    )
+        SECOND_PLOT_GUIDE_BATTERY_MV - battery_intercept_mv
+    ) / battery_slope_mv
+    second_plot_guide_counter = (
+        second_plot_guide_volt - volt_from_counter_intercept
+    ) / volt_from_counter_slope
 
     regression_counters = linear_counters + [target_counter]
     regression_volts = [
@@ -284,7 +288,8 @@ def build_time_plot() -> tuple[figure, float, float, datetime, datetime, datetim
     y_max = 400
 
     plot_minutes = figure(
-        title="nRF Power Consumption Study with a 3,7V 150mAh LiPo Battery — Vgpio vs Msg Count",
+        # title="nRF Power Consumption Study with a 3,7V 150mAh LiPo Battery — Vgpio vs Msg Count",
+        title="nRF Power Consumption Study with a 3,7V 3000mAh BMS protected LiPo Battery — Vgpio vs Msg Count",
         x_axis_label="MSG COUNT",
         y_axis_label="Vgpio ()",
         width=1100,
@@ -305,11 +310,10 @@ def build_time_plot() -> tuple[figure, float, float, datetime, datetime, datetim
         Span(location=second_plot_guide_volt, dimension="width", line_dash="dashed", line_color="#1d3557")
     )
     plot_minutes.add_layout(
-        Span(location=SECOND_PLOT_GUIDE_COUNTER, dimension="height", line_dash="dashed", line_color="#1d3557")
+        Span(location=second_plot_guide_counter, dimension="height", line_dash="dashed", line_color="#1d3557")
     )
     plot_minutes.extra_x_ranges = {"time": Range1d(start=time_x_min, end=time_x_max)}
     plot_minutes.add_layout(LinearAxis(x_range_name="time", axis_label="Time (min)"), "above")
-    battery_slope_mv, battery_intercept_mv = get_battery_fit_mv()
     battery_y_min = battery_slope_mv * y_min + battery_intercept_mv
     battery_y_max = battery_slope_mv * y_max + battery_intercept_mv
     plot_minutes.extra_y_ranges = {"vbat": Range1d(start=battery_y_min, end=battery_y_max)}
@@ -427,8 +431,10 @@ def main() -> None:
             f"<p><b>Debut:</b> {start_dt:%Y-%m-%d %H:%M:%S}<br>"
             f"<b>Fin:</b> {end_dt:%Y-%m-%d %H:%M:%S}<br>"
             f"<b>Duree:</b> {format_duration(measured_duration)}<br>"
-            f"<b>Fin zone lineaire:</b> {linear_end_dt:%Y-%m-%d %H:%M:%S} ({linear_end_minute:.1f} min)<br>"
-            f"<b>Heure extrapolee pour Vgpio = {TARGET_NRF_VOLT}:</b> {target_dt:%Y-%m-%d %H:%M:%S}</p>"
+            # f"<b>Fin zone lineaire:</b> {linear_end_dt:%Y-%m-%d %H:%M:%S} ({linear_end_minute:.1f} min)<br>"
+            # f"<b>Heure extrapolee pour Vgpio = {TARGET_NRF_VOLT}:</b> {target_dt:%Y-%m-%d %H:%M:%S}</p>"
+            f"<b>Attention, le graphique 1 montre l’étalonnage Vbat vs Vgpio qui a été réalisé sur une batterie LiPo 150mAh.</b></p>"
+            f"<b>Le graphique 2 montre la courbe de décharge d’une LiPo 3000mAh protégée par BMS intégré.</b></p>"
         ),
         width=1100,
     )
