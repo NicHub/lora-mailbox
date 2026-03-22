@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
+from urllib.request import urlopen
 
 from bokeh.io import output_notebook, save, show
 from bokeh.layouts import column
@@ -34,11 +36,23 @@ CALIBRATION_POINTS = [
 #    (1.88, 209), # Zone non linéaire, ne pas prendre en compte pour le fit. Autre batterie que les mesures précédente ?
 ]
 OUTPUT_DIR = Path(__file__).resolve().parent / "output"
-JSONL_PATH = OUTPUT_DIR / "lora-receive-1.jsonl"
+JSONL_URL = "https://public.ouilogique.ch/data/mqtt.ouilogique.ch_8883_mbx_nj.jsonl"
+JSONL_PATH = OUTPUT_DIR / Path(JSONL_URL).name
 HTML_PATH = OUTPUT_DIR / "battery_regression_plot.html"
 TARGET_NRF_VOLT = 318
 DERIVATIVE_SMOOTHING_WINDOW = 21
 SECOND_PLOT_GUIDE_COUNTER = 1500
+
+
+def ensure_local_jsonl(path: Path, url: str) -> Path:
+    """Telecharge le JSONL une seule fois et reutilise la copie locale ensuite."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        return path
+
+    with urlopen(url) as response:
+        path.write_bytes(response.read())
+    return path
 
 
 def linear_regression(xs: list[float], ys: list[float]) -> tuple[float, float]:
@@ -97,37 +111,46 @@ def find_linear_region_end(minutes: list[float], volts: list[float]) -> int:
     return best_index
 
 
+@lru_cache(maxsize=None)
+def parse_measurements(path: Path) -> tuple[tuple[datetime, int, int | None], ...]:
+    """Charge et parse le fichier une seule fois, puis garde les mesures en memoire."""
+    rows: list[tuple[datetime, int, int | None]] = []
+    with path.open(encoding="utf-8") as handle:
+        for raw_line in handle:
+            line = raw_line.strip()
+            if not line:
+                continue
+
+            json_start = line.find("{")
+            if json_start < 0:
+                continue
+
+            try:
+                obj = json.loads(line[json_start:])
+            except json.JSONDecodeError:
+                continue
+
+            current_time = obj.get("CURRENT_TIME", obj.get("CURRENT TIME"))
+            volt = obj.get("VGPIO", obj.get("volt"))
+            if current_time is None or volt is None:
+                continue
+
+            dt = datetime.strptime(current_time, "%Y-%m-%d %H:%M:%S")
+            counter = obj.get("COUNTER", {}).get("VALUE")
+            rows.append((dt, int(volt), None if counter is None else int(counter)))
+
+    rows.sort(key=lambda row: row[0])
+    return tuple(rows)
+
+
 def load_rows(path: Path) -> list[tuple[datetime, int]]:
     """Charge les mesures temporelles depuis le JSONL."""
-    rows = []
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        obj = json.loads(line)
-        if "CURRENT TIME" not in obj or "volt" not in obj:
-            continue
-        dt = datetime.strptime(obj["CURRENT TIME"], "%Y-%m-%d %H:%M:%S")
-        rows.append((dt, int(obj["volt"])))
-    return sorted(rows, key=lambda row: row[0])
+    return [(dt, volt) for dt, volt, _ in parse_measurements(path)]
 
 
 def load_counter_rows(path: Path) -> list[tuple[datetime, int, int]]:
     """Charge les mesures temporelles avec COUNTER.VALUE depuis le JSONL."""
-    rows = []
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        obj = json.loads(line)
-        if "CURRENT TIME" not in obj or "volt" not in obj:
-            continue
-        counter = obj.get("COUNTER", {}).get("VALUE")
-        if counter is None:
-            continue
-        dt = datetime.strptime(obj["CURRENT TIME"], "%Y-%m-%d %H:%M:%S")
-        rows.append((dt, int(obj["volt"]), int(counter)))
-    return sorted(rows, key=lambda row: row[0])
+    return [(dt, volt, counter) for dt, volt, counter in parse_measurements(path) if counter is not None]
 
 
 def get_counter_fit(path: Path) -> tuple[float, float]:
@@ -374,6 +397,7 @@ def build_derivative_plot() -> figure:
 
 def main() -> None:
     output_notebook()
+    ensure_local_jsonl(JSONL_PATH, JSONL_URL)
 
     calibration_plot, calibration_slope, calibration_intercept = build_calibration_plot()
     (
