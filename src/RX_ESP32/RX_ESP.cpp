@@ -51,9 +51,7 @@ bool isHeartbeatTxEvent()
 void broadcastNtfy()
 {
     bool shouldNotifyNtfy = isPinHighEvent();
-#if NTFY_NOTIFY_HEARTBEAT_TX
-    shouldNotifyNtfy = shouldNotifyNtfy || isHeartbeatTxEvent();
-#endif
+    shouldNotifyNtfy = shouldNotifyNtfy || (settings::ntfy::notify_heartbeat_tx && isHeartbeatTxEvent());
     if (shouldNotifyNtfy)
         lmb_ntfy.sendMsg(jsonDoc);
 }

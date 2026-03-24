@@ -6,34 +6,40 @@
 
 #pragma once
 
+#include "common/LoraMailBox_NTFY_types.h"
 #include "user_settings/user_settings_secrets.h"
+
+namespace settings::mailbox
+{
+    static constexpr char recipient_name[] = "rolf";
+}
 
 #define BOARD_TYPE_SEEED_XIAO_ESP32S3_SX1262 1
 #define BOARD_TYPE_SEEED_XIAO_NRF52840_SX1262 2
 namespace board
 {
 #if BOARD_TYPE == BOARD_TYPE_SEEED_XIAO_ESP32S3_SX1262
-namespace hw
-{
-static constexpr uint32_t wakeup_pin = D10;
-static constexpr uint32_t lora_cs = 41;            // GPIO4
-static constexpr uint32_t lora_irq = 39;           // DIO1
-static constexpr uint32_t lora_rst = 42;           // GPIO3
-static constexpr uint32_t lora_gpio = 40;          // GPIO2
-static constexpr uint32_t lora_led_green = GPIO_NUM_48;
-static constexpr uint32_t lora_user_button = GPIO_NUM_21;
-}
+    namespace hw
+    {
+        static constexpr uint32_t wakeup_pin = D10;
+        static constexpr uint32_t lora_cs = 41;   // GPIO4
+        static constexpr uint32_t lora_irq = 39;  // DIO1
+        static constexpr uint32_t lora_rst = 42;  // GPIO3
+        static constexpr uint32_t lora_gpio = 40; // GPIO2
+        static constexpr uint32_t lora_led_green = GPIO_NUM_48;
+        static constexpr uint32_t lora_user_button = GPIO_NUM_21;
+    }
 #elif BOARD_TYPE == BOARD_TYPE_SEEED_XIAO_NRF52840_SX1262
-namespace hw
-{
-static constexpr uint32_t wakeup_pin = D5;
-static constexpr uint32_t lora_cs = D4;
-static constexpr uint32_t lora_irq = D1;
-static constexpr uint32_t lora_rst = D2;
-static constexpr uint32_t lora_gpio = D3;
-static constexpr uint32_t lora_led_green = LED_GREEN;
-static constexpr uint32_t lora_user_button = PIN_BUTTON1;
-}
+    namespace hw
+    {
+        static constexpr uint32_t wakeup_pin = D5;
+        static constexpr uint32_t lora_cs = D4;
+        static constexpr uint32_t lora_irq = D1;
+        static constexpr uint32_t lora_rst = D2;
+        static constexpr uint32_t lora_gpio = D3;
+        static constexpr uint32_t lora_led_green = LED_GREEN;
+        static constexpr uint32_t lora_user_button = PIN_BUTTON1;
+    }
 #else
 #error Unsupported BOARD_TYPE
 #endif
@@ -83,9 +89,17 @@ static constexpr uint32_t lora_user_button = PIN_BUTTON1;
 
 /** @brief NTFY settings. */
 #define NTFY_ENABLED true
-#define NTFY_NOTIFY_HEARTBEAT_TX true
-#define NTFY_ICON_PIN_HIGH "📩"
-#define NTFY_ICON_HEARTBEAT_TX "🔔"
-#define NTFY_SERVER "https://ntfy.ouilogique.ch/"
-#define NTFY_RECIPIENT_NAME "rolf"
-#define NTFY_TOPIC "mbx_rz"
+namespace settings::ntfy
+{
+    static constexpr bool notify_heartbeat_tx = true;
+    static constexpr char server[] = "https://ntfy.ouilogique.ch/";
+    static constexpr char topic[] = "mbx_rz";
+
+    static constexpr NTFYPriority message_received_priority = NTFYPriority::Max;
+    static constexpr char message_received_icon[] = "📩";
+    static constexpr char message_received_title_suffix[] = " got mail";
+
+    static constexpr NTFYPriority heartbeat_priority = NTFYPriority::Min;
+    static constexpr char heartbeat_icon[] = "🔔";
+    static constexpr char heartbeat_title_suffix[] = " got heartbeat";
+}

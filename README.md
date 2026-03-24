@@ -6,6 +6,8 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
 
 -   The first build copies files from `src/user_settings-examples/` to `src/user_settings/` if they are missing.
 -   Update the files in `src/user_settings/` with your information.
+-   `src/user_settings/` is intentionally a nested local Git repository used to keep private machine-specific settings and secrets out of the main project repository.
+-   Keep `src/user_settings-examples/` and `src/user_settings/` structurally aligned, but never copy secrets from `src/user_settings/` into the example directory.
 -   Copy `user_settings-example.ini` to `user_settings.ini`
     and update the serial port details for your machine.
 
