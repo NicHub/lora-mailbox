@@ -23,29 +23,62 @@ class LoraMailBox_NTFY
 public:
     LoraMailBox_NTFY() {}
 
-    NotificationStatus getNotificationStatus(const JsonDocument &jsonDoc) const
+    NTFYPriority getNTFYPriority(NTFYMessageKind ntfyMessageKind) const
+    {
+        switch (ntfyMessageKind)
+        {
+        case NTFYMessageKind::MessageReceived:
+            return settings::ntfy::message_received_priority;
+        case NTFYMessageKind::Heartbeat:
+            return settings::ntfy::heartbeat_priority;
+        case NTFYMessageKind::None:
+        default:
+            return NTFYPriority::Default;
+        }
+    }
+
+    const char *getNTFYIcon(NTFYMessageKind ntfyMessageKind) const
+    {
+        switch (ntfyMessageKind)
+        {
+        case NTFYMessageKind::MessageReceived:
+            return settings::ntfy::message_received_icon;
+        case NTFYMessageKind::Heartbeat:
+            return settings::ntfy::heartbeat_icon;
+        case NTFYMessageKind::None:
+        default:
+            return "";
+        }
+    }
+
+    const char *getNTFYTitleSuffix(NTFYMessageKind ntfyMessageKind) const
+    {
+        switch (ntfyMessageKind)
+        {
+        case NTFYMessageKind::MessageReceived:
+            return settings::ntfy::message_received_title_suffix;
+        case NTFYMessageKind::Heartbeat:
+            return settings::ntfy::heartbeat_title_suffix;
+        case NTFYMessageKind::None:
+        default:
+            return "";
+        }
+    }
+
+    NTFYMessageKind getNTFYMessageKind(const JsonDocument &jsonDoc) const
     {
         const char *wakeup = jsonDoc["WAKEUP"] | "";
         if (wakeup[0] == '\0')
             wakeup = jsonDoc["wakeup"] | "";
         if (strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0)
-            return NotificationStatus::MessageReceived;
-#if NTFY_NOTIFY_HEARTBEAT_TX
-        if (strcmp(wakeup, "HEARTBEAT_TX") == 0)
-            return NotificationStatus::Heartbeat;
-#endif
-        return NotificationStatus::None;
+            return NTFYMessageKind::MessageReceived;
+        if (settings::ntfy::notify_heartbeat_tx && strcmp(wakeup, "HEARTBEAT_TX") == 0)
+            return NTFYMessageKind::Heartbeat;
+        return NTFYMessageKind::None;
     }
 
-    /**
-     * @brief Build notification emoji text from message categories.
-     * @param jsonDoc JSON payload.
-     * @param status Precomputed notification status.
-     * @return Notification text.
-     */
-    String getNotificationText(const JsonDocument &jsonDoc, NotificationStatus status) const
+    String buildNTFYBody(const JsonDocument &jsonDoc) const
     {
-        (void)status;
         uint16_t counterValue = jsonDoc["COUNTER"]["VALUE"] | 0;
         const char *counterStatus = jsonDoc["COUNTER"]["STATUS"] | "";
         uint16_t vgpio = jsonDoc["VGPIO"] | 0;
@@ -77,36 +110,35 @@ public:
     }
 
     /**
-     * @brief Build notification title from board identifier.
-     * @param jsonDoc JSON payload.
-     * @param status Precomputed notification status.
-     * @return Board identifier (`board_id_hex`) when available.
+     * @brief Build a complete NTFY message from the current payload.
      */
-    String getNotificationTitle(const JsonDocument &jsonDoc, NotificationStatus status) const
+    NTFYMessage buildNTFYMessage(const JsonDocument &jsonDoc) const
     {
-        (void)jsonDoc;
+        NTFYMessageKind ntfyMessageKind = getNTFYMessageKind(jsonDoc);
+        if (ntfyMessageKind == NTFYMessageKind::None)
+            return NTFYMessage{NTFYMessageKind::None, NTFYPriority::Default, "", ""};
+
         struct tm timeinfo;
         char timeStr[9] = "";
         if (getLocalTime(&timeinfo))
             strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
 
+        const char *ntfyIcon = getNTFYIcon(ntfyMessageKind);
+        const char *ntfyTitleSuffix = getNTFYTitleSuffix(ntfyMessageKind);
         String title;
-        if (status == NotificationStatus::MessageReceived)
-            title = String(NTFY_ICON_PIN_HIGH) + " ";
-        else if (status == NotificationStatus::Heartbeat)
-            title = String(NTFY_ICON_HEARTBEAT_TX) + " ";
+        if (ntfyIcon[0] != '\0')
+            title = String(ntfyIcon) + " ";
         if (timeStr[0] != '\0')
             title += String(timeStr);
-        title += " @" + String(NTFY_RECIPIENT_NAME);
-        if (status == NotificationStatus::MessageReceived)
-            title += " got mail";
-        else if (status == NotificationStatus::Heartbeat)
-            title += " got heartbeat";
-        else
-            title += " got undefined notif";
+        title += " @" + String(settings::mailbox::recipient_name);
+        title += ntfyTitleSuffix;
 
-
-        return title;
+        return NTFYMessage{
+            ntfyMessageKind,
+            getNTFYPriority(ntfyMessageKind),
+            title,
+            buildNTFYBody(jsonDoc),
+        };
     }
 
     /**
@@ -115,7 +147,7 @@ public:
      * @param topic NTFY topic suffix.
      * @return true on HTTP 2xx success, false otherwise.
      */
-    bool sendMsg(const JsonDocument &jsonDoc, const String &topic = NTFY_TOPIC)
+    bool sendMsg(const JsonDocument &jsonDoc, const String &topic = settings::ntfy::topic)
     {
         if (WiFi.status() != WL_CONNECTED)
             return false;
@@ -124,25 +156,28 @@ public:
         client.setInsecure();
 
         HTTPClient https;
-        String url = String(NTFY_SERVER) + topic;
+        String url = String(settings::ntfy::server) + topic;
 
         bool ok = false;
         if (!https.begin(client, url))
             return false;
 
-        NotificationStatus status = getNotificationStatus(jsonDoc);
-        String title = getNotificationTitle(jsonDoc, status);
-        String alertText = getNotificationText(jsonDoc, status);
-        String message = alertText;
+        NTFYMessage ntfyMessage = buildNTFYMessage(jsonDoc);
+        if (ntfyMessage.kind == NTFYMessageKind::None)
+        {
+            https.end();
+            return false;
+        }
 
-        https.addHeader("Title", title);
+        https.addHeader("Title", ntfyMessage.title);
+        https.addHeader("Priority", ntfyPriorityToString(ntfyMessage.priority));
 
         if (String(NTFY_USERNAME).length() > 0 || String(NTFY_PASSWORD).length() > 0)
             https.setAuthorization(NTFY_USERNAME, NTFY_PASSWORD);
 
         https.addHeader("Markdown", "yes");
         https.addHeader("Content-Type", "text/markdown; charset=utf-8");
-        int httpCode = https.POST(message);
+        int httpCode = https.POST(ntfyMessage.body);
         ok = (httpCode >= 200 && httpCode < 300);
         https.end();
 
@@ -157,24 +192,22 @@ class LoraMailBox_NTFY
 public:
     LoraMailBox_NTFY() {}
 
-    NotificationStatus getNotificationStatus(const JsonDocument &jsonDoc) const
+    NTFYMessageKind getNTFYMessageKind(const JsonDocument &jsonDoc) const
     {
         (void)jsonDoc;
-        return NotificationStatus::None;
+        return NTFYMessageKind::None;
     }
 
-    String getNotificationText(const JsonDocument &jsonDoc, NotificationStatus status) const
+    String buildNTFYBody(const JsonDocument &jsonDoc) const
     {
         (void)jsonDoc;
-        (void)status;
         return "";
     }
 
-    String getNotificationTitle(const JsonDocument &jsonDoc, NotificationStatus status) const
+    NTFYMessage buildNTFYMessage(const JsonDocument &jsonDoc) const
     {
         (void)jsonDoc;
-        (void)status;
-        return "";
+        return NTFYMessage{NTFYMessageKind::None, NTFYPriority::Default, "", ""};
     }
 
     bool sendMsg(const JsonDocument &jsonDoc, const String &topic = "")

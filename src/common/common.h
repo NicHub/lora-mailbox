@@ -9,6 +9,7 @@
 #include <Arduino.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
+#include "common/LoraMailBox_NTFY_types.h"
 #include "user_settings/user_settings.h"
 
 // #if defined(ESP32)
@@ -33,13 +34,6 @@ enum class WakeupReason : uint8_t
     Boot,
     WakeupPinHigh,
     HeartbeatTx,
-};
-
-enum class NotificationStatus : uint8_t
-{
-    None,
-    MessageReceived,
-    Heartbeat,
 };
 
 struct BatteryMeasurement
