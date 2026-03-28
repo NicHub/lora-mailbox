@@ -168,7 +168,11 @@ nico
 ```
 
 mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_nj/#" -v
+mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_nj/+/heartbeat_rx" -v
+mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_nj/98:3D:AE:ED:0E:E4/heartbeat_rx" -v
+
 mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/#" -v
+mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/+/heartbeat_rx" -v
+mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/B8:F8:62:F8:B0:E8/heartbeat_rx" -v
 
 ```
-
