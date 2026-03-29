@@ -22,7 +22,7 @@ Detects when mailbox flap is opened using a PIR motion sensor and sends a notifi
 
 -   XIAO nRF52840 & Wio-SX1262 Kit
 
-    -   https://github.com/meshtastic/firmware/blob/master/variants/seeed_xiao_nrf52840_kit/variant.h
+    -   https://github.com/meshtastic/firmware/blob/master/variants/nrf52840/seeed_xiao_nrf52840_kit/variant.h
     -   https://files.seeedstudio.com/products/SenseCAP/Wio_SX1262/Wio-SX1262%20for%20XIAO%20V1.0_SCH.pdf
     -   Wio-SX1262 for XIAO standalone SKU `113010003`
     -   XIAO nRF52840 kit SKU `102010710`
