@@ -8,18 +8,15 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include "user_settings/user_settings.h"
-
-#if MQTT_ENABLED
 #include <PsychicMqttClient.h>
 #include <WiFi.h>
+#include "user_settings/user_settings.h"
 
 class LoraMailBox_MQTT
 {
 private:
-#if MQTT_USE_TLS
     static constexpr const char *MQTT_ROOT_CA = MQTT_ROOT_CA_PEM;
-#endif
+
     PsychicMqttClient client;
     const char *mqtt_server;
     const int mqtt_port;
@@ -32,9 +29,6 @@ private:
 
     static constexpr size_t MAX_TOPICS_PER_MESSAGE = 8;
 
-    /**
-     * @brief Return true when Wi-Fi is connected.
-     */
     bool ensureWiFiConnected()
     {
         if (WiFi.status() == WL_CONNECTED)
@@ -44,13 +38,6 @@ private:
         return false;
     }
 
-    /**
-     * @brief Add one topic to the output list if it is non-empty and not already present.
-     * @param topic Candidate topic.
-     * @param topics Output array of topics.
-     * @param topicCount Current topic count.
-     * @param maxTopics Maximum number of topics accepted.
-     */
     void addTopicIfUnique(const char *topic, const char **topics, size_t &topicCount, size_t maxTopics) const
     {
         if (topic == nullptr || topic[0] == '\0')
@@ -65,13 +52,6 @@ private:
         topics[topicCount++] = topic;
     }
 
-    /**
-     * @brief Add one topic string to the output list if it is non-empty and not already present.
-     * @param topic Candidate topic.
-     * @param topics Output array of topic strings.
-     * @param topicCount Current topic count.
-     * @param maxTopics Maximum number of topics accepted.
-     */
     void addTopicStringIfUnique(const String &topic, String *topics, size_t &topicCount, size_t maxTopics) const
     {
         if (topic.isEmpty())
@@ -86,13 +66,6 @@ private:
         topics[topicCount++] = topic;
     }
 
-    /**
-     * @brief Resolve all MQTT topics matching the message categories.
-     * @param jsonDoc Message payload.
-     * @param topics Output array of topics.
-     * @param maxTopics Maximum number of topics accepted.
-     * @return Number of topics selected.
-     */
     size_t resolveTopics(const JsonDocument &jsonDoc, const char **topics, size_t maxTopics) const
     {
         size_t topicCount = 0;
@@ -100,36 +73,23 @@ private:
         if (wakeup[0] == '\0')
             wakeup = jsonDoc["wakeup"] | "";
 
-#if defined(MQTT_TOPIC_HEARTBEAT_RX)
         if (!jsonDoc["HEARTBEAT_RX"].isNull())
             addTopicIfUnique(MQTT_TOPIC_HEARTBEAT_RX, topics, topicCount, maxTopics);
-#endif
 
-#if defined(MQTT_TOPIC_WAKEUP_PIN_HIGH)
         if (strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0)
             addTopicIfUnique(MQTT_TOPIC_WAKEUP_PIN_HIGH, topics, topicCount, maxTopics);
-#endif
 
-#if defined(MQTT_TOPIC_HEARTBEAT_TX)
         if (strcmp(wakeup, "HEARTBEAT_TX") == 0)
             addTopicIfUnique(MQTT_TOPIC_HEARTBEAT_TX, topics, topicCount, maxTopics);
-#endif
 
-#if defined(MQTT_TOPIC_BOOT)
         if (strcmp(wakeup, "BOOT") == 0)
             addTopicIfUnique(MQTT_TOPIC_BOOT, topics, topicCount, maxTopics);
-#endif
+
         if (topicCount == 0)
             addTopicIfUnique(mqtt_default_topic, topics, topicCount, maxTopics);
         return topicCount;
     }
 
-    /**
-     * @brief Publish one payload on a specific MQTT topic.
-     * @param payload Serialized JSON payload.
-     * @param topic Destination topic.
-     * @return true when publish request succeeded.
-     */
     bool publishPayload(const String &payload, const char *topic)
     {
         const int publishResult = client.publish(topic, 0, false, payload.c_str());
@@ -146,12 +106,6 @@ private:
         return true;
     }
 
-    /**
-     * @brief Inject `board_id_hex` as second topic level when available.
-     * @param topic Base topic (for example `mbx_nj/pin`).
-     * @param boardIdHex Board identifier extracted from payload.
-     * @return Topic with board id as second level.
-     */
     String topicWithBoardId(const char *topic, const char *boardIdHex) const
     {
         if (topic == nullptr)
@@ -170,12 +124,6 @@ private:
         return prefix + "/" + boardIdHex + "/" + suffix;
     }
 
-    /**
-     * @brief Publish one payload to all topics from a line-separated topic list.
-     * @param payload Serialized JSON payload.
-     * @param topicList Newline-separated topic list.
-     * @return true when all publish operations succeeded.
-     */
     bool publishPayloadToTopicList(const String &payload, const String &topicList)
     {
         if (topicList.isEmpty())
@@ -201,19 +149,21 @@ private:
 
 public:
     LoraMailBox_MQTT(const char *server = MQTT_SERVER,
-                         int port = MQTT_PORT,
-                         const char *topic = MQTT_TOPIC)
+                     int port = MQTT_PORT,
+                     const char *topic = MQTT_TOPIC)
         : mqtt_server(server), mqtt_port(port), mqtt_default_topic(topic)
     {
-#if MQTT_USE_TLS
-        mqtt_uri = String("mqtts://") + mqtt_server + ":" + mqtt_port;
-#else
-        mqtt_uri = String("mqtt://") + mqtt_server + ":" + mqtt_port;
-#endif
+        if (MQTT_USE_TLS)
+            mqtt_uri = String("mqtts://") + mqtt_server + ":" + mqtt_port;
+        else
+            mqtt_uri = String("mqtt://") + mqtt_server + ":" + mqtt_port;
     }
 
     void reconnect()
     {
+        if (!MQTT_ENABLED)
+            return;
+
         if (!ensureWiFiConnected())
             return;
 
@@ -226,10 +176,12 @@ public:
 
     void begin()
     {
+        if (!MQTT_ENABLED)
+            return;
+
         client.setServer(mqtt_uri.c_str());
-#if MQTT_USE_TLS
-        client.setCACert(MQTT_ROOT_CA);
-#endif
+        if (MQTT_USE_TLS)
+            client.setCACert(MQTT_ROOT_CA);
         if (strlen(MQTT_USERNAME) > 0)
             client.setCredentials(MQTT_USERNAME, MQTT_PASSWORD);
         client.setBufferSize(1024);
@@ -270,6 +222,9 @@ public:
 
     void sendMsg(JsonDocument jsonDoc)
     {
+        if (!MQTT_ENABLED)
+            return;
+
         if (!ensureWiFiConnected())
             return;
 
@@ -313,31 +268,3 @@ public:
         publishPayloadToTopicList(mqttString, topicList);
     }
 };
-
-#else
-
-class LoraMailBox_MQTT
-{
-public:
-    LoraMailBox_MQTT(const char *server = "", int port = 0, const char *topic = "")
-    {
-        (void)server;
-        (void)port;
-        (void)topic;
-    }
-
-    void reconnect()
-    {
-    }
-
-    void begin()
-    {
-    }
-
-    void sendMsg(JsonDocument jsonDoc)
-    {
-        (void)jsonDoc;
-    }
-};
-
-#endif

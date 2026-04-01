@@ -14,11 +14,12 @@ namespace settings::mailbox
     static constexpr char recipient_name[] = "rolf";
 }
 
-#define BOARD_TYPE_SEEED_XIAO_ESP32S3_SX1262 1
-#define BOARD_TYPE_SEEED_XIAO_NRF52840_SX1262 2
 namespace board
 {
-#if BOARD_TYPE == BOARD_TYPE_SEEED_XIAO_ESP32S3_SX1262
+    static constexpr int seeed_xiao_esp32s3_sx1262 = 1;
+    static constexpr int seeed_xiao_nrf52840_sx1262 = 2;
+
+#if BOARD_TYPE == 1
     namespace hw
     {
         static constexpr uint32_t wakeup_pin = D10;
@@ -29,7 +30,7 @@ namespace board
         static constexpr uint32_t lora_led_green = GPIO_NUM_48;
         static constexpr uint32_t lora_user_button = GPIO_NUM_21;
     }
-#elif BOARD_TYPE == BOARD_TYPE_SEEED_XIAO_NRF52840_SX1262
+#elif BOARD_TYPE == 2
     namespace hw
     {
         static constexpr uint32_t wakeup_pin = D5;
@@ -46,63 +47,63 @@ namespace board
 }
 
 /** @brief Miscellaneous settings. */
-#define DEBUG true
-#define SERIAL_VERBOSITY 2
-#define TX_RESET_MSG_COUNTER_ON_REBOOT false
+static constexpr bool DEBUG = true;
+static constexpr int SERIAL_VERBOSITY = 2;
+static constexpr bool TX_RESET_MSG_COUNTER_ON_REBOOT = false;
 
 /** @brief Battery fit coefficients used to compute `VFIT` from `VGPIO`. */
-#define VFIT_SLOPE 10.805f
-#define VFIT_OFFSET -55.f
-#define VBAT_MAX 4100.f
-#define VBAT_MIN 3600.f
-#define VBAT_NO_BATTERY_THRESHOLD (100.f * VFIT_SLOPE + VFIT_OFFSET)
+static constexpr float VFIT_SLOPE = 10.805f;
+static constexpr float VFIT_OFFSET = -55.f;
+static constexpr float VBAT_MAX = 4100.f;
+static constexpr float VBAT_MIN = 3600.f;
+static constexpr float VBAT_NO_BATTERY_THRESHOLD = 100.f * VFIT_SLOPE + VFIT_OFFSET;
 
 /** @brief POSIX timezone string used by NTP/localtime; see https://github.com/nayarsystems/posix_tz_db for timezone values. */
-#define NTP_TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
-#define NTP_SERVER "pool.ntp.org"
-#define NTP_SYNC_MAX_RETRIES 10
-#define NTP_SYNC_RETRY_DELAY_MS 500UL
+static constexpr char NTP_TIMEZONE[] = "CET-1CEST,M3.5.0/2,M10.5.0/3";
+static constexpr char NTP_SERVER[] = "pool.ntp.org";
+static constexpr int NTP_SYNC_MAX_RETRIES = 10;
+static constexpr unsigned long NTP_SYNC_RETRY_DELAY_MS = 500UL;
 
 /** @brief Wi-Fi settings. */
-#define WIFI_CONNECT_TIMEOUT_MS 10000UL
-#define WIFI_CONNECT_RETRY_DELAY_MS 500UL
-#define WIFI_RECONNECT_MIN_INTERVAL_MS 5000UL
-#define WIFI_RECONNECT_TIMEOUT_MS 8000UL
+static constexpr unsigned long WIFI_CONNECT_TIMEOUT_MS = 10000UL;
+static constexpr unsigned long WIFI_CONNECT_RETRY_DELAY_MS = 500UL;
+static constexpr unsigned long WIFI_RECONNECT_MIN_INTERVAL_MS = 5000UL;
+static constexpr unsigned long WIFI_RECONNECT_TIMEOUT_MS = 8000UL;
 
 /** @brief LoRa settings. */
-#define LORA_FREQ 868.0
-#define LORA_BW 62.5
-#define LORA_SF 12
-#define LORA_CR 8
-#define LORA_SYNCWORD RADIOLIB_SX126X_SYNC_WORD_PRIVATE
-#define LORA_POWER 14
-#define LORA_PREAMBLELENGTH 12
-#define LORA_TCXOVOLTAGE 1.6
-#define LORA_USEREGULATORLDO false
+static constexpr float LORA_FREQ = 868.0;
+static constexpr float LORA_BW = 62.5;
+static constexpr uint8_t LORA_SF = 12;
+static constexpr uint8_t LORA_CR = 8;
+static constexpr uint8_t LORA_SYNCWORD = RADIOLIB_SX126X_SYNC_WORD_PRIVATE;
+static constexpr int8_t LORA_POWER = 14;
+static constexpr uint16_t LORA_PREAMBLELENGTH = 12;
+static constexpr float LORA_TCXOVOLTAGE = 1.6;
+static constexpr bool LORA_USEREGULATORLDO = false;
 // 868.0 MHz: respect legal duty-cycle constraints (typically 1%), so avoid short intervals.
-#define HEARTBEAT_INTERVAL_SECONDS (60 * 60)
-#define HEARTBEAT_INTERVAL_MS (HEARTBEAT_INTERVAL_SECONDS * 1000UL)
-#define HEARTBEAT_RX_INTERVAL_MS 5000UL
-#define TX_DEBOUNCE_S 5UL
+static constexpr unsigned long HEARTBEAT_INTERVAL_SECONDS = 60UL * 60UL;
+static constexpr unsigned long HEARTBEAT_INTERVAL_MS = HEARTBEAT_INTERVAL_SECONDS * 1000UL;
+static constexpr unsigned long HEARTBEAT_RX_INTERVAL_MS = 5000UL;
+static constexpr unsigned long TX_DEBOUNCE_S = 5UL;
 
 /** @brief MQTT settings. */
-#define MQTT_ENABLED true
-#define MQTT_SERVER "mqtt.ouilogique.ch"
-#define MQTT_USE_TLS true
-#define MQTT_PORT (MQTT_USE_TLS ? 8883 : 1883)
-#define MQTT_TOPIC "mbx_rz"
-#define MQTT_TOPIC_HEARTBEAT_RX "mbx_rz/heartbeat_rx"
-#define MQTT_TOPIC_WAKEUP_PIN_HIGH "mbx_rz/pin"
-#define MQTT_TOPIC_HEARTBEAT_TX "mbx_rz/heartbeat"
-#define MQTT_TOPIC_BOOT "mbx_rz/boot"
-#define SIMULATOR_MQTT_BASE_TOPIC "mbx_rz/simulator"
-#define SIMULATOR_MQTT_ON_TOPIC SIMULATOR_MQTT_BASE_TOPIC "/on"
-#define SIMULATOR_MQTT_OFF_TOPIC SIMULATOR_MQTT_BASE_TOPIC "/off"
-#define SIMULATOR_MQTT_PWM_TOPIC SIMULATOR_MQTT_BASE_TOPIC "/pwm"
-#define SIMULATOR_MQTT_STATUS_TOPIC SIMULATOR_MQTT_BASE_TOPIC "/status"
+static constexpr bool MQTT_ENABLED = true;
+static constexpr char MQTT_SERVER[] = "mqtt.ouilogique.ch";
+static constexpr bool MQTT_USE_TLS = true;
+static constexpr int MQTT_PORT = MQTT_USE_TLS ? 8883 : 1883;
+static constexpr char MQTT_TOPIC[] = "mbx_rz";
+static constexpr char MQTT_TOPIC_HEARTBEAT_RX[] = "mbx_rz/heartbeat_rx";
+static constexpr char MQTT_TOPIC_WAKEUP_PIN_HIGH[] = "mbx_rz/pin";
+static constexpr char MQTT_TOPIC_HEARTBEAT_TX[] = "mbx_rz/heartbeat";
+static constexpr char MQTT_TOPIC_BOOT[] = "mbx_rz/boot";
+static constexpr char SIMULATOR_MQTT_BASE_TOPIC[] = "mbx_rz/simulator";
+static constexpr char SIMULATOR_MQTT_ON_TOPIC[] = "mbx_rz/simulator/on";
+static constexpr char SIMULATOR_MQTT_OFF_TOPIC[] = "mbx_rz/simulator/off";
+static constexpr char SIMULATOR_MQTT_PWM_TOPIC[] = "mbx_rz/simulator/pwm";
+static constexpr char SIMULATOR_MQTT_STATUS_TOPIC[] = "mbx_rz/simulator/status";
 
 /** @brief NTFY settings. */
-#define NTFY_ENABLED true
+static constexpr bool NTFY_ENABLED = true;
 namespace settings::ntfy
 {
     static constexpr bool notify_heartbeat_tx = true;

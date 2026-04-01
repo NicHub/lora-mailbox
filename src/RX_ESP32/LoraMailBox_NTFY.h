@@ -10,13 +10,11 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include "user_settings/user_settings.h"
-
-#if NTFY_ENABLED
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <time.h>
+#include "user_settings/user_settings.h"
 
 class LoraMailBox_NTFY
 {
@@ -67,6 +65,9 @@ public:
 
     NTFYMessageKind getNTFYMessageKind(const JsonDocument &jsonDoc) const
     {
+        if (!NTFY_ENABLED)
+            return NTFYMessageKind::None;
+
         const char *wakeup = jsonDoc["WAKEUP"] | "";
         if (wakeup[0] == '\0')
             wakeup = jsonDoc["wakeup"] | "";
@@ -79,6 +80,12 @@ public:
 
     String buildNTFYBody(const JsonDocument &jsonDoc) const
     {
+        if (!NTFY_ENABLED)
+        {
+            (void)jsonDoc;
+            return "";
+        }
+
         uint16_t counterValue = jsonDoc["COUNTER"]["VALUE"] | 0;
         const char *counterStatus = jsonDoc["COUNTER"]["STATUS"] | "";
         uint16_t vgpio = jsonDoc["VGPIO"] | 0;
@@ -109,11 +116,14 @@ public:
         return text;
     }
 
-    /**
-     * @brief Build a complete NTFY message from the current payload.
-     */
     NTFYMessage buildNTFYMessage(const JsonDocument &jsonDoc) const
     {
+        if (!NTFY_ENABLED)
+        {
+            (void)jsonDoc;
+            return NTFYMessage{NTFYMessageKind::None, NTFYPriority::Default, "", ""};
+        }
+
         NTFYMessageKind ntfyMessageKind = getNTFYMessageKind(jsonDoc);
         if (ntfyMessageKind == NTFYMessageKind::None)
             return NTFYMessage{NTFYMessageKind::None, NTFYPriority::Default, "", ""};
@@ -141,14 +151,15 @@ public:
         };
     }
 
-    /**
-     * @brief Send an alert notification to NTFY via HTTPS.
-     * @param jsonDoc JSON payload.
-     * @param topic NTFY topic suffix.
-     * @return true on HTTP 2xx success, false otherwise.
-     */
     bool sendMsg(const JsonDocument &jsonDoc, const String &topic = settings::ntfy::topic)
     {
+        if (!NTFY_ENABLED)
+        {
+            (void)jsonDoc;
+            (void)topic;
+            return false;
+        }
+
         if (WiFi.status() != WL_CONNECTED)
             return false;
 
@@ -184,38 +195,3 @@ public:
         return ok;
     }
 };
-
-#else
-
-class LoraMailBox_NTFY
-{
-public:
-    LoraMailBox_NTFY() {}
-
-    NTFYMessageKind getNTFYMessageKind(const JsonDocument &jsonDoc) const
-    {
-        (void)jsonDoc;
-        return NTFYMessageKind::None;
-    }
-
-    String buildNTFYBody(const JsonDocument &jsonDoc) const
-    {
-        (void)jsonDoc;
-        return "";
-    }
-
-    NTFYMessage buildNTFYMessage(const JsonDocument &jsonDoc) const
-    {
-        (void)jsonDoc;
-        return NTFYMessage{NTFYMessageKind::None, NTFYPriority::Default, "", ""};
-    }
-
-    bool sendMsg(const JsonDocument &jsonDoc, const String &topic = "")
-    {
-        (void)jsonDoc;
-        (void)topic;
-        return false;
-    }
-};
-
-#endif

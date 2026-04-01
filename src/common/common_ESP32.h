@@ -12,9 +12,8 @@
 #include <WiFi.h>
 #include "user_settings/user_settings.h"
 
-#define MASK (1ULL << board::hw::wakeup_pin)
-
-#define PREFIX "\n[" PROJECT_NAME "] "
+static constexpr uint64_t MASK = 1ULL << board::hw::wakeup_pin;
+static constexpr char PREFIX[] = "\n[" PROJECT_NAME "] ";
 
 void debounce(uint32_t);
 void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
@@ -43,10 +42,11 @@ void setupDeepSleep()
 
 void goToDeepSleep()
 {
-    Serial.printf(PREFIX "COMPILATION DATE %s", COMPILATION_DATE);
-    Serial.printf(PREFIX "COMPILATION TIME %s", COMPILATION_TIME);
-    Serial.printf(PREFIX "PROJECT NAME %s", PROJECT_NAME);
-    Serial.print(F(PREFIX "GOING TO DEEP SLEEP\n"));
+    Serial.printf("%sCOMPILATION DATE %s", PREFIX, COMPILATION_DATE);
+    Serial.printf("%sCOMPILATION TIME %s", PREFIX, COMPILATION_TIME);
+    Serial.printf("%sPROJECT NAME %s", PREFIX, PROJECT_NAME);
+    Serial.print(PREFIX);
+    Serial.print(F("GOING TO DEEP SLEEP\n"));
     Serial.flush();
 
     setupDeepSleep();

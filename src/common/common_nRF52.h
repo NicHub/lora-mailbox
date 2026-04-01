@@ -11,7 +11,7 @@
 #include <ArduinoJson.h>
 #include "flash/flash_nrf5x.h"
 
-#define PREFIX "\n[" PROJECT_NAME "] "
+static constexpr char PREFIX[] = "\n[" PROJECT_NAME "] ";
 
 #include "common/common.h"
 
@@ -19,12 +19,12 @@ void debounce(uint32_t);
 void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
 
 #ifdef NRF52840_XXAA
-#define COUNTER_STORAGE_ADDR 0xED000
+static constexpr uint32_t COUNTER_STORAGE_ADDR = 0xED000;
 #else
-#define COUNTER_STORAGE_ADDR 0x6D000
+static constexpr uint32_t COUNTER_STORAGE_ADDR = 0x6D000;
 #endif
 
-#define COUNTER_STORAGE_SIZE (7 * FLASH_NRF52_PAGE_SIZE)
+static constexpr uint32_t COUNTER_STORAGE_SIZE = 7 * FLASH_NRF52_PAGE_SIZE;
 
 struct CounterRecord
 {
@@ -242,7 +242,7 @@ uint16_t readBatteryVoltage()
 
     uint32_t vbat = 0;
     uint32_t sum = 0;
-#define CNT_MAX 10
+    constexpr int CNT_MAX = 10;
     for (int i = 0; i < CNT_MAX; ++i)
     {
         sum += analogRead(PIN_VBAT);
@@ -261,8 +261,8 @@ void testAllLEDs()
     uint32_t wait_1 = 5000;
     uint32_t wait_2 = 1000;
 
-#define LED_ON LOW
-#define LED_OFF HIGH
+    constexpr uint32_t LED_ON = LOW;
+    constexpr uint32_t LED_OFF = HIGH;
 
     digitalWrite(LED_BUILTIN, LED_ON);
     Serial.println("\nLED_BUILTIN, LED_ON");
@@ -293,17 +293,22 @@ void testAllLEDs()
     delay(wait_2);
 }
 
-#if defined(DEBUG) && DEBUG
 static inline void writeRgbLeds(
     uint32_t LED_RED_STATE,
     uint32_t LED_GREEN_STATE,
     uint32_t LED_BLUE_STATE)
 {
-    // Note that on XIAO nRF52, LED_BUILTIN == LED_RED.
-    digitalWrite(LED_RED, !LED_RED_STATE);
-    digitalWrite(LED_GREEN, !LED_GREEN_STATE);
-    digitalWrite(LED_BLUE, !LED_BLUE_STATE);
+    if (DEBUG)
+    {
+        // Note that on XIAO nRF52, LED_BUILTIN == LED_RED.
+        digitalWrite(LED_RED, !LED_RED_STATE);
+        digitalWrite(LED_GREEN, !LED_GREEN_STATE);
+        digitalWrite(LED_BLUE, !LED_BLUE_STATE);
+    }
+    else
+    {
+        (void)LED_RED_STATE;
+        (void)LED_GREEN_STATE;
+        (void)LED_BLUE_STATE;
+    }
 }
-#else
-static inline void writeRgbLeds(uint32_t, uint32_t, uint32_t) {}
-#endif

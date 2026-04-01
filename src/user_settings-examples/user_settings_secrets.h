@@ -6,14 +6,14 @@
 
 #pragma once
 
-#define WIFI_SSID ""
-#define WIFI_PASSWORD ""
+static constexpr char WIFI_SSID[] = "";
+static constexpr char WIFI_PASSWORD[] = "";
 
-#define MQTT_USERNAME "guest"
-#define MQTT_PASSWORD "guest123"
+static constexpr char MQTT_USERNAME[] = "guest";
+static constexpr char MQTT_PASSWORD[] = "guest123";
 
-#define NTFY_USERNAME "nico"
-#define NTFY_PASSWORD "ntfyntfy1234"
+static constexpr char NTFY_USERNAME[] = "nico";
+static constexpr char NTFY_PASSWORD[] = "ntfyntfy1234";
 
 static const char MQTT_ROOT_CA_PEM[] = R"PEM(-----BEGIN CERTIFICATE-----
 MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw

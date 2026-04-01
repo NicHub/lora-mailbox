@@ -155,7 +155,7 @@ void transmitLoRa(
     doc["last_commit_id"] = LAST_COMMIT_ID;
     serializeJson(doc, msg);
 
-    Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());
+    Serial.printf("%sSending\t\t%s", PREFIX, msg.c_str());
 
     // Don’t use the non-blocking `startTransmit()` function.
     // It makes it difficult to estimate the necessary delay
@@ -163,16 +163,18 @@ void transmitLoRa(
     int state = radio.transmit(msg.c_str());
     if (state != RADIOLIB_ERR_NONE)
     {
-        Serial.printf(PREFIX "Failed, code %d", state);
+        Serial.printf("%sFailed, code %d", PREFIX, state);
         return;
     }
-    Serial.print(F(PREFIX "Transmission finished!"));
+    Serial.print(PREFIX);
+    Serial.print(F("Transmission finished!"));
 }
 
 void setupLoRa()
 {
     radio = new Module(board::hw::lora_cs, board::hw::lora_irq, board::hw::lora_rst, board::hw::lora_gpio);
-    Serial.print(F(PREFIX "Initializing LoRa..."));
+    Serial.print(PREFIX);
+    Serial.print(F("Initializing LoRa..."));
     int state = radio.begin(
         LORA_FREQ,
         LORA_BW,

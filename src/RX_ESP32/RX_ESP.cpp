@@ -62,19 +62,22 @@ void broadcastResults()
     lmb_wifi.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
     broadcastNtfy();
-#if SERIAL_VERBOSITY == 1
-    uint16_t ctr = jsonDoc["COUNTER"]["VALUE"].as<uint16_t>();
-    static uint16_t first_ctr = ctr;
-    ctr -= first_ctr;
+    if (SERIAL_VERBOSITY == 1)
+    {
+        uint16_t ctr = jsonDoc["COUNTER"]["VALUE"].as<uint16_t>();
+        static uint16_t first_ctr = ctr;
+        ctr -= first_ctr;
 
-    unsigned long ms = millis();
-    static unsigned long first_ms = ms;
-    ms -= first_ms;
+        unsigned long ms = millis();
+        static unsigned long first_ms = ms;
+        ms -= first_ms;
 
-    Serial.printf("- ctr: %3u , ms: %8lu\n", ctr, ms);
-#elif SERIAL_VERBOSITY == 2
-    Serial.println(jsonString);
-#endif
+        Serial.printf("- ctr: %3u , ms: %8lu\n", ctr, ms);
+    }
+    else if (SERIAL_VERBOSITY == 2)
+    {
+        Serial.println(jsonString);
+    }
 }
 
 void counterCheck()
@@ -117,9 +120,8 @@ void heartBeat()
     jsonDoc["COMPILATION_DATE"] = COMPILATION_DATE;
     jsonDoc["COMPILATION_TIME"] = COMPILATION_TIME;
     serializeJson(jsonDoc, jsonString);
-#if SERIAL_VERBOSITY == 2
-    Serial.println(jsonString);
-#endif
+    if (SERIAL_VERBOSITY == 2)
+        Serial.println(jsonString);
     lmb_wifi.sendMsg(jsonString);
     lmb_mqtt.sendMsg(jsonDoc);
 }
