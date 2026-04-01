@@ -152,6 +152,7 @@ void transmitLoRa(
     doc["cnt"] = cnt;
     doc["volt_gpio"] = battery_voltage;
     doc["wakeup"] = wakeupReasonToString(wakeup_reason);
+    doc["last_commit_id"] = LAST_COMMIT_ID;
     serializeJson(doc, msg);
 
     Serial.printf(PREFIX "Sending\t\t%s", msg.c_str());

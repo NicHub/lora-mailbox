@@ -190,8 +190,8 @@ void loop()
     writeRgbLeds(0, 1, 0);
     saveMsgCounter(++cnt);
 
-    // Low-power wait replacing the active-CPU delay (CPU: ~3-4 mA → ~2 µA).
-    sleepSecondsNoPin(5);
+    // Keep a short debounce window before re-checking wakeup conditions.
+    sleepSecondsNoPin(TX_DEBOUNCE_S);
 
     pinMode(board::hw::wakeup_pin, INPUT);
     uint32_t now_ms = millis();
