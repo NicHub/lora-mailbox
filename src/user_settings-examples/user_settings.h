@@ -59,6 +59,15 @@ namespace board
 
 /** @brief POSIX timezone string used by NTP/localtime; see https://github.com/nayarsystems/posix_tz_db for timezone values. */
 #define NTP_TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
+#define NTP_SERVER "pool.ntp.org"
+#define NTP_SYNC_MAX_RETRIES 10
+#define NTP_SYNC_RETRY_DELAY_MS 500UL
+
+/** @brief Wi-Fi settings. */
+#define WIFI_CONNECT_TIMEOUT_MS 10000UL
+#define WIFI_CONNECT_RETRY_DELAY_MS 500UL
+#define WIFI_RECONNECT_MIN_INTERVAL_MS 5000UL
+#define WIFI_RECONNECT_TIMEOUT_MS 8000UL
 
 /** @brief LoRa settings. */
 #define LORA_FREQ 868.0
@@ -70,6 +79,10 @@ namespace board
 #define LORA_PREAMBLELENGTH 12
 #define LORA_TCXOVOLTAGE 1.6
 #define LORA_USEREGULATORLDO false
+// 868.0 MHz: respect legal duty-cycle constraints (typically 1%), so avoid short intervals.
+#define HEARTBEAT_INTERVAL_SECONDS (60 * 60)
+#define HEARTBEAT_INTERVAL_MS (HEARTBEAT_INTERVAL_SECONDS * 1000UL)
+#define HEARTBEAT_RX_INTERVAL_MS 5000UL
 
 /** @brief MQTT settings. */
 #define MQTT_ENABLED true

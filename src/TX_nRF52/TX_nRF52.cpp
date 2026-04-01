@@ -4,10 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-// 868.0 MHz: respect legal duty-cycle constraints (typically 1%), so avoid short intervals.
-#define HEARTBEAT_INTERVAL_SECONDS (20 * 60)
-#define HEARTBEAT_INTERVAL_MS (HEARTBEAT_INTERVAL_SECONDS * 1000UL)
-
 // If the linter does not recognize the paths below,
 // or the constants like `LED_RED` :
 //    -    open `user_settings.ini`

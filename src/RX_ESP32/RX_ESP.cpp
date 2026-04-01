@@ -107,7 +107,7 @@ void heartBeat()
 {
     unsigned long heartBeat = millis();
     static unsigned long prevHeartBeat = heartBeat;
-    if (heartBeat - prevHeartBeat < 5000)
+    if (heartBeat - prevHeartBeat < HEARTBEAT_RX_INTERVAL_MS)
         return;
     prevHeartBeat = heartBeat;
     jsonDoc.clear();

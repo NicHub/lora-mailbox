@@ -103,11 +103,11 @@ public:
             Serial.println("\nConnecting to WiFi");
 
             WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-            waitForConnection(10000);
+            waitForConnection(WIFI_CONNECT_TIMEOUT_MS);
             if (WiFi.status() != WL_CONNECTED)
             {
                 Serial.println("\nWiFi connection failed");
-                delay(500);
+                delay(WIFI_CONNECT_RETRY_DELAY_MS);
                 scanWiFiNetworks();
             }
         }
@@ -130,7 +130,7 @@ public:
             return true;
 
         uint32_t now = millis();
-        if ((now - lastReconnectAttemptMs) < 5000)
+        if ((now - lastReconnectAttemptMs) < WIFI_RECONNECT_MIN_INTERVAL_MS)
             return false;
         lastReconnectAttemptMs = now;
 
@@ -138,7 +138,7 @@ public:
 
         WiFi.disconnect(false, false);
         WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-        if (!waitForConnection(8000))
+        if (!waitForConnection(WIFI_RECONNECT_TIMEOUT_MS))
         {
             Serial.println("WiFi reconnect failed");
             return false;
@@ -152,25 +152,22 @@ public:
 
     bool synchronizeNTPTime()
     {
-        const char *ntpServer = "pool.ntp.org";
-
         Serial.println("Synchronizing time with NTP server...");
-        configTzTime(NTP_TIMEZONE, ntpServer);
+        configTzTime(NTP_TIMEZONE, NTP_SERVER);
 
         // Wait for time to be set
         time_t now = 0;
         struct tm timeinfo;
         int retry = 0;
-        const int maxRetries = 10;
 
-        while (!getLocalTime(&timeinfo) && retry < maxRetries)
+        while (!getLocalTime(&timeinfo) && retry < NTP_SYNC_MAX_RETRIES)
         {
             Serial.print(".");
-            delay(500);
+            delay(NTP_SYNC_RETRY_DELAY_MS);
             retry++;
         }
 
-        if (retry < maxRetries)
+        if (retry < NTP_SYNC_MAX_RETRIES)
         {
             time(&now);
             Serial.println("\nTime synchronized successfully");
