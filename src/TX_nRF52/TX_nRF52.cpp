@@ -161,9 +161,9 @@ void setup()
     nextHeartbeatDeadlineMs = millis() + HEARTBEAT_INTERVAL_MS;
     setupSerial();
     setupMsgCounterStorage();
-#if defined(RESET_MSG_COUNTER_ON_UPLOAD) && RESET_MSG_COUNTER_ON_UPLOAD
+#if defined(TX_RESET_MSG_COUNTER_ON_REBOOT) && TX_RESET_MSG_COUNTER_ON_REBOOT
     saveMsgCounter(0);
-    Serial.println("MSG COUNTER RESET TO 0 (RESET_MSG_COUNTER_ON_UPLOAD=true)");
+    Serial.println("MSG COUNTER RESET TO 0 (TX_RESET_MSG_COUNTER_ON_REBOOT=true)");
 #endif
     setupLoRa();
 }

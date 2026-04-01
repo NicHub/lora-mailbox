@@ -48,7 +48,7 @@ namespace board
 /** @brief Miscellaneous settings. */
 #define DEBUG true
 #define SERIAL_VERBOSITY 2
-#define RESET_MSG_COUNTER_ON_UPLOAD false
+#define TX_RESET_MSG_COUNTER_ON_REBOOT false
 
 /** @brief Battery fit coefficients used to compute `VFIT` from `VGPIO`. */
 #define VFIT_SLOPE 10.805f
