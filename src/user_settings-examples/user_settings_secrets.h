@@ -16,9 +16,7 @@ namespace settings::mqtt
 {
     static constexpr char username[] = "guest";
     static constexpr char password[] = "guest123";
-    static const char root_ca_pem[] =
-#include "mqtt_root_ca.inc"
-    ;
+#include "mqtt_root_ca.pem.inc"
 }
 
 namespace settings::ntfy
