@@ -103,11 +103,11 @@ public:
             Serial.println("\nConnecting to WiFi");
 
             WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-            waitForConnection(WIFI_CONNECT_TIMEOUT_MS);
+            waitForConnection(settings::wifi::connect_timeout_ms);
             if (WiFi.status() != WL_CONNECTED)
             {
                 Serial.println("\nWiFi connection failed");
-                delay(WIFI_CONNECT_RETRY_DELAY_MS);
+                delay(settings::wifi::connect_retry_delay_ms);
                 scanWiFiNetworks();
             }
         }
@@ -130,7 +130,7 @@ public:
             return true;
 
         uint32_t now = millis();
-        if ((now - lastReconnectAttemptMs) < WIFI_RECONNECT_MIN_INTERVAL_MS)
+        if ((now - lastReconnectAttemptMs) < settings::wifi::reconnect_min_interval_ms)
             return false;
         lastReconnectAttemptMs = now;
 
@@ -138,7 +138,7 @@ public:
 
         WiFi.disconnect(false, false);
         WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-        if (!waitForConnection(WIFI_RECONNECT_TIMEOUT_MS))
+        if (!waitForConnection(settings::wifi::reconnect_timeout_ms))
         {
             Serial.println("WiFi reconnect failed");
             return false;
@@ -153,21 +153,21 @@ public:
     bool synchronizeNTPTime()
     {
         Serial.println("Synchronizing time with NTP server...");
-        configTzTime(NTP_TIMEZONE, NTP_SERVER);
+        configTzTime(settings::ntp::timezone, settings::ntp::server);
 
         // Wait for time to be set
         time_t now = 0;
         struct tm timeinfo;
         int retry = 0;
 
-        while (!getLocalTime(&timeinfo) && retry < NTP_SYNC_MAX_RETRIES)
+        while (!getLocalTime(&timeinfo) && retry < settings::ntp::sync_max_retries)
         {
             Serial.print(".");
-            delay(NTP_SYNC_RETRY_DELAY_MS);
+            delay(settings::ntp::sync_retry_delay_ms);
             retry++;
         }
 
-        if (retry < NTP_SYNC_MAX_RETRIES)
+        if (retry < settings::ntp::sync_max_retries)
         {
             time(&now);
             Serial.println("\nTime synchronized successfully");

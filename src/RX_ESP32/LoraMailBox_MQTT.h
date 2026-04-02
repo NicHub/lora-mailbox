@@ -74,16 +74,16 @@ private:
             wakeup = jsonDoc["wakeup"] | "";
 
         if (!jsonDoc["HEARTBEAT_RX"].isNull())
-            addTopicIfUnique(MQTT_TOPIC_HEARTBEAT_RX, topics, topicCount, maxTopics);
+            addTopicIfUnique(settings::mqtt::topic_heartbeat_rx, topics, topicCount, maxTopics);
 
         if (strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0)
-            addTopicIfUnique(MQTT_TOPIC_WAKEUP_PIN_HIGH, topics, topicCount, maxTopics);
+            addTopicIfUnique(settings::mqtt::topic_got_mail, topics, topicCount, maxTopics);
 
         if (strcmp(wakeup, "HEARTBEAT_TX") == 0)
-            addTopicIfUnique(MQTT_TOPIC_HEARTBEAT_TX, topics, topicCount, maxTopics);
+            addTopicIfUnique(settings::mqtt::topic_heartbeat_tx, topics, topicCount, maxTopics);
 
         if (strcmp(wakeup, "BOOT") == 0)
-            addTopicIfUnique(MQTT_TOPIC_BOOT, topics, topicCount, maxTopics);
+            addTopicIfUnique(settings::mqtt::topic_wake_boot, topics, topicCount, maxTopics);
 
         if (topicCount == 0)
             addTopicIfUnique(mqtt_default_topic, topics, topicCount, maxTopics);
@@ -148,12 +148,12 @@ private:
     }
 
 public:
-    LoraMailBox_MQTT(const char *server = MQTT_SERVER,
-                     int port = MQTT_PORT,
-                     const char *topic = MQTT_TOPIC)
+    LoraMailBox_MQTT(const char *server = settings::mqtt::server,
+                     int port = settings::mqtt::port,
+                     const char *topic = settings::mqtt::topic)
         : mqtt_server(server), mqtt_port(port), mqtt_default_topic(topic)
     {
-        if (MQTT_USE_TLS)
+        if (settings::mqtt::use_tls)
             mqtt_uri = String("mqtts://") + mqtt_server + ":" + mqtt_port;
         else
             mqtt_uri = String("mqtt://") + mqtt_server + ":" + mqtt_port;
@@ -161,7 +161,7 @@ public:
 
     void reconnect()
     {
-        if (!MQTT_ENABLED)
+        if (!settings::mqtt::enabled)
             return;
 
         if (!ensureWiFiConnected())
@@ -176,11 +176,11 @@ public:
 
     void begin()
     {
-        if (!MQTT_ENABLED)
+        if (!settings::mqtt::enabled)
             return;
 
         client.setServer(mqtt_uri.c_str());
-        if (MQTT_USE_TLS)
+        if (settings::mqtt::use_tls)
             client.setCACert(MQTT_ROOT_CA);
         if (strlen(MQTT_USERNAME) > 0)
             client.setCredentials(MQTT_USERNAME, MQTT_PASSWORD);
@@ -222,7 +222,7 @@ public:
 
     void sendMsg(JsonDocument jsonDoc)
     {
-        if (!MQTT_ENABLED)
+        if (!settings::mqtt::enabled)
             return;
 
         if (!ensureWiFiConnected())

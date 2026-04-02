@@ -65,7 +65,7 @@ public:
 
     NTFYMessageKind getNTFYMessageKind(const JsonDocument &jsonDoc) const
     {
-        if (!NTFY_ENABLED)
+        if (!settings::ntfy::enabled)
             return NTFYMessageKind::None;
 
         const char *wakeup = jsonDoc["WAKEUP"] | "";
@@ -80,7 +80,7 @@ public:
 
     String buildNTFYBody(const JsonDocument &jsonDoc) const
     {
-        if (!NTFY_ENABLED)
+        if (!settings::ntfy::enabled)
         {
             (void)jsonDoc;
             return "";
@@ -118,7 +118,7 @@ public:
 
     NTFYMessage buildNTFYMessage(const JsonDocument &jsonDoc) const
     {
-        if (!NTFY_ENABLED)
+        if (!settings::ntfy::enabled)
         {
             (void)jsonDoc;
             return NTFYMessage{NTFYMessageKind::None, NTFYPriority::Default, "", ""};
@@ -140,7 +140,7 @@ public:
             title = String(ntfyIcon) + " ";
         if (timeStr[0] != '\0')
             title += String(timeStr);
-        title += " @" + String(settings::mailbox::recipient_name);
+        title += " @" + String(settings::misc::recipient_name);
         title += ntfyTitleSuffix;
 
         return NTFYMessage{
@@ -153,7 +153,7 @@ public:
 
     bool sendMsg(const JsonDocument &jsonDoc, const String &topic = settings::ntfy::topic)
     {
-        if (!NTFY_ENABLED)
+        if (!settings::ntfy::enabled)
         {
             (void)jsonDoc;
             (void)topic;

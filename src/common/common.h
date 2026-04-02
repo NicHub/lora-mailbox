@@ -49,23 +49,24 @@ static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
     BatteryMeasurement measurement{};
 
     // Convert the raw GPIO-derived voltage to an estimated battery voltage.
-    measurement.vbatMv = static_cast<int>(VFIT_SLOPE * static_cast<float>(vgpioMv) + VFIT_OFFSET);
+    measurement.vbatMv = static_cast<int>(
+        settings::battery::fit_slope * static_cast<float>(vgpioMv) + settings::battery::fit_offset);
 
     // Map the estimated battery voltage to a 0..100 percent range.
-    if (measurement.vbatMv >= VBAT_MAX)
+    if (measurement.vbatMv >= settings::battery::max)
         measurement.batteryPercent = 100;
-    else if (measurement.vbatMv <= VBAT_MIN)
+    else if (measurement.vbatMv <= settings::battery::min)
         measurement.batteryPercent = 0;
     else
         measurement.batteryPercent = static_cast<int>(
-            (100.f * static_cast<float>(measurement.vbatMv - VBAT_MIN)) /
-                static_cast<float>(VBAT_MAX - VBAT_MIN) +
+            (100.f * static_cast<float>(measurement.vbatMv - settings::battery::min)) /
+                static_cast<float>(settings::battery::max - settings::battery::min) +
             0.5f);
 
     // Pick a compact battery glyph for quick display in notifications.
-    if (measurement.vbatMv >= VBAT_MAX)
+    if (measurement.vbatMv >= settings::battery::max)
         measurement.glyph = "⚡";
-    else if (measurement.vbatMv < VBAT_NO_BATTERY_THRESHOLD)
+    else if (measurement.vbatMv < settings::battery::no_battery_threshold)
         measurement.glyph = "🔌";
     else if (measurement.batteryPercent < 5)
         measurement.glyph = "▁";
@@ -79,11 +80,11 @@ static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
         measurement.glyph = "█";
 
     // Derive the coarse battery status used by MQTT/NTFY routing logic.
-    if (measurement.vbatMv >= VBAT_MAX)
+    if (measurement.vbatMv >= settings::battery::max)
         measurement.status = "HIGH";
-    else if (measurement.vbatMv >= VBAT_MIN)
+    else if (measurement.vbatMv >= settings::battery::min)
         measurement.status = "OK";
-    else if (measurement.vbatMv >= VBAT_NO_BATTERY_THRESHOLD)
+    else if (measurement.vbatMv >= settings::battery::no_battery_threshold)
         measurement.status = "LOW";
     else
         measurement.status = "NOBAT";
@@ -172,19 +173,22 @@ void transmitLoRa(
 
 void setupLoRa()
 {
-    radio = new Module(board::hw::lora_cs, board::hw::lora_irq, board::hw::lora_rst, board::hw::lora_gpio);
+    radio = new Module(settings::board::lora_cs,
+                       settings::board::lora_irq,
+                       settings::board::lora_rst,
+                       settings::board::lora_gpio);
     Serial.print(PREFIX);
     Serial.print(F("Initializing LoRa..."));
     int state = radio.begin(
-        LORA_FREQ,
-        LORA_BW,
-        LORA_SF,
-        LORA_CR,
-        LORA_SYNCWORD,
-        LORA_POWER,
-        LORA_PREAMBLELENGTH,
-        LORA_TCXOVOLTAGE,
-        LORA_USEREGULATORLDO);
+        settings::lora::freq,
+        settings::lora::bw,
+        settings::lora::sf,
+        settings::lora::cr,
+        settings::lora::syncword,
+        settings::lora::power,
+        settings::lora::preamble_length,
+        settings::lora::tcxo_voltage,
+        settings::lora::use_regulator_ldo);
     if (state != RADIOLIB_ERR_NONE)
     {
         Serial.printf(" failed, code %d\n", state);

@@ -143,7 +143,7 @@ static inline String getBoardUidHex()
  */
 void goToDeepSleep()
 {
-    pinMode(board::hw::wakeup_pin, INPUT_SENSE_HIGH);
+    pinMode(settings::board::wakeup_pin, INPUT_SENSE_HIGH);
     debounce(1000);
     NRF_POWER->SYSTEMOFF = 1;
 }
@@ -298,7 +298,7 @@ static inline void writeRgbLeds(
     uint32_t LED_GREEN_STATE,
     uint32_t LED_BLUE_STATE)
 {
-    if (DEBUG)
+    if (settings::misc::debug)
     {
         // Note that on XIAO nRF52, LED_BUILTIN == LED_RED.
         digitalWrite(LED_RED, !LED_RED_STATE);

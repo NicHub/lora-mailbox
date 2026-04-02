@@ -12,7 +12,7 @@
 #include <WiFi.h>
 #include "user_settings/user_settings.h"
 
-static constexpr uint64_t MASK = 1ULL << board::hw::wakeup_pin;
+static constexpr uint64_t MASK = 1ULL << settings::board::wakeup_pin;
 static constexpr char PREFIX[] = "\n[" PROJECT_NAME "] ";
 
 void debounce(uint32_t);
@@ -51,14 +51,14 @@ void goToDeepSleep()
 
     setupDeepSleep();
     debounce(1000);
-    digitalWrite(board::hw::lora_led_green, LOW);
+    digitalWrite(settings::board::lora_led_green, LOW);
     esp_deep_sleep_start();
 }
 
 void switchOffAllLEDs()
 {
     digitalWrite(LED_BUILTIN, HIGH);
-    digitalWrite(board::hw::lora_led_green, LOW);
+    digitalWrite(settings::board::lora_led_green, LOW);
 }
 
 uint16_t readBatteryVoltage()

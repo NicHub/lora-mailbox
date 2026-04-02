@@ -38,8 +38,8 @@ void onWakeupPinRise()
 
 void setupRtcWakeup()
 {
-    pinMode(board::hw::wakeup_pin, INPUT);
-    attachInterrupt(digitalPinToInterrupt(board::hw::wakeup_pin), onWakeupPinRise, RISING);
+    pinMode(settings::board::wakeup_pin, INPUT);
+    attachInterrupt(digitalPinToInterrupt(settings::board::wakeup_pin), onWakeupPinRise, RISING);
 
     if ((NRF_CLOCK->LFCLKSTAT & CLOCK_LFCLKSTAT_STATE_Msk) == 0)
     {
@@ -83,8 +83,8 @@ static void sleepSecondsNoPin(uint32_t seconds)
 
 WakeupReason sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
 {
-    pinMode(board::hw::wakeup_pin, INPUT);
-    if (digitalRead(board::hw::wakeup_pin))
+    pinMode(settings::board::wakeup_pin, INPUT);
+    if (digitalRead(settings::board::wakeup_pin))
         return WakeupReason::WakeupPinHigh;
 
     rtcTimeoutElapsed = false;
@@ -130,7 +130,7 @@ static void advanceHeartbeatDeadline(uint32_t now_ms)
     // Keep a fixed heartbeat cadence, independent of processing jitter.
     do
     {
-        nextHeartbeatDeadlineMs += HEARTBEAT_INTERVAL_MS;
+        nextHeartbeatDeadlineMs += settings::lora::tx_heartbeat_interval_ms;
     } while ((int32_t)(now_ms - nextHeartbeatDeadlineMs) >= 0);
 }
 
@@ -158,10 +158,10 @@ void setup()
     setupGPIOs();
     writeRgbLeds(0, 0, 1);
     setupRtcWakeup();
-    nextHeartbeatDeadlineMs = millis() + HEARTBEAT_INTERVAL_MS;
+    nextHeartbeatDeadlineMs = millis() + settings::lora::tx_heartbeat_interval_ms;
     setupSerial();
     setupMsgCounterStorage();
-    if (TX_RESET_MSG_COUNTER_ON_REBOOT)
+    if (settings::misc::tx_reset_msg_counter_on_reboot)
     {
         saveMsgCounter(0);
         Serial.println("MSG COUNTER RESET TO 0 (TX_RESET_MSG_COUNTER_ON_REBOOT=true)");
@@ -192,16 +192,16 @@ void loop()
     saveMsgCounter(++cnt);
 
     // Keep a short debounce window before re-checking wakeup conditions.
-    sleepSecondsNoPin(TX_DEBOUNCE_S);
+    sleepSecondsNoPin(settings::lora::tx_debounce_s);
 
-    pinMode(board::hw::wakeup_pin, INPUT);
+    pinMode(settings::board::wakeup_pin, INPUT);
     uint32_t now_ms = millis();
     if (isHeartbeatDue(now_ms))
     {
         wakeupReason = WakeupReason::HeartbeatTx;
         return;
     }
-    if (digitalRead(board::hw::wakeup_pin))
+    if (digitalRead(settings::board::wakeup_pin))
     {
         wakeupReason = WakeupReason::WakeupPinHigh;
         return;
