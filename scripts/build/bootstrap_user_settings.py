@@ -23,6 +23,43 @@ copy_operations = [
 ]
 
 copied_files = []
+copied_missing_files = []
+generated_files = []
+
+
+def copy_missing_files(source_dir: Path, destination_dir: Path):
+    for source_path in source_dir.rglob("*"):
+        if not source_path.is_file():
+            continue
+        relative_path = source_path.relative_to(source_dir)
+        destination_path = destination_dir / relative_path
+        if destination_path.exists():
+            continue
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, destination_path)
+        copied_missing_files.append(destination_path.relative_to(project_dir))
+
+
+def render_pem_include(pem_path: Path) -> str:
+    pem_text = pem_path.read_text(encoding="utf-8")
+    if not pem_text.endswith("\n"):
+        pem_text += "\n"
+    return f'R"PEM({pem_text})PEM"\n'
+
+
+def sync_pem_includes(settings_dir: Path):
+    for pem_path in settings_dir.glob("*.pem"):
+        include_path = pem_path.with_suffix(".inc")
+        include_content = render_pem_include(pem_path)
+        existing_content = (
+            include_path.read_text(encoding="utf-8") if include_path.exists() else None
+        )
+        if existing_content == include_content:
+            continue
+        include_path.write_text(include_content, encoding="utf-8")
+        generated_files.append(include_path.relative_to(project_dir))
+
+
 for source, destination in copy_operations:
     if not source.exists():
         raise SystemExit(
@@ -31,6 +68,8 @@ for source, destination in copy_operations:
         )
 
     if destination.exists():
+        if source.is_dir() and destination.is_dir():
+            copy_missing_files(source, destination)
         continue
 
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -47,3 +86,17 @@ if copied_files:
     for path in copied_files:
         print(f"  - {path}")
     print("[ouilogique.com] Update these paths with your local configuration.")
+
+if copied_missing_files:
+    print("[ouilogique.com] Added missing local user settings files:")
+    for path in copied_missing_files:
+        print(f"  - {path}")
+
+local_settings_dir = project_dir / "src" / "user_settings"
+if local_settings_dir.exists():
+    sync_pem_includes(local_settings_dir)
+
+if generated_files:
+    print("[ouilogique.com] Generated local PEM include files:")
+    for path in generated_files:
+        print(f"  - {path}")

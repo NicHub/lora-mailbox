@@ -183,8 +183,8 @@ public:
         https.addHeader("Title", ntfyMessage.title);
         https.addHeader("Priority", ntfyPriorityToString(ntfyMessage.priority));
 
-        if (String(NTFY_USERNAME).length() > 0 || String(NTFY_PASSWORD).length() > 0)
-            https.setAuthorization(NTFY_USERNAME, NTFY_PASSWORD);
+        if (String(settings::ntfy::username).length() > 0 || String(settings::ntfy::password).length() > 0)
+            https.setAuthorization(settings::ntfy::username, settings::ntfy::password);
 
         https.addHeader("Markdown", "yes");
         https.addHeader("Content-Type", "text/markdown; charset=utf-8");

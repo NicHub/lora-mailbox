@@ -102,7 +102,7 @@ public:
         {
             Serial.println("\nConnecting to WiFi");
 
-            WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+            WiFi.begin(settings::wifi::ssid, settings::wifi::password);
             waitForConnection(settings::wifi::connect_timeout_ms);
             if (WiFi.status() != WL_CONNECTED)
             {
@@ -137,7 +137,7 @@ public:
         Serial.printf("WiFi disconnected (status=%d), trying reconnect...\n", WiFi.status());
 
         WiFi.disconnect(false, false);
-        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+        WiFi.begin(settings::wifi::ssid, settings::wifi::password);
         if (!waitForConnection(settings::wifi::reconnect_timeout_ms))
         {
             Serial.println("WiFi reconnect failed");

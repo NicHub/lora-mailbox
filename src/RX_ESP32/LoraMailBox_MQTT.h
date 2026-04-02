@@ -15,7 +15,7 @@
 class LoraMailBox_MQTT
 {
 private:
-    static constexpr const char *MQTT_ROOT_CA = MQTT_ROOT_CA_PEM;
+    static constexpr const char *MQTT_ROOT_CA = settings::mqtt::root_ca_pem;
 
     PsychicMqttClient client;
     const char *mqtt_server;
@@ -182,8 +182,8 @@ public:
         client.setServer(mqtt_uri.c_str());
         if (settings::mqtt::use_tls)
             client.setCACert(MQTT_ROOT_CA);
-        if (strlen(MQTT_USERNAME) > 0)
-            client.setCredentials(MQTT_USERNAME, MQTT_PASSWORD);
+        if (strlen(settings::mqtt::username) > 0)
+            client.setCredentials(settings::mqtt::username, settings::mqtt::password);
         client.setBufferSize(1024);
         client.setAutoReconnect(true);
         client.onConnect([this](bool sessionPresent)
