@@ -4,9 +4,5 @@
             "path": "."
         }
     ],
-    "settings": {
-        "search.useParentIgnoreFiles": false,
-        "search.useGlobalIgnoreFiles": false,
-        "search.useIgnoreFiles": false
-    }
+    "settings": {}
 }
