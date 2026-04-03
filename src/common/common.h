@@ -149,11 +149,11 @@ void transmitLoRa(
 {
     String msg;
     JsonDocument doc;
-    doc["board_id_hex"] = board_id_hex;
-    doc["cnt"] = cnt;
-    doc["volt_gpio"] = battery_voltage;
-    doc["wakeup"] = wakeupReasonToString(wakeup_reason);
-    doc["last_commit_id"] = LAST_COMMIT_ID;
+    doc["BOARD_ID_HEX"] = board_id_hex;
+    doc["CNT"] = cnt;
+    doc["VOLT_GPIO"] = battery_voltage;
+    doc["WAKEUP"] = wakeupReasonToString(wakeup_reason);
+    doc["LAST_COMMIT_ID_TX"] = LAST_COMMIT_ID;
     serializeJson(doc, msg);
 
     Serial.printf("%sSending\t\t%s", PREFIX, msg.c_str());
