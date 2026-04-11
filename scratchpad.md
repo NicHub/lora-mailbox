@@ -178,3 +178,15 @@ mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/+/he
 mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/B8:F8:62:F8:B0:E8/heartbeat_rx" -v
 
 ```
+
+-   ESP32 Deep Sleep Current: What the Datasheet Says vs What You'll Actually Measure
+    -   https://hubble.com/community/guides/esp32-deep-sleep-current-what-the-datasheet-says-vs-what-you-ll-actually-measure/#three-fixes-that-dont-require-a-custom-pcb
+
+-   TTN (The Things Network) Platform Connection & Usage
+    -   https://docs.m5stack.com/en/guide/lora/lorawan/ttn
+
+-   ESP32 Guide 2026
+    -   https://www.youtube.com/watch?v=CfIjInYch7U
+    -   https://dronebotworkshop.com/esp32-2026/
+    -   https://dronebotworkshop.com/esp32-2026/#ESP32_Variant_Comparison
+    -   https://dronebotworkshop.com/esp32-2026/#General_Purpose_Experimenter_Boards
