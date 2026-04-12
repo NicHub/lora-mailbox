@@ -51,7 +51,7 @@ namespace settings::battery
 {
     static constexpr float fit_slope = 10.805f;
     static constexpr float fit_offset = -55.f;
-    static constexpr float max = 4100.f;
+    static constexpr float max = 4200.f;
     static constexpr float min = 3600.f;
     static constexpr float no_battery_threshold = 100.f * fit_slope + fit_offset;
 }
