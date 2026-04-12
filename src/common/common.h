@@ -23,22 +23,41 @@ bool transmitFlag = false;
 /** @brief Flag set by the radio ISR when a packet was sent or received. */
 volatile bool loraEvent = false;
 
-enum class WakeupReason : uint8_t
+enum class TxTrigger : uint8_t
 {
     Boot,
     WakeupPinHigh,
     HeartbeatTx,
 };
 
+enum class BatteryStatus : uint8_t
+{
+    High,
+    Ok,
+    Low,
+    NoBattery,
+};
+
+enum class BatteryGlyph : uint8_t
+{
+    Charging,
+    ExternalPower,
+    Empty,
+    Quarter,
+    Half,
+    ThreeQuarters,
+    Full,
+};
+
 struct BatteryMeasurement
 {
     int vbatMv;
     int batteryPercent;
-    const char *glyph;
-    const char *status;
+    BatteryGlyph glyph;
+    BatteryStatus status;
 };
 
-static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
+static inline BatteryMeasurement Vbat_raw2Vbat_mv(uint16_t vgpioMv)
 {
     BatteryMeasurement measurement{};
 
@@ -59,42 +78,82 @@ static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
 
     /** @note Pick a compact battery glyph for quick display in notifications. */
     if (measurement.vbatMv >= settings::battery::max)
-        measurement.glyph = "⚡";
+        measurement.glyph = BatteryGlyph::Charging;
     else if (measurement.vbatMv < settings::battery::no_battery_threshold)
-        measurement.glyph = "🔌";
+        measurement.glyph = BatteryGlyph::ExternalPower;
     else if (measurement.batteryPercent < 5)
-        measurement.glyph = "▁";
+        measurement.glyph = BatteryGlyph::Empty;
     else if (measurement.batteryPercent < 25)
-        measurement.glyph = "▂";
+        measurement.glyph = BatteryGlyph::Quarter;
     else if (measurement.batteryPercent < 50)
-        measurement.glyph = "▄";
+        measurement.glyph = BatteryGlyph::Half;
     else if (measurement.batteryPercent < 75)
-        measurement.glyph = "▆";
+        measurement.glyph = BatteryGlyph::ThreeQuarters;
     else
-        measurement.glyph = "█";
+        measurement.glyph = BatteryGlyph::Full;
 
     /** @note Derive the coarse battery status used by MQTT/NTFY routing logic. */
     if (measurement.vbatMv >= settings::battery::max)
-        measurement.status = "HIGH";
+        measurement.status = BatteryStatus::High;
     else if (measurement.vbatMv >= settings::battery::min)
-        measurement.status = "OK";
+        measurement.status = BatteryStatus::Ok;
     else if (measurement.vbatMv >= settings::battery::no_battery_threshold)
-        measurement.status = "LOW";
+        measurement.status = BatteryStatus::Low;
     else
-        measurement.status = "NOBAT";
+        measurement.status = BatteryStatus::NoBattery;
 
     return measurement;
 }
 
-static inline const char *wakeupReasonToString(WakeupReason reason)
+static inline const char *batteryGlyphToString(BatteryGlyph glyph)
 {
-    switch (reason)
+    switch (glyph)
     {
-    case WakeupReason::Boot:
+    case BatteryGlyph::Charging:
+        return "⚡";
+    case BatteryGlyph::ExternalPower:
+        return "🔌";
+    case BatteryGlyph::Empty:
+        return "▁";
+    case BatteryGlyph::Quarter:
+        return "▂";
+    case BatteryGlyph::Half:
+        return "▄";
+    case BatteryGlyph::ThreeQuarters:
+        return "▆";
+    case BatteryGlyph::Full:
+        return "█";
+    default:
+        return "";
+    }
+}
+
+static inline const char *batteryStatusToString(BatteryStatus status)
+{
+    switch (status)
+    {
+    case BatteryStatus::High:
+        return "HIGH";
+    case BatteryStatus::Ok:
+        return "OK";
+    case BatteryStatus::Low:
+        return "LOW";
+    case BatteryStatus::NoBattery:
+        return "NOBAT";
+    default:
+        return "NOBAT";
+    }
+}
+
+static inline const char *txTriggerToString(TxTrigger trigger)
+{
+    switch (trigger)
+    {
+    case TxTrigger::Boot:
         return "BOOT";
-    case WakeupReason::WakeupPinHigh:
+    case TxTrigger::WakeupPinHigh:
         return "WAKEUP_PIN_HIGH";
-    case WakeupReason::HeartbeatTx:
+    case TxTrigger::HeartbeatTx:
         return "HEARTBEAT_TX";
     default:
         return "BOOT";
@@ -135,28 +194,15 @@ void blink(
     }
 }
 
-void transmitLoRa(
-    const String &board_id_hex,
-    uint16_t cnt,
-    uint16_t battery_voltage,
-    WakeupReason wakeup_reason)
+void sendLoRaPayload(const String &payload)
 {
-    String msg;
-    JsonDocument doc;
-    doc["BOARD_ID_HEX"] = board_id_hex;
-    doc["CNT"] = cnt;
-    doc["VOLT_GPIO"] = battery_voltage;
-    doc["WAKEUP"] = wakeupReasonToString(wakeup_reason);
-    doc["LAST_COMMIT_ID_TX"] = LAST_COMMIT_ID;
-    serializeJson(doc, msg);
-
-    Serial.printf("%sSending\t\t%s", PREFIX, msg.c_str());
+    Serial.printf("%sSending\t\t%s", PREFIX, payload.c_str());
 
     /**
      * @note Do not use the non-blocking `startTransmit()` function here.
      * @note It makes it difficult to estimate the required delay before sending a new message.
      */
-    int state = radio.transmit(msg.c_str());
+    int state = radio.transmit(payload.c_str());
     if (state != RADIOLIB_ERR_NONE)
     {
         Serial.printf("%sFailed, code %d", PREFIX, state);

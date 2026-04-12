@@ -11,7 +11,7 @@
 
 static volatile bool rtcTimeoutElapsed = false;
 static volatile bool wakeupPinEvent = false;
-static WakeupReason wakeupReason = WakeupReason::Boot;
+static TxTrigger txTrigger = TxTrigger::Boot;
 static uint32_t nextHeartbeatDeadlineMs = 0;
 
 /** @brief RTC prescaler for an 8 Hz tick from the 32.768 kHz LF clock. */
@@ -82,11 +82,11 @@ static void sleepSecondsNoPin(uint32_t seconds)
     NRF_RTC2->INTENCLR = RTC_INTENCLR_COMPARE0_Msk;
 }
 
-WakeupReason sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
+TxTrigger sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
 {
     pinMode(settings::board::wakeup_pin, INPUT);
     if (digitalRead(settings::board::wakeup_pin))
-        return WakeupReason::WakeupPinHigh;
+        return TxTrigger::WakeupPinHigh;
 
     rtcTimeoutElapsed = false;
     wakeupPinEvent = false;
@@ -117,8 +117,8 @@ WakeupReason sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
     NRF_RTC2->TASKS_STOP = 1;
     NRF_RTC2->INTENCLR = RTC_INTENCLR_COMPARE0_Msk;
     if (wakeupPinEvent)
-        return WakeupReason::WakeupPinHigh;
-    return WakeupReason::HeartbeatTx;
+        return TxTrigger::WakeupPinHigh;
+    return TxTrigger::HeartbeatTx;
 }
 
 static inline bool isHeartbeatDue(uint32_t now_ms)
@@ -176,10 +176,11 @@ void loop()
     writeRgbLeds(0, 1, 0);
     uint16_t battery_voltage = readBatteryVoltage();
     uint16_t cnt = readMsgCounter();
+    String payload = buildTxPayload(getBoardUidHex(), cnt, battery_voltage, txTrigger);
 
     writeRgbLeds(1, 0, 0);
-    transmitLoRa(getBoardUidHex(), cnt, battery_voltage, wakeupReason);
-    if (wakeupReason == WakeupReason::HeartbeatTx)
+    sendLoRaPayload(payload);
+    if (txTrigger == TxTrigger::HeartbeatTx)
         advanceHeartbeatDeadline(millis());
 
     /**
@@ -202,12 +203,12 @@ void loop()
     uint32_t now_ms = millis();
     if (isHeartbeatDue(now_ms))
     {
-        wakeupReason = WakeupReason::HeartbeatTx;
+        txTrigger = TxTrigger::HeartbeatTx;
         return;
     }
     if (digitalRead(settings::board::wakeup_pin))
     {
-        wakeupReason = WakeupReason::WakeupPinHigh;
+        txTrigger = TxTrigger::WakeupPinHigh;
         return;
     }
 
@@ -215,5 +216,5 @@ void loop()
     uint32_t remaining_ms = nextHeartbeatDeadlineMs - now_ms;
     /** @note Round up milliseconds to whole seconds before entering RTC sleep. */
     uint32_t sleep_seconds = (remaining_ms + 999) / 1000;
-    wakeupReason = sleepUntilWakeupPinOrTimeout(sleep_seconds);
+    txTrigger = sleepUntilWakeupPinOrTimeout(sleep_seconds);
 }

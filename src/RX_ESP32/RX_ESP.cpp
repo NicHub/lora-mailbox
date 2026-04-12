@@ -19,30 +19,38 @@ JsonDocument jsonDoc;
 
 /**
  * @brief Return whether the current payload reports a mailbox event.
- * @return true when `wakeup` equals `WAKEUP_PIN_HIGH`, false otherwise.
+ * @return true when the TX trigger equals `WAKEUP_PIN_HIGH`, false otherwise.
  */
 bool isPinHighEvent()
 {
-    JsonVariant wakeup = jsonDoc["WAKEUP"];
-    if (wakeup.isNull())
-        wakeup = jsonDoc["wakeup"];
-    if (wakeup.isNull())
+    JsonVariant trigger = jsonDoc["TX"]["TX_TRIGGER"];
+    if (trigger.isNull())
+        trigger = jsonDoc["TX"]["TX_WAKEUP"];
+    if (trigger.isNull())
+        trigger = jsonDoc["TX"]["WAKEUP"];
+    if (trigger.isNull())
+        trigger = jsonDoc["TX"]["wakeup"];
+    if (trigger.isNull())
         return false;
-    return String(wakeup.as<const char *>()) == "WAKEUP_PIN_HIGH";
+    return String(trigger.as<const char *>()) == "WAKEUP_PIN_HIGH";
 }
 
 /**
  * @brief Return whether the current payload reports a TX heartbeat event.
- * @return true when `wakeup` equals `HEARTBEAT_TX`, false otherwise.
+ * @return true when the TX trigger equals `HEARTBEAT_TX`, false otherwise.
  */
 bool isHeartbeatTxEvent()
 {
-    JsonVariant wakeup = jsonDoc["WAKEUP"];
-    if (wakeup.isNull())
-        wakeup = jsonDoc["wakeup"];
-    if (wakeup.isNull())
+    JsonVariant trigger = jsonDoc["TX"]["TX_TRIGGER"];
+    if (trigger.isNull())
+        trigger = jsonDoc["TX"]["TX_WAKEUP"];
+    if (trigger.isNull())
+        trigger = jsonDoc["TX"]["WAKEUP"];
+    if (trigger.isNull())
+        trigger = jsonDoc["TX"]["wakeup"];
+    if (trigger.isNull())
         return false;
-    return String(wakeup.as<const char *>()) == "HEARTBEAT_TX";
+    return String(trigger.as<const char *>()) == "HEARTBEAT_TX";
 }
 
 /**
@@ -82,17 +90,14 @@ void broadcastResults()
 
 void counterCheck()
 {
-    JsonVariant countValue = jsonDoc["CNT"];
-    if (countValue.isNull())
-        countValue = jsonDoc["cnt"];
-    uint16_t cnt = countValue.as<uint16_t>();
+    if (jsonDoc["TX"]["TX_CNT"].isNull())
+        return;
+    uint16_t cnt = jsonDoc["TX"]["TX_CNT"].as<uint16_t>();
     static uint16_t prevCnt = cnt - 1;
     static uint16_t errorCount = 0;
     bool counterStatus = cnt != prevCnt + 1;
     errorCount += counterStatus;
 
-    jsonDoc.remove("CNT");
-    jsonDoc.remove("cnt");
     jsonDoc["COUNTER"]["VALUE"] = cnt;
     jsonDoc["COUNTER"]["PREVIOUS_VALUE"] = prevCnt;
     jsonDoc["COUNTER"]["ERROR_COUNT"] = errorCount;
@@ -110,16 +115,6 @@ String getCurrentTime()
     return String(timeStr);
 }
 
-/**
- * @brief Append RX firmware build metadata without overwriting TX payload fields.
- */
-void appendRxBuildMetadata(JsonDocument &doc)
-{
-    doc["COMPILATION_DATE"] = COMPILATION_DATE;
-    doc["COMPILATION_TIME"] = COMPILATION_TIME;
-    doc["LAST_COMMIT_ID_RX"] = LAST_COMMIT_ID;
-}
-
 void heartBeat()
 {
     unsigned long heartBeat = millis();
@@ -127,11 +122,15 @@ void heartBeat()
     if (heartBeat - prevHeartBeat < settings::lora::rx_heartbeat_interval_ms)
         return;
     prevHeartBeat = heartBeat;
+
     jsonDoc.clear();
-    jsonDoc["HEARTBEAT_RX"] = getCurrentTime();
-    jsonDoc["BOARD_ID_HEX"] = getMacAddress();
-    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
-    appendRxBuildMetadata(jsonDoc);
+    jsonDoc["RX"]["RX_BOARD_ID"] = getMacAddress();
+    jsonDoc["RX"]["RX_COMPILATION_DATE"] = COMPILATION_DATE;
+    jsonDoc["RX"]["RX_COMPILATION_TIME"] = COMPILATION_TIME;
+    jsonDoc["RX"]["RX_HEARTBEAT"] = getCurrentTime();
+    jsonDoc["RX"]["RX_LAST_COMMIT_ID"] = LAST_COMMIT_ID;
+    jsonDoc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+
     serializeJson(jsonDoc, jsonString);
     if (settings::misc::serial_verbosity == 2)
         Serial.println(jsonString);
@@ -146,58 +145,34 @@ void readLoRa()
     int state = radio.readData(jsonString);
     digitalWrite(settings::board::lora_led_green, LOW);
 
-    jsonDoc["LORA_STATE"] = state;
+    jsonDoc["RX_LORA_STATE"] = state;
     if (state != RADIOLIB_ERR_NONE)
         return;
-    deserializeJson(jsonDoc, jsonString);
-    if (!jsonDoc["BOARD_ID_HEX"].isNull())
+    JsonDocument txDoc;
+    deserializeJson(txDoc, jsonString);
+    jsonDoc.clear();
+    JsonObject tx = jsonDoc["TX"].to<JsonObject>();
+    for (JsonPairConst kv : txDoc.as<JsonObjectConst>())
+        tx[kv.key()] = kv.value();
+    jsonDoc["TX"]["TX_JSON_STRING"] = jsonString;
+    jsonDoc["RX"]["RX_BOARD_ID"] = getMacAddress();
+    jsonDoc["RX"]["RX_COMPILATION_DATE"] = COMPILATION_DATE;
+    jsonDoc["RX"]["RX_COMPILATION_TIME"] = COMPILATION_TIME;
+    jsonDoc["RX"]["RX_CURRENT_TIME"] = getCurrentTime();
+    jsonDoc["RX"]["RX_LAST_COMMIT_ID"] = LAST_COMMIT_ID;
+    jsonDoc["RX"]["RX_RSSI_DBM"] = radio.getRSSI();
+    jsonDoc["RX"]["RX_SNR_DB"] = radio.getSNR();
+    jsonDoc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    jsonDoc["RX"]["RX_WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
+    jsonDoc["RX_TX"]["RX_TX_DEBUG"] = settings::misc::debug;
+    if (!jsonDoc["TX"]["TX_VBAT_RAW"].isNull())
     {
-        /** @note Keep uppercase payload keys, but also normalize any legacy lowercase field. */
-        jsonDoc.remove("board_id_hex");
+        BatteryMeasurement battery = Vbat_raw2Vbat_mv(jsonDoc["TX"]["TX_VBAT_RAW"].as<uint16_t>());
+        jsonDoc["TX"]["TX_VBAT_MV"] = battery.vbatMv;
+        jsonDoc["TX"]["TX_VBAT_PERCENT"] = battery.batteryPercent;
+        jsonDoc["TX"]["TX_VBAT_GLYPH"] = batteryGlyphToString(battery.glyph);
+        jsonDoc["TX"]["TX_VBAT_STATUS"] = batteryStatusToString(battery.status);
     }
-    if (!jsonDoc["board_id_hex"].isNull())
-    {
-        jsonDoc["BOARD_ID_HEX"] = jsonDoc["board_id_hex"];
-        jsonDoc.remove("board_id_hex");
-    }
-    if (!jsonDoc["WAKEUP"].isNull())
-    {
-        jsonDoc.remove("wakeup");
-    }
-    if (!jsonDoc["wakeup"].isNull())
-    {
-        jsonDoc["WAKEUP"] = jsonDoc["wakeup"];
-        jsonDoc.remove("wakeup");
-    }
-    if (!jsonDoc["VOLT_GPIO"].isNull())
-    {
-        jsonDoc["VGPIO"] = jsonDoc["VOLT_GPIO"];
-        jsonDoc.remove("volt_gpio");
-        BatteryMeasurement battery = Vgpio2Vbat(jsonDoc["VGPIO"].as<uint16_t>());
-        jsonDoc["VBAT_MV"] = battery.vbatMv;
-        jsonDoc["VBAT_PERCENT"] = battery.batteryPercent;
-        jsonDoc["VBAT_GLYPH"] = battery.glyph;
-        jsonDoc["VBAT_STATUS"] = battery.status;
-    }
-    if (!jsonDoc["volt_gpio"].isNull())
-    {
-        jsonDoc["VGPIO"] = jsonDoc["volt_gpio"];
-        jsonDoc.remove("volt_gpio");
-        BatteryMeasurement battery = Vgpio2Vbat(jsonDoc["VGPIO"].as<uint16_t>());
-        jsonDoc["VBAT_MV"] = battery.vbatMv;
-        jsonDoc["VBAT_PERCENT"] = battery.batteryPercent;
-        jsonDoc["VBAT_GLYPH"] = battery.glyph;
-        jsonDoc["VBAT_STATUS"] = battery.status;
-    }
-    jsonDoc["CURRENT_TIME"] = getCurrentTime();
-    appendRxBuildMetadata(jsonDoc);
-    jsonDoc["RSSI_DBM"] = radio.getRSSI();
-    jsonDoc["SNR_DB"] = radio.getSNR();
-    jsonDoc["WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
-    jsonDoc["WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
-    jsonDoc["STATE"] = state;
-    jsonDoc["JSON_STRING"] = jsonString;
-    jsonDoc["DEBUG"] = settings::misc::debug;
 }
 
 void setupMQTT()

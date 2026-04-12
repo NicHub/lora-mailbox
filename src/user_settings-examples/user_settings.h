@@ -112,6 +112,7 @@ namespace settings::ntfy
     static constexpr bool notify_heartbeat_tx = true;
     static constexpr char server[] = "https://ntfy.ouilogique.ch/";
     static constexpr char topic[] = ROOT_TOPIC;
+    static constexpr char md_code_tag[] = "";
 
     static constexpr NTFYPriority message_received_priority = NTFYPriority::Max;
     static constexpr char message_received_icon[] = "📩";
