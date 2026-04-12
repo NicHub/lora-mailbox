@@ -99,9 +99,9 @@ static inline int32_t getLastCounterRecordIndex()
     return counterRecordIndexCache;
 }
 
-/*
- * 64 bit-long BOARD ID
- *   => 20 digit-long in DEC
+/**
+ * @brief Return the 64-bit board identifier in decimal form.
+ * @return Board unique identifier.
  */
 static inline uint64_t getBoardUidDec()
 {
@@ -110,9 +110,9 @@ static inline uint64_t getBoardUidDec()
     return uid;
 }
 
-/*
- * 64 bit-long BOARD ID
- *   => 16 digit-long in HEX
+/**
+ * @brief Return the 64-bit board identifier in hexadecimal form.
+ * @return Uppercase 16-character hexadecimal board unique identifier.
  */
 static inline String getBoardUidHex()
 {
@@ -122,8 +122,10 @@ static inline String getBoardUidHex()
     if (initialized)
         return String(uid_hex);
 
-    // Avoid %llX on embedded printf/nano-libc:
-    // format the two 32-bit words directly.
+    /**
+     * @note Avoid `%llX` on embedded `printf` / nano-libc.
+     * @note Format the two 32-bit words directly instead.
+     */
     uint32_t uid_hi = NRF_FICR->DEVICEID[1];
     uint32_t uid_lo = NRF_FICR->DEVICEID[0];
     snprintf(
@@ -137,9 +139,9 @@ static inline String getBoardUidHex()
     return String(uid_hex);
 }
 
-/*
- * Deep sleep from
- * https://forum.seeedstudio.com/t/xiao-sense-accelerometer-examples-and-low-power/270801
+/**
+ * @brief Enter nRF52 system-off deep sleep.
+ * @see https://forum.seeedstudio.com/t/xiao-sense-accelerometer-examples-and-low-power/270801
  */
 void goToDeepSleep()
 {
@@ -214,30 +216,19 @@ void setupMsgCounterStorage()
 
 uint16_t readBatteryVoltage()
 {
-    /*
-        VBAT_ENABLE controls the VBAT voltage divider for PIN_VBAT.
-        See: https://wiki.seeedstudio.com/XIAO_BLE/#q3-what-are-the-considerations-when-using-xiao-nrf52840-sense-for-battery-charging
-
-        pinMode   digitalWrite   SAFE   USAGE             EFFECT
-        INPUT     LOW            YES    low consumption   Divider off (high-Z)
-        INPUT     HIGH           YES    low consumption   Divider off (high-Z)
-        OUTPUT    LOW            YES    bat read          Divider on → VBAT readable on PIN_VBAT
-        OUTPUT    HIGH           NO     avoid             Forces 3.3V → may exceed 3.6V on PIN_VBAT
-
-        Recommended sequence:
-        pinMode(VBAT_ENABLE, OUTPUT);
-        digitalWrite(VBAT_ENABLE, LOW);   // enable divider
-        int vbat = analogRead(A0);
-        pinMode(VBAT_ENABLE, INPUT);      // disable divider
-    */
+    /** @note
+     * Hardware details and operating
+     * constraints are documented in
+     * docs/xiao-nrf52840-sense-hardware-notes.md.
+     */
 
     pinMode(VBAT_ENABLE, OUTPUT);
     digitalWrite(VBAT_ENABLE, LOW);
     pinMode(PIN_VBAT, INPUT);
 
-    // Let the analog node settle (RC + ADC input)
-    delay(2); // ms (paranoid but cheap)
-    // Discard first sample (often "dirty" after switching)
+    /** @note Let the analog node settle before sampling. */
+    delay(2);
+    /** @note Discard the first sample, which is often dirty after switching. */
     (void)analogRead(PIN_VBAT);
 
     uint32_t vbat = 0;
@@ -250,13 +241,22 @@ uint16_t readBatteryVoltage()
     }
     vbat = sum / CNT_MAX;
 
-    // Reset to INPUT after reading to avoid current draw through the resistor divider.
+    /**
+     * @note Reset `VBAT_ENABLE` to `INPUT` after reading
+     * to avoid current draw through the resistor divider.
+     */
     pinMode(VBAT_ENABLE, INPUT);
     return vbat;
 }
 
 void testAllLEDs()
 {
+    /** @note
+     * Hardware details and operating
+     * constraints are documented in
+     * docs/xiao-nrf52840-sense-hardware-notes.md.
+     */
+
     Serial.println("\n================");
     uint32_t wait_1 = 5000;
     uint32_t wait_2 = 1000;
@@ -300,7 +300,7 @@ static inline void writeRgbLeds(
 {
     if (settings::misc::debug)
     {
-        // Note that on XIAO nRF52, LED_BUILTIN == LED_RED.
+        /** @note On XIAO nRF52, `LED_BUILTIN == LED_RED`. */
         digitalWrite(LED_RED, !LED_RED_STATE);
         digitalWrite(LED_GREEN, !LED_GREEN_STATE);
         digitalWrite(LED_BLUE, !LED_BLUE_STATE);

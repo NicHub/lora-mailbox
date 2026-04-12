@@ -12,14 +12,11 @@ Import("env")
 
 project_dir = Path(env["PROJECT_DIR"])
 copy_operations = [
-    (
-        project_dir / "src" / "user_settings-examples",
-        project_dir / "src" / "user_settings",
-    ),
-    (
-        project_dir / "user_settings-example.ini",
-        project_dir / "user_settings.ini",
-    ),
+    {
+        "source": project_dir / "src" / "user_settings-examples",
+        "destination": project_dir / "src" / "user_settings",
+        "required": True,
+    },
 ]
 
 copied_files = []
@@ -38,12 +35,18 @@ def copy_missing_files(source_dir: Path, destination_dir: Path):
         shutil.copy2(source_path, destination_path)
         copied_missing_files.append(destination_path.relative_to(project_dir))
 
-for source, destination in copy_operations:
+for operation in copy_operations:
+    source = operation["source"]
+    destination = operation["destination"]
+    required = operation["required"]
+
     if not source.exists():
-        raise SystemExit(
-            "[ouilogique.com]\n"
-            f"Missing path: {source.relative_to(project_dir)}"
-        )
+        if required:
+            raise SystemExit(
+                "[ouilogique.com]\n"
+                f"Missing path: {source.relative_to(project_dir)}"
+            )
+        continue
 
     if destination.exists():
         if source.is_dir() and destination.is_dir():

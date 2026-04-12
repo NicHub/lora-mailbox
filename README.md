@@ -75,6 +75,12 @@ This can be solved by installing Rosetta:
 softwareupdate --install-rosetta --agree-to-license
 ```
 
+If the VS Code linter does not recognize project include paths or board constants such as `LED_RED`:
+
+1. Open `user_settings.ini`.
+2. Check `default_envs`.
+3. Make sure `seeed_xiao_nrf52840-tx` is the first entry in `default_envs`.
+
 ## Videos
 
 -   <https://youtu.be/mFGQBNXpCBE>

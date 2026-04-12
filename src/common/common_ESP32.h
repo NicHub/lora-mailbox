@@ -18,9 +18,11 @@ static constexpr char PREFIX[] = "\n[" PROJECT_NAME "] ";
 void debounce(uint32_t);
 void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
 
-// Platform counter storage API.
-// ESP32 RX does not currently persist a message counter, but we keep the
-// same interface as nRF52 so a future ESP-based TX can reuse the same calls.
+/**
+ * @note Platform counter storage API.
+ * @note ESP32 RX does not currently persist a message counter, but it keeps the
+ * same interface as nRF52 so a future ESP-based TX can reuse the same calls.
+ */
 void setupMsgCounterStorage()
 {
 }
@@ -63,7 +65,7 @@ void switchOffAllLEDs()
 
 uint16_t readBatteryVoltage()
 {
-    // TODO
+    /** @todo Implement battery voltage reading on ESP32 builds. */
     return 0;
 }
 

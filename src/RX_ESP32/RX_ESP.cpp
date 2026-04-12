@@ -152,7 +152,7 @@ void readLoRa()
     deserializeJson(jsonDoc, jsonString);
     if (!jsonDoc["BOARD_ID_HEX"].isNull())
     {
-        // Keep uppercase payload keys, but also normalize any legacy lowercase field.
+        /** @note Keep uppercase payload keys, but also normalize any legacy lowercase field. */
         jsonDoc.remove("board_id_hex");
     }
     if (!jsonDoc["board_id_hex"].isNull())
