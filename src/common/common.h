@@ -12,21 +12,15 @@
 #include "common/LoraMailBox_NTFY_types.h"
 #include "user_settings/user_settings.h"
 
-// #if defined(ESP32)
-// #include "common/common_ESP32.h"
-// #elif defined(NRF52840_XXAA)
-// #include "common/common_nRF52.h"
-// #endif
-
 SX1262 radio = nullptr;
 
-// Save transmission states between loops.
+/** @brief Save transmission state between loops. */
 int transmissionState = RADIOLIB_ERR_NONE;
 
-// Flag to indicate transmission or reception state.
+/** @brief Flag indicating that a transmission is in progress. */
 bool transmitFlag = false;
 
-// Flag to indicate that a packet was sent or received.
+/** @brief Flag set by the radio ISR when a packet was sent or received. */
 volatile bool loraEvent = false;
 
 enum class WakeupReason : uint8_t
@@ -48,11 +42,11 @@ static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
 {
     BatteryMeasurement measurement{};
 
-    // Convert the raw GPIO-derived voltage to an estimated battery voltage.
+    /** @note Convert the raw GPIO-derived voltage to an estimated battery voltage. */
     measurement.vbatMv = static_cast<int>(
         settings::battery::fit_slope * static_cast<float>(vgpioMv) + settings::battery::fit_offset);
 
-    // Map the estimated battery voltage to a 0..100 percent range.
+    /** @note Map the estimated battery voltage to a 0..100 percent range. */
     if (measurement.vbatMv >= settings::battery::max)
         measurement.batteryPercent = 100;
     else if (measurement.vbatMv <= settings::battery::min)
@@ -63,7 +57,7 @@ static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
                 static_cast<float>(settings::battery::max - settings::battery::min) +
             0.5f);
 
-    // Pick a compact battery glyph for quick display in notifications.
+    /** @note Pick a compact battery glyph for quick display in notifications. */
     if (measurement.vbatMv >= settings::battery::max)
         measurement.glyph = "⚡";
     else if (measurement.vbatMv < settings::battery::no_battery_threshold)
@@ -79,7 +73,7 @@ static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
     else
         measurement.glyph = "█";
 
-    // Derive the coarse battery status used by MQTT/NTFY routing logic.
+    /** @note Derive the coarse battery status used by MQTT/NTFY routing logic. */
     if (measurement.vbatMv >= settings::battery::max)
         measurement.status = "HIGH";
     else if (measurement.vbatMv >= settings::battery::min)
@@ -92,7 +86,7 @@ static inline BatteryMeasurement Vgpio2Vbat(uint16_t vgpioMv)
     return measurement;
 }
 
-static inline const char* wakeupReasonToString(WakeupReason reason)
+static inline const char *wakeupReasonToString(WakeupReason reason)
 {
     switch (reason)
     {
@@ -107,10 +101,10 @@ static inline const char* wakeupReasonToString(WakeupReason reason)
     }
 }
 
-// The `setFlag` function is called when a complete
-// packet is transmitted or received by the module
-// IMPORTANT: this function MUST be 'void' type and
-// MUST NOT have any arguments!
+/**
+ * @brief RadioLib IRQ callback for TX/RX completion.
+ * @note This function must have `void` return type and no arguments.
+ */
 #if defined(ESP8266) || defined(ESP32)
 ICACHE_RAM_ATTR
 #endif
@@ -142,7 +136,7 @@ void blink(
 }
 
 void transmitLoRa(
-    const String& board_id_hex,
+    const String &board_id_hex,
     uint16_t cnt,
     uint16_t battery_voltage,
     WakeupReason wakeup_reason)
@@ -158,9 +152,10 @@ void transmitLoRa(
 
     Serial.printf("%sSending\t\t%s", PREFIX, msg.c_str());
 
-    // Don’t use the non-blocking `startTransmit()` function.
-    // It makes it difficult to estimate the necessary delay
-    // before sending a new message.
+    /**
+     * @note Do not use the non-blocking `startTransmit()` function here.
+     * @note It makes it difficult to estimate the required delay before sending a new message.
+     */
     int state = radio.transmit(msg.c_str());
     if (state != RADIOLIB_ERR_NONE)
     {
@@ -201,27 +196,35 @@ void setupLoRa()
 void printSplashScreen()
 {
     Serial.println("\n\n##########################");
-    Serial.print(F("# PROJECT PATH:     "));
-    Serial.println(PROJECT_PATH);
-    Serial.print(F("# PROJECT NAME:     "));
+    Serial.print(F("PROJECT NAME:     "));
     Serial.println(PROJECT_NAME);
-    Serial.print(F("# COMPILATION DATE: "));
+    Serial.print(F("FILE NAME:        "));
+    Serial.println(__FILE__);
+    Serial.print(F("PROJECT PATH:     "));
+    Serial.println(PROJECT_PATH);
+    Serial.print(F("COMPILATION DATE: "));
     Serial.println(COMPILATION_DATE);
-    Serial.print(F("# COMPILATION TIME: "));
+    Serial.print(F("COMPILATION TIME: "));
     Serial.println(COMPILATION_TIME);
-    Serial.print(F("# F_CPU:            "));
-    Serial.println(F_CPU);
-    Serial.print(F("# LAST_COMMIT_ID:   "));
+    Serial.print(F("LAST COMMIT ID:   "));
     Serial.println(LAST_COMMIT_ID);
+    Serial.print(F("PYTHON VERSION:   "));
+    Serial.println(PYTHON_VERSION);
+    Serial.print(F("PYTHON PATH:      "));
+    Serial.println(PYTHON_PATH);
+    Serial.print(F("F_CPU:            "));
+    Serial.println(F_CPU);
+    Serial.print(F("MCU Model:        "));
+#if defined(ESP32)
+    Serial.println(ESP.getChipModel());
+#elif defined(NRF52_SERIES)
+    Serial.print(F("nRF"));
+    Serial.println(NRF_FICR->INFO.PART, HEX);
+#endif
     Serial.println("##########################\n\n");
 }
 
-void setupSerial(size_t printCnt = 0)
+void setupSerial()
 {
     Serial.begin(BAUD_RATE);
-    for (size_t i = 0; i <= printCnt; i++)
-    {
-        Serial.println(i);
-        delay(1000);
-    }
 }

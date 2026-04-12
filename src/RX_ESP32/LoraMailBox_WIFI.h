@@ -80,7 +80,7 @@ public:
         Serial.println(" networks found:");
         for (int i = 0; i < networksFound; ++i)
         {
-            // Print SSID and RSSI for each network found
+            /** @note Print SSID and RSSI for each network found. */
             Serial.print(i + 1);
             Serial.print(": ");
             Serial.print(WiFi.SSID(i));
@@ -155,7 +155,7 @@ public:
         Serial.println("Synchronizing time with NTP server...");
         configTzTime(settings::ntp::timezone, settings::ntp::server);
 
-        // Wait for time to be set
+        /** @note Wait for time to be set. */
         time_t now = 0;
         struct tm timeinfo;
         int retry = 0;

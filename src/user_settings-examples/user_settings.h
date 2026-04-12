@@ -24,6 +24,7 @@ namespace settings::misc
 namespace settings::board
 {
 #if BOARD_TYPE == 0
+    /** @note ESP32S3 Wio-SX1262 pin mapping. */
     static constexpr uint32_t wakeup_pin = D10;
     static constexpr uint32_t lora_cs = 41;   // GPIO4
     static constexpr uint32_t lora_irq = 39;  // DIO1
@@ -32,6 +33,7 @@ namespace settings::board
     static constexpr uint32_t lora_led_green = GPIO_NUM_48;
     static constexpr uint32_t lora_user_button = GPIO_NUM_21;
 #elif BOARD_TYPE == 1
+    /** @note XIAO nRF52840 Wio-SX1262 pin mapping. */
     static constexpr uint32_t wakeup_pin = D5;
     static constexpr uint32_t lora_cs = D4;
     static constexpr uint32_t lora_irq = D1;

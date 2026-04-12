@@ -4,11 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-// If the linter does not recognize the paths below,
-// or the constants like `LED_RED` :
-//    -    open `user_settings.ini`
-//    -    in `default_envs`
-//    -    make sure `seeed_xiao_nrf52840-tx` is the first `default_envs`
 #include <Arduino.h>
 #include <nrf.h>
 #include "common/common_nRF52.h"
@@ -19,7 +14,8 @@ static volatile bool wakeupPinEvent = false;
 static WakeupReason wakeupReason = WakeupReason::Boot;
 static uint32_t nextHeartbeatDeadlineMs = 0;
 
-static constexpr uint32_t RTC_PRESCALER = 4095; // 32768 / (4095 + 1) = 8 Hz
+/** @brief RTC prescaler for an 8 Hz tick from the 32.768 kHz LF clock. */
+static constexpr uint32_t RTC_PRESCALER = 4095;
 static constexpr uint32_t RTC_TICKS_PER_SECOND = 8;
 
 extern "C" void RTC2_IRQHandler(void)
@@ -50,7 +46,12 @@ void setupRtcWakeup()
     }
 }
 
-// Low-power sleep using RTC, without pin wakeup (unconditional wait).
+/**
+ * @brief Sleep for a fixed number of seconds using RTC2 only.
+ * @param seconds Sleep duration in seconds.
+ *
+ * @note This path does not wake on the external wakeup pin.
+ */
 static void sleepSecondsNoPin(uint32_t seconds)
 {
     uint32_t ticks = seconds * RTC_TICKS_PER_SECOND;
@@ -127,7 +128,7 @@ static inline bool isHeartbeatDue(uint32_t now_ms)
 
 static void advanceHeartbeatDeadline(uint32_t now_ms)
 {
-    // Keep a fixed heartbeat cadence, independent of processing jitter.
+    /** @note Keep a fixed heartbeat cadence, independent of processing jitter. */
     do
     {
         nextHeartbeatDeadlineMs += settings::lora::tx_heartbeat_interval_ms;
@@ -142,20 +143,24 @@ void setupGPIOs()
     pinMode(LED_BLUE, OUTPUT);
     writeRgbLeds(0, 0, 0);
 
-    // PIN_CHARGING_CURRENT
-    // - LOW: High charging current (100 mA)
-    // - HIGH: Low charging current (50 mA)
+    /**
+     * @brief Configure charger current selection.
+     * @note `LOW` selects high charging current (100 mA).
+     * @note `HIGH` selects low charging current (50 mA).
+     */
     pinMode(PIN_CHARGING_CURRENT, OUTPUT);
     digitalWrite(PIN_CHARGING_CURRENT, HIGH);
 
-    // VBAT_ENABLE
-    // See comment in the function readBatteryVoltage().
+    /** @note See `readBatteryVoltage()` and the hardware notes for `VBAT_ENABLE`. */
     pinMode(VBAT_ENABLE, INPUT);
 }
 
 void setup()
 {
     setupGPIOs();
+    while(true)
+        testAllLEDs();
+
     writeRgbLeds(0, 0, 1);
     setupRtcWakeup();
     nextHeartbeatDeadlineMs = millis() + settings::lora::tx_heartbeat_interval_ms;
@@ -180,18 +185,20 @@ void loop()
     if (wakeupReason == WakeupReason::HeartbeatTx)
         advanceHeartbeatDeadline(millis());
 
-    // Put radio to sleep immediately after transmission.
-    // The SX1262 consumes ~1.6 mA in standby vs ~0.9 µA in sleep.
-    // RadioLib wakes it automatically on the next transmit() call (NSS falling edge).
+    /**
+     * @note Put the radio to sleep immediately after transmission.
+     * @note The SX1262 consumes about 1.6 mA in standby versus about 0.9 uA in sleep.
+     * @note RadioLib wakes it automatically on the next `transmit()` call.
+     */
     radio.sleep();
 
-    // Flush serial before sleeping to avoid UART current draw on buffered data.
+    /** @note Flush serial before sleeping to avoid UART current draw on buffered data. */
     Serial.flush();
 
     writeRgbLeds(0, 1, 0);
     saveMsgCounter(++cnt);
 
-    // Keep a short debounce window before re-checking wakeup conditions.
+    /** @note Keep a short debounce window before re-checking wakeup conditions. */
     sleepSecondsNoPin(settings::lora::tx_debounce_s);
 
     pinMode(settings::board::wakeup_pin, INPUT);
@@ -209,6 +216,7 @@ void loop()
 
     writeRgbLeds(0, 0, 0);
     uint32_t remaining_ms = nextHeartbeatDeadlineMs - now_ms;
-    uint32_t sleep_seconds = (remaining_ms + 999) / 1000; // ceil(ms/1000)
+    /** @note Round up milliseconds to whole seconds before entering RTC sleep. */
+    uint32_t sleep_seconds = (remaining_ms + 999) / 1000;
     wakeupReason = sleepUntilWakeupPinOrTimeout(sleep_seconds);
 }
