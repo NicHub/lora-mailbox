@@ -158,9 +158,6 @@ void setupGPIOs()
 void setup()
 {
     setupGPIOs();
-    while(true)
-        testAllLEDs();
-
     writeRgbLeds(0, 0, 1);
     setupRtcWakeup();
     nextHeartbeatDeadlineMs = millis() + settings::lora::tx_heartbeat_interval_ms;
