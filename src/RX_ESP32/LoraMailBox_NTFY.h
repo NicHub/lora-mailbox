@@ -68,12 +68,16 @@ public:
         if (!settings::ntfy::enabled)
             return NTFYMessageKind::None;
 
-        const char *wakeup = jsonDoc["WAKEUP"] | "";
-        if (wakeup[0] == '\0')
-            wakeup = jsonDoc["wakeup"] | "";
-        if (strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0)
+        const char *trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
+        if (trigger[0] == '\0')
+            trigger = jsonDoc["TX"]["TX_WAKEUP"] | "";
+        if (trigger[0] == '\0')
+            trigger = jsonDoc["TX"]["WAKEUP"] | "";
+        if (trigger[0] == '\0')
+            trigger = jsonDoc["TX"]["wakeup"] | "";
+        if (strcmp(trigger, "WAKEUP_PIN_HIGH") == 0)
             return NTFYMessageKind::MessageReceived;
-        if (settings::ntfy::notify_heartbeat_tx && strcmp(wakeup, "HEARTBEAT_TX") == 0)
+        if (settings::ntfy::notify_heartbeat_tx && strcmp(trigger, "HEARTBEAT_TX") == 0)
             return NTFYMessageKind::Heartbeat;
         return NTFYMessageKind::None;
     }
@@ -88,30 +92,47 @@ public:
 
         uint16_t counterValue = jsonDoc["COUNTER"]["VALUE"] | 0;
         const char *counterStatus = jsonDoc["COUNTER"]["STATUS"] | "";
-        uint16_t vgpio = jsonDoc["VGPIO"] | 0;
-        int vbat_mv = jsonDoc["VBAT_MV"] | 0;
-        int vbat_percent = jsonDoc["VBAT_PERCENT"] | 0;
-        const char *vbat_glyph = jsonDoc["VBAT_GLYPH"] | "";
-        const char *vbat_status = jsonDoc["VBAT_STATUS"] | "";
+        uint16_t tx_vbat_raw = jsonDoc["TX"]["TX_VBAT_RAW"] | 0;
+        int tx_vbat_mv = jsonDoc["TX"]["TX_VBAT_MV"] | 0;
+        int tx_vbat_percent = jsonDoc["TX"]["TX_VBAT_PERCENT"] | 0;
+        const char *tx_vbat_glyph = jsonDoc["TX"]["TX_VBAT_GLYPH"] | "";
+        const char *tx_vbat_status = jsonDoc["TX"]["TX_VBAT_STATUS"] | "";
+        float rx_rssi_dbm = jsonDoc["RX"]["RX_RSSI_DBM"] | 0.0f;
+        float rx_snr_db = jsonDoc["RX"]["RX_SNR_DB"] | 0.0f;
+        const char *md_code_tag = settings::ntfy::md_code_tag;
 
         String text;
-        text += "`bat ";
-        text += vbat_glyph;
+        text += md_code_tag;
+        text += "bat ";
+        text += tx_vbat_glyph;
         text += " ";
-        text += String(vbat_percent);
+        text += String(tx_vbat_percent);
         text += "% (";
-        text += String(vbat_mv);
+        text += String(tx_vbat_mv);
         text += "mV, ";
-        text += vbat_status;
+        text += tx_vbat_status;
         text += ", ";
-        text += String(vgpio);
-        text += ")`";
+        text += String(tx_vbat_raw);
+        text += ")";
+        text += md_code_tag;
         text += "\n";
-        text += "`ctr ";
+        text += md_code_tag;
+        text += "ctr ";
         text += String(counterValue);
         text += " (";
         text += counterStatus;
-        text += ")`";
+        text += ")";
+        text += md_code_tag;
+        text += "\n";
+        text += md_code_tag;
+        text += "RSSI ";
+        text += String(rx_rssi_dbm, 0);
+        text += "dBm ";
+        text += " | ";
+        text += "SNR ";
+        text += String(rx_snr_db, 1);
+        text += "dB";
+        text += md_code_tag;
 
         return text;
     }

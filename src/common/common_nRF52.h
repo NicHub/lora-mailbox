@@ -59,6 +59,23 @@ static inline uint32_t counterRecordAddress(uint32_t index)
     return COUNTER_STORAGE_ADDR + index * sizeof(CounterRecord);
 }
 
+static inline String buildTxPayload(
+    const String &board_id,
+    uint16_t cnt,
+    uint16_t vbat_raw,
+    TxTrigger tx_trigger)
+{
+    String payload;
+    JsonDocument doc;
+    doc["TX_BOARD_ID"] = board_id;
+    doc["TX_CNT"] = cnt;
+    doc["TX_VBAT_RAW"] = vbat_raw;
+    doc["TX_TRIGGER"] = txTriggerToString(tx_trigger);
+    doc["TX_LAST_COMMIT_ID"] = LAST_COMMIT_ID;
+    serializeJson(doc, payload);
+    return payload;
+}
+
 static inline CounterRecord readCounterRecord(uint32_t index)
 {
     CounterRecord record{};

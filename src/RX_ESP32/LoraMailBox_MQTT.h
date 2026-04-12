@@ -69,20 +69,24 @@ private:
     size_t resolveTopics(const JsonDocument &jsonDoc, const char **topics, size_t maxTopics) const
     {
         size_t topicCount = 0;
-        const char *wakeup = jsonDoc["WAKEUP"] | "";
-        if (wakeup[0] == '\0')
-            wakeup = jsonDoc["wakeup"] | "";
+        const char *trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
+        if (trigger[0] == '\0')
+            trigger = jsonDoc["TX"]["TX_WAKEUP"] | "";
+        if (trigger[0] == '\0')
+            trigger = jsonDoc["TX"]["WAKEUP"] | "";
+        if (trigger[0] == '\0')
+            trigger = jsonDoc["TX"]["wakeup"] | "";
 
-        if (!jsonDoc["HEARTBEAT_RX"].isNull())
+        if (!jsonDoc["RX"]["RX_HEARTBEAT"].isNull())
             addTopicIfUnique(settings::mqtt::topic_heartbeat_rx, topics, topicCount, maxTopics);
 
-        if (strcmp(wakeup, "WAKEUP_PIN_HIGH") == 0)
+        if (strcmp(trigger, "WAKEUP_PIN_HIGH") == 0)
             addTopicIfUnique(settings::mqtt::topic_got_mail, topics, topicCount, maxTopics);
 
-        if (strcmp(wakeup, "HEARTBEAT_TX") == 0)
+        if (strcmp(trigger, "HEARTBEAT_TX") == 0)
             addTopicIfUnique(settings::mqtt::topic_heartbeat_tx, topics, topicCount, maxTopics);
 
-        if (strcmp(wakeup, "BOOT") == 0)
+        if (strcmp(trigger, "BOOT") == 0)
             addTopicIfUnique(settings::mqtt::topic_wake_boot, topics, topicCount, maxTopics);
 
         if (topicCount == 0)
@@ -232,9 +236,9 @@ public:
         serializeJson(jsonDoc, mqttString);
         const char *topics[MAX_TOPICS_PER_MESSAGE];
         size_t topicCount = resolveTopics(jsonDoc, topics, MAX_TOPICS_PER_MESSAGE);
-        const char *boardIdHex = jsonDoc["BOARD_ID_HEX"] | "";
+        const char *boardIdHex = jsonDoc["TX"]["TX_BOARD_ID"] | "";
         if (boardIdHex[0] == '\0')
-            boardIdHex = jsonDoc["board_id_hex"] | "";
+            boardIdHex = jsonDoc["TX"]["BOARD_ID_HEX"] | "";
 
         String finalTopics[MAX_TOPICS_PER_MESSAGE];
         size_t finalTopicCount = 0;
