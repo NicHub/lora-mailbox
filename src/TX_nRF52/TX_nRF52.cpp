@@ -5,12 +5,12 @@
  */
 
 #include <Arduino.h>
+#include <FreeRTOS.h>
 #include <nrf.h>
+#include <semphr.h>
+
 #include "common/common_nRF52.h"
 #include "common/common.h"
-
-#include <FreeRTOS.h>
-#include <semphr.h>
 
 static SemaphoreHandle_t wakeupSem;
 static TxTrigger txTrigger = TxTrigger::Boot;
@@ -29,8 +29,6 @@ void setupRtcWakeup()
     pinMode(settings::board::wakeup_pin, INPUT);
     attachInterrupt(digitalPinToInterrupt(settings::board::wakeup_pin), onWakeupPinRise, RISING);
 }
-
-
 
 static inline bool isHeartbeatDue(uint32_t now_ms)
 {
