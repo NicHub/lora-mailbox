@@ -121,7 +121,7 @@ void counterCheck()
     prevTxCnt = txCnt;
 }
 
-String getCurrentTime()
+const char* getCurrentTime()
 {
     time_t now = time(nullptr);
     struct tm local_tm = *localtime(&now);
@@ -131,7 +131,7 @@ String getCurrentTime()
         offset_min += (local_tm.tm_hour < 12) ? 1440 : -1440;
     int offset_h = offset_min / 60;
     int offset_m = abs(offset_min % 60);
-    char timeStr[26];
+    static char timeStr[26];
     snprintf(timeStr, sizeof(timeStr), "%04d-%02d-%02dT%02d:%02d:%02d%+03d:%02d",
              local_tm.tm_year + 1900,
              local_tm.tm_mon + 1,
@@ -141,7 +141,7 @@ String getCurrentTime()
              local_tm.tm_sec,
              offset_h,
              offset_m);
-    return String(timeStr);
+    return timeStr;
 }
 
 void addLoraSettingsToJsonDoc()
@@ -273,6 +273,7 @@ void setup()
 
 void loop()
 {
+    statusLed.update();
     lmb_wifi.ensureWiFiConnected();
     heartBeat();
     yield();
@@ -280,8 +281,7 @@ void loop()
         return;
     loraEvent = false;
     readLoRa();
-    blink(8UL, 60UL, 5UL, settings::board::lora_led_green, false);
     counterCheck();
     broadcastResults();
-    blink(8UL, 60UL, 5UL, settings::board::lora_led_green, false);
+    statusLed.start(8UL, 60UL, 10UL, settings::board::lora_led_green, false);
 }

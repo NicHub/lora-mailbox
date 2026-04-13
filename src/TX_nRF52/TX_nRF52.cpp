@@ -176,7 +176,8 @@ void loop()
     writeRgbLeds(0, 1, 0);
     uint16_t battery_voltage = readBatteryVoltage();
     uint16_t cnt = readMsgCounter();
-    String payload = buildTxPayload(getBoardUidHex(), cnt, battery_voltage, txTrigger);
+    char payload[256];
+    buildTxPayload(payload, sizeof(payload), getBoardUidHex(), cnt, battery_voltage, txTrigger);
 
     writeRgbLeds(1, 0, 0);
     sendLoRaPayload(payload);
