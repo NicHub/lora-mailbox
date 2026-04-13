@@ -131,7 +131,7 @@ static void advanceHeartbeatDeadline(uint32_t now_ms)
     /** @note Keep a fixed heartbeat cadence, independent of processing jitter. */
     do
     {
-        nextHeartbeatDeadlineMs += settings::lora::tx_heartbeat_interval_ms;
+        nextHeartbeatDeadlineMs += settings::misc::tx_heartbeat_interval_ms;
     } while ((int32_t)(now_ms - nextHeartbeatDeadlineMs) >= 0);
 }
 
@@ -160,7 +160,7 @@ void setup()
     setupGPIOs();
     writeRgbLeds(0, 0, 1);
     setupRtcWakeup();
-    nextHeartbeatDeadlineMs = millis() + settings::lora::tx_heartbeat_interval_ms;
+    nextHeartbeatDeadlineMs = millis() + settings::misc::tx_heartbeat_interval_ms;
     setupSerial();
     setupMsgCounterStorage();
     if (settings::misc::tx_reset_msg_counter_on_reboot)
@@ -197,7 +197,7 @@ void loop()
     saveMsgCounter(++cnt);
 
     /** @note Keep a short debounce window before re-checking wakeup conditions. */
-    sleepSecondsNoPin(settings::lora::tx_debounce_s);
+    sleepSecondsNoPin(settings::misc::tx_debounce_s);
 
     pinMode(settings::board::wakeup_pin, INPUT);
     uint32_t now_ms = millis();

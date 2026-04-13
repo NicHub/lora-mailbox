@@ -19,6 +19,9 @@ namespace settings::misc
     static constexpr bool debug = true;
     static constexpr int serial_verbosity = 2;
     static constexpr bool tx_reset_msg_counter_on_reboot = false;
+    static constexpr unsigned long tx_heartbeat_interval_ms = 60UL * 60UL * 1000UL;
+    static constexpr unsigned long rx_heartbeat_interval_ms = 5000UL;
+    static constexpr unsigned long tx_debounce_s = 5UL;
 }
 
 namespace settings::board
@@ -86,9 +89,6 @@ namespace settings::lora
     static constexpr uint16_t preamble_length = 12;
     static constexpr float tcxo_voltage = 1.6;
     static constexpr bool use_regulator_ldo = false;
-    static constexpr unsigned long tx_heartbeat_interval_ms = 60UL * 60UL * 1000UL;
-    static constexpr unsigned long rx_heartbeat_interval_ms = 5000UL;
-    static constexpr unsigned long tx_debounce_s = 5UL;
 }
 
 /** @brief MQTT settings. */

@@ -144,11 +144,24 @@ String getCurrentTime()
     return String(timeStr);
 }
 
+void addLoraSettingsToJsonDoc()
+{
+    jsonDoc["LORA"]["LORA_FREQ"] = settings::lora::freq;
+    jsonDoc["LORA"]["LORA_BW"] = settings::lora::bw;
+    jsonDoc["LORA"]["LORA_SF"] = settings::lora::sf;
+    jsonDoc["LORA"]["LORA_CR"] = settings::lora::cr;
+    jsonDoc["LORA"]["LORA_SYNCWORD"] = settings::lora::syncword;
+    jsonDoc["LORA"]["LORA_POWER"] = settings::lora::power;
+    jsonDoc["LORA"]["LORA_PREAMBLE_LENGTH"] = settings::lora::preamble_length;
+    jsonDoc["LORA"]["LORA_TCXO_VOLTAGE"] = settings::lora::tcxo_voltage;
+    jsonDoc["LORA"]["LORA_USE_REGULATOR_LDO"] = settings::lora::use_regulator_ldo;
+}
+
 void heartBeat()
 {
     unsigned long heartBeat = millis();
     static unsigned long prevHeartBeat = heartBeat;
-    if (heartBeat - prevHeartBeat < settings::lora::rx_heartbeat_interval_ms)
+    if (heartBeat - prevHeartBeat < settings::misc::rx_heartbeat_interval_ms)
         return;
     prevHeartBeat = heartBeat;
 
@@ -201,6 +214,7 @@ void readLoRa()
     jsonDoc["RX"]["RX_TRIGGER"] = "LORA_PAYLOAD_RECEIVED";
     jsonDoc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
     jsonDoc["RX"]["RX_WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
+    addLoraSettingsToJsonDoc();
     jsonDoc["RX_TX"]["RX_TX_RSSI_DBM"] = radio.getRSSI();
     jsonDoc["RX_TX"]["RX_TX_SNR_DB"] = radio.getSNR();
     if (!jsonDoc["TX"]["TX_VBAT_RAW"].isNull())
