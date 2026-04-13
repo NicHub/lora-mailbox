@@ -191,45 +191,14 @@ mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/B8:F
     -   https://dronebotworkshop.com/esp32-2026/#ESP32_Variant_Comparison
     -   https://dronebotworkshop.com/esp32-2026/#General_Purpose_Experimenter_Boards
 
+## Niveaux acceptables
 
+  | Niveau     |            RSSI |                            SNR | Interprétation                                                    |
+  | ---------- | --------------: | -----------------------------: | ----------------------------------------------------------------- |
+  | Excellent  |       > -90 dBm |                        > +7 dB | Liaison très confortable, forte marge                             |
+  | Bon        |  -90 à -105 dBm |                      0 à +7 dB | Fonctionnement normal, stable                                     |
+  | Acceptable | -105 à -120 dBm |                      -7 à 0 dB | Encore exploitable, marge réduite                                 |
+  | Limite     | -120 à -127 dBm |                    -15 à -7 dB | Risque réel de pertes, messages partiellement corrompus possibles |
+  | Critique   |      < -127 dBm |                       < -15 dB | Réception au bord de la rupture, décodage très instable           |
+  | Perdu      |        variable | trop bas pour le réglage radio | plus de message décodable                                         |
 
-
-------
-
-
-
-```jsonl
-{
-  "last_commit_id": "3339c59 (0 uncommitted files)",
-  "BOARD_ID_HEX": "FBBF6F978A698846",
-  "WAKEUP": "HEARTBEAT_TX",
-  "VGPIO": 356,
-  "VBAT_MV": 3791,
-  "VBAT_PERCENT": 38,
-  "VBAT_GLYPH": "▄",
-  "VBAT_STATUS": "OK",
-  "CURRENT_TIME": "2026-04-11 16:41:07",
-  "COMPILATION_DATE": "2026-04-01",
-  "COMPILATION_TIME": "14:58:26",
-  "RSSI_DBM": -120,
-  "SNR_DB": -1.5,
-  "WEB_UI_URL": "http://192.168.1.106",
-  "WS_CLIENT_COUNT": 0,
-  "STATE": 0,
-  "JSON_STRING": "{\"board_id_hex\":\"FBBF6F978A698846\",\"cnt\":1491,\"volt_gpio\":356,\"wakeup\":\"HEARTBEAT_TX\",\"last_commit_id\":\"3339c59 (0 uncommitted files)\"}",
-  "DEBUG": true,
-  "COUNTER": {
-    "VALUE": 1491,
-    "PREVIOUS_VALUE": 1490,
-    "ERROR_COUNT": 7,
-    "STATUS": "OK"
-  }
-}
-{
-  "HEARTBEAT_RX": "2026-04-11 16:41:08",
-  "BOARD_ID_HEX": "B8:F8:62:F8:B0:E8",
-  "WEB_UI_URL": "http://192.168.1.106",
-  "COMPILATION_DATE": "2026-04-01",
-  "COMPILATION_TIME": "14:58:26"
-}
-```
