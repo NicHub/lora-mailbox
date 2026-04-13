@@ -37,16 +37,10 @@ static String bytesToHex(const String &input)
  */
 bool isPinHighEvent()
 {
-    JsonVariant trigger = jsonDoc["TX"]["TX_TRIGGER"];
-    if (trigger.isNull())
-        trigger = jsonDoc["TX"]["TX_WAKEUP"];
-    if (trigger.isNull())
-        trigger = jsonDoc["TX"]["WAKEUP"];
-    if (trigger.isNull())
-        trigger = jsonDoc["TX"]["wakeup"];
-    if (trigger.isNull())
+    const char *trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
+    if (trigger[0] == '\0')
         return false;
-    return String(trigger.as<const char *>()) == "WAKEUP_PIN_HIGH";
+    return strcmp(trigger, "WAKEUP_PIN_HIGH") == 0;
 }
 
 /**
@@ -55,16 +49,22 @@ bool isPinHighEvent()
  */
 bool isHeartbeatTxEvent()
 {
-    JsonVariant trigger = jsonDoc["TX"]["TX_TRIGGER"];
-    if (trigger.isNull())
-        trigger = jsonDoc["TX"]["TX_WAKEUP"];
-    if (trigger.isNull())
-        trigger = jsonDoc["TX"]["WAKEUP"];
-    if (trigger.isNull())
-        trigger = jsonDoc["TX"]["wakeup"];
-    if (trigger.isNull())
+    const char *trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
+    if (trigger[0] == '\0')
         return false;
-    return String(trigger.as<const char *>()) == "HEARTBEAT_TX";
+    return strcmp(trigger, "HEARTBEAT_TX") == 0;
+}
+
+/**
+ * @brief Return whether the current payload reports a TX boot event.
+ * @return true when the TX trigger equals `BOOT`, false otherwise.
+ */
+bool isBootEvent()
+{
+    const char *trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
+    if (trigger[0] == '\0')
+        return false;
+    return strcmp(trigger, "BOOT") == 0;
 }
 
 /**
@@ -74,6 +74,7 @@ void broadcastNtfy()
 {
     bool shouldNotifyNtfy = isPinHighEvent();
     shouldNotifyNtfy = shouldNotifyNtfy || (settings::ntfy::notify_heartbeat_tx && isHeartbeatTxEvent());
+    shouldNotifyNtfy = shouldNotifyNtfy || isBootEvent();
     if (shouldNotifyNtfy)
         lmb_ntfy.sendMsg(jsonDoc);
 }
@@ -86,7 +87,7 @@ void broadcastResults()
     broadcastNtfy();
     if (settings::misc::serial_verbosity == 1)
     {
-        uint16_t ctr = jsonDoc["COUNTER"]["VALUE"].as<uint16_t>();
+        uint16_t ctr = jsonDoc["RX"]["RX_COUNTER"] | 0;
         static uint16_t first_ctr = ctr;
         ctr -= first_ctr;
 
@@ -104,28 +105,42 @@ void broadcastResults()
 
 void counterCheck()
 {
-    if (jsonDoc["TX"]["TX_CNT"].isNull())
+    if (jsonDoc["TX"]["TX_COUNTER"].isNull())
         return;
-    uint16_t cnt = jsonDoc["TX"]["TX_CNT"].as<uint16_t>();
-    static uint16_t prevCnt = cnt - 1;
+    uint16_t txCnt = jsonDoc["TX"]["TX_COUNTER"].as<uint16_t>();
+    static uint16_t prevTxCnt = txCnt - 1;
     static uint16_t errorCount = 0;
-    bool counterStatus = cnt != prevCnt + 1;
+    uint16_t rxCnt = prevTxCnt + 1;
+    bool counterStatus = txCnt != rxCnt;
     errorCount += counterStatus;
 
-    jsonDoc["COUNTER"]["VALUE"] = cnt;
-    jsonDoc["COUNTER"]["PREVIOUS_VALUE"] = prevCnt;
-    jsonDoc["COUNTER"]["ERROR_COUNT"] = errorCount;
-    jsonDoc["COUNTER"]["STATUS"] = counterStatus ? "NOT OK" : "OK";
+    jsonDoc["RX"]["RX_COUNTER"] = rxCnt;
+    jsonDoc["RX_TX"]["RX_TX_COUNTER_ERROR_COUNT"] = errorCount;
+    jsonDoc["RX_TX"]["RX_TX_COUNTER_STATUS"] = counterStatus ? "NOT OK" : "OK";
 
-    prevCnt = cnt;
+    prevTxCnt = txCnt;
 }
 
 String getCurrentTime()
 {
     time_t now = time(nullptr);
-    struct tm *timeinfo = localtime(&now);
-    char timeStr[25];
-    strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", timeinfo);
+    struct tm local_tm = *localtime(&now);
+    struct tm utc_tm = *gmtime(&now);
+    int offset_min = (local_tm.tm_hour - utc_tm.tm_hour) * 60 + (local_tm.tm_min - utc_tm.tm_min);
+    if (local_tm.tm_mday != utc_tm.tm_mday)
+        offset_min += (local_tm.tm_hour < 12) ? 1440 : -1440;
+    int offset_h = offset_min / 60;
+    int offset_m = abs(offset_min % 60);
+    char timeStr[26];
+    snprintf(timeStr, sizeof(timeStr), "%04d-%02d-%02dT%02d:%02d:%02d%+03d:%02d",
+             local_tm.tm_year + 1900,
+             local_tm.tm_mon + 1,
+             local_tm.tm_mday,
+             local_tm.tm_hour,
+             local_tm.tm_min,
+             local_tm.tm_sec,
+             offset_h,
+             offset_m);
     return String(timeStr);
 }
 
@@ -139,10 +154,10 @@ void heartBeat()
 
     jsonDoc.clear();
     jsonDoc["RX"]["RX_BOARD_ID"] = getMacAddress();
-    jsonDoc["RX"]["RX_COMPILATION_DATE"] = COMPILATION_DATE;
-    jsonDoc["RX"]["RX_COMPILATION_TIME"] = COMPILATION_TIME;
-    jsonDoc["RX"]["RX_HEARTBEAT"] = getCurrentTime();
-    jsonDoc["RX"]["RX_LAST_COMMIT_ID"] = LAST_COMMIT_ID;
+    jsonDoc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
+    jsonDoc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
+    jsonDoc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
+    jsonDoc["RX"]["RX_TRIGGER"] = "HEARTBEAT_RX";
     jsonDoc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
 
     serializeJson(jsonDoc, jsonString);
@@ -178,15 +193,16 @@ void readLoRa()
         tx["TX_JSON_STRING"] = jsonString;
     }
     jsonDoc["RX"]["RX_BOARD_ID"] = getMacAddress();
-    jsonDoc["RX"]["RX_COMPILATION_DATE"] = COMPILATION_DATE;
-    jsonDoc["RX"]["RX_COMPILATION_TIME"] = COMPILATION_TIME;
-    jsonDoc["RX"]["RX_CURRENT_TIME"] = getCurrentTime();
-    jsonDoc["RX"]["RX_LAST_COMMIT_ID"] = LAST_COMMIT_ID;
-    jsonDoc["RX"]["RX_RSSI_DBM"] = radio.getRSSI();
-    jsonDoc["RX"]["RX_SNR_DB"] = radio.getSNR();
+    jsonDoc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
+    jsonDoc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
+    jsonDoc["RX"]["RX_DEBUG"] = settings::misc::debug;
+    jsonDoc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
+    jsonDoc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
+    jsonDoc["RX"]["RX_TRIGGER"] = "LORA_PAYLOAD_RECEIVED";
     jsonDoc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
     jsonDoc["RX"]["RX_WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
-    jsonDoc["RX_TX"]["RX_TX_DEBUG"] = settings::misc::debug;
+    jsonDoc["RX_TX"]["RX_TX_RSSI_DBM"] = radio.getRSSI();
+    jsonDoc["RX_TX"]["RX_TX_SNR_DB"] = radio.getSNR();
     if (!jsonDoc["TX"]["TX_VBAT_RAW"].isNull())
     {
         BatteryMeasurement battery = Vbat_raw2Vbat_mv(jsonDoc["TX"]["TX_VBAT_RAW"].as<uint16_t>());

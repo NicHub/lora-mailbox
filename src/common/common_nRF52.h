@@ -68,10 +68,12 @@ static inline String buildTxPayload(
     String payload;
     JsonDocument doc;
     doc["TX_BOARD_ID"] = board_id;
-    doc["TX_CNT"] = cnt;
-    doc["TX_VBAT_RAW"] = vbat_raw;
+    doc["TX_COUNTER"] = cnt;
+    doc["TX_DEBUG"] = settings::misc::debug;
+    doc["TX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
+    doc["TX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
     doc["TX_TRIGGER"] = txTriggerToString(tx_trigger);
-    doc["TX_LAST_COMMIT_ID"] = LAST_COMMIT_ID;
+    doc["TX_VBAT_RAW"] = vbat_raw;
     serializeJson(doc, payload);
     return payload;
 }

@@ -69,24 +69,18 @@ private:
     size_t resolveTopics(const JsonDocument &jsonDoc, const char **topics, size_t maxTopics) const
     {
         size_t topicCount = 0;
-        const char *trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
-        if (trigger[0] == '\0')
-            trigger = jsonDoc["TX"]["TX_WAKEUP"] | "";
-        if (trigger[0] == '\0')
-            trigger = jsonDoc["TX"]["WAKEUP"] | "";
-        if (trigger[0] == '\0')
-            trigger = jsonDoc["TX"]["wakeup"] | "";
-
-        if (!jsonDoc["RX"]["RX_HEARTBEAT"].isNull())
+        const char *rx_trigger = jsonDoc["RX"]["RX_TRIGGER"] | "";
+        const char *tx_trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
+        if (strcmp(rx_trigger, "HEARTBEAT_RX") == 0)
             addTopicIfUnique(settings::mqtt::topic_heartbeat_rx, topics, topicCount, maxTopics);
 
-        if (strcmp(trigger, "WAKEUP_PIN_HIGH") == 0)
+        if (strcmp(tx_trigger, "WAKEUP_PIN_HIGH") == 0)
             addTopicIfUnique(settings::mqtt::topic_got_mail, topics, topicCount, maxTopics);
 
-        if (strcmp(trigger, "HEARTBEAT_TX") == 0)
+        if (strcmp(tx_trigger, "HEARTBEAT_TX") == 0)
             addTopicIfUnique(settings::mqtt::topic_heartbeat_tx, topics, topicCount, maxTopics);
 
-        if (strcmp(trigger, "BOOT") == 0)
+        if (strcmp(tx_trigger, "BOOT") == 0)
             addTopicIfUnique(settings::mqtt::topic_wake_boot, topics, topicCount, maxTopics);
 
         if (topicCount == 0)

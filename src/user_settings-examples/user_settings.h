@@ -121,4 +121,8 @@ namespace settings::ntfy
     static constexpr NTFYPriority heartbeat_priority = NTFYPriority::Min;
     static constexpr char heartbeat_icon[] = "🔔";
     static constexpr char heartbeat_title_suffix[] = " got heartbeat";
+
+    static constexpr NTFYPriority boot_priority = NTFYPriority::Default;
+    static constexpr char boot_icon[] = "🚀";
+    static constexpr char boot_title_suffix[] = " boot";
 }

@@ -44,8 +44,7 @@ void setupDeepSleep()
 
 void goToDeepSleep()
 {
-    Serial.printf("%sCOMPILATION DATE %s", PREFIX, COMPILATION_DATE);
-    Serial.printf("%sCOMPILATION TIME %s", PREFIX, COMPILATION_TIME);
+    Serial.printf("%sBUILD LOCAL TIME %s", PREFIX, BUILD_LOCAL_TIME);
     Serial.printf("%sPROJECT NAME %s", PREFIX, PROJECT_NAME);
     Serial.print(PREFIX);
     Serial.print(F("GOING TO DEEP SLEEP\n"));

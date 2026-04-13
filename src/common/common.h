@@ -9,6 +9,7 @@
 #include <Arduino.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
+#include "common/LoraMailBox_TX_types.h"
 #include "common/LoraMailBox_NTFY_types.h"
 #include "user_settings/user_settings.h"
 
@@ -22,13 +23,6 @@ bool transmitFlag = false;
 
 /** @brief Flag set by the radio ISR when a packet was sent or received. */
 volatile bool loraEvent = false;
-
-enum class TxTrigger : uint8_t
-{
-    Boot,
-    WakeupPinHigh,
-    HeartbeatTx,
-};
 
 enum class BatteryStatus : uint8_t
 {
@@ -145,21 +139,6 @@ static inline const char *batteryStatusToString(BatteryStatus status)
     }
 }
 
-static inline const char *txTriggerToString(TxTrigger trigger)
-{
-    switch (trigger)
-    {
-    case TxTrigger::Boot:
-        return "BOOT";
-    case TxTrigger::WakeupPinHigh:
-        return "WAKEUP_PIN_HIGH";
-    case TxTrigger::HeartbeatTx:
-        return "HEARTBEAT_TX";
-    default:
-        return "BOOT";
-    }
-}
-
 /**
  * @brief RadioLib IRQ callback for TX/RX completion.
  * @note This function must have `void` return type and no arguments.
@@ -242,25 +221,25 @@ void setupLoRa()
 void printSplashScreen()
 {
     Serial.println("\n\n##########################");
-    Serial.print(F("PROJECT NAME:     "));
+    Serial.print(F("PROJECT NAME:       "));
     Serial.println(PROJECT_NAME);
-    Serial.print(F("FILE NAME:        "));
+    Serial.print(F("FILE NAME:          "));
     Serial.println(__FILE__);
-    Serial.print(F("PROJECT PATH:     "));
-    Serial.println(PROJECT_PATH);
-    Serial.print(F("COMPILATION DATE: "));
-    Serial.println(COMPILATION_DATE);
-    Serial.print(F("COMPILATION TIME: "));
-    Serial.println(COMPILATION_TIME);
-    Serial.print(F("LAST COMMIT ID:   "));
-    Serial.println(LAST_COMMIT_ID);
-    Serial.print(F("PYTHON VERSION:   "));
-    Serial.println(PYTHON_VERSION);
-    Serial.print(F("PYTHON PATH:      "));
-    Serial.println(PYTHON_PATH);
-    Serial.print(F("F_CPU:            "));
+    Serial.print(F("BUILD_SOURCE_PATH:  "));
+    Serial.println(BUILD_SOURCE_PATH);
+    Serial.print(F("BUILD_LOCAL_TIME:   "));
+    Serial.println(BUILD_LOCAL_TIME);
+    Serial.print(F("GIT_HEAD_COMMIT_ID: "));
+    Serial.println(GIT_HEAD_COMMIT_ID);
+    Serial.print(F("GIT_UNCOMMITTED:    "));
+    Serial.println(GIT_UNCOMMITTED_FILES_COUNT);
+    Serial.print(F("BUILD_PYTHON_VER:   "));
+    Serial.println(BUILD_PYTHON_VERSION);
+    Serial.print(F("BUILD_PYTHON_PATH:  "));
+    Serial.println(BUILD_PYTHON_PATH);
+    Serial.print(F("F_CPU:              "));
     Serial.println(F_CPU);
-    Serial.print(F("MCU Model:        "));
+    Serial.print(F("MCU_MODEL:          "));
 #if defined(ESP32)
     Serial.println(ESP.getChipModel());
 #elif defined(NRF52_SERIES)
