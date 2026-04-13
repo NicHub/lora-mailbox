@@ -30,29 +30,7 @@ void setupRtcWakeup()
     attachInterrupt(digitalPinToInterrupt(settings::board::wakeup_pin), onWakeupPinRise, RISING);
 }
 
-/**
- * @brief Sleep for a fixed number of seconds.
- * @param seconds Sleep duration in seconds.
- *
- * @note This uses Arduino delay which natively sleeps using FreeRTOS tickless idle.
- */
-static void sleepSecondsNoPin(uint32_t seconds)
-{
-    delay(seconds * 1000);
-}
 
-TxTrigger sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
-{
-    pinMode(settings::board::wakeup_pin, INPUT);
-    if (digitalRead(settings::board::wakeup_pin))
-        return TxTrigger::WakeupPinHigh;
-
-    xSemaphoreTake(wakeupSem, 0); // clear any pending triggers
-    if (xSemaphoreTake(wakeupSem, pdMS_TO_TICKS(timeout_seconds * 1000)) == pdTRUE)
-        return TxTrigger::WakeupPinHigh;
-
-    return TxTrigger::HeartbeatTx;
-}
 
 static inline bool isHeartbeatDue(uint32_t now_ms)
 {
@@ -129,25 +107,28 @@ void loop()
     writeRgbLeds(0, 1, 0);
     saveMsgCounter(++cnt);
 
-    /** @note Keep a short debounce window before re-checking wakeup conditions. */
-    sleepSecondsNoPin(settings::misc::tx_debounce_s);
+    writeRgbLeds(0, 0, 0);
 
-    pinMode(settings::board::wakeup_pin, INPUT);
+    /** @note Keep a short debounce window before re-checking wakeup conditions. */
+    delay(settings::misc::tx_debounce_s * 1000);
+
     uint32_t now_ms = millis();
     if (isHeartbeatDue(now_ms))
     {
         txTrigger = TxTrigger::HeartbeatTx;
-        return;
     }
-    if (digitalRead(settings::board::wakeup_pin))
+    else if (digitalRead(settings::board::wakeup_pin))
     {
         txTrigger = TxTrigger::WakeupPinHigh;
-        return;
     }
-
-    writeRgbLeds(0, 0, 0);
-    uint32_t remaining_ms = nextHeartbeatDeadlineMs - now_ms;
-    /** @note Round up milliseconds to whole seconds before entering RTC sleep. */
-    uint32_t sleep_seconds = (remaining_ms + 999) / 1000;
-    txTrigger = sleepUntilWakeupPinOrTimeout(sleep_seconds);
+    else
+    {
+        /** @note Wait exactly until the next heartbeat or until an interrupt wakes us. */
+        uint32_t sleep_ms = nextHeartbeatDeadlineMs - now_ms;
+        xSemaphoreTake(wakeupSem, 0); // Clear any pending events
+        if (xSemaphoreTake(wakeupSem, pdMS_TO_TICKS(sleep_ms)) == pdTRUE)
+            txTrigger = TxTrigger::WakeupPinHigh;
+        else
+            txTrigger = TxTrigger::HeartbeatTx;
+    }
 }
