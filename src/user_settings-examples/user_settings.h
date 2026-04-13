@@ -19,9 +19,9 @@ namespace settings::misc
     static constexpr bool debug = true;
     static constexpr int serial_verbosity = 2;
     static constexpr bool tx_reset_msg_counter_on_reboot = false;
-    static constexpr unsigned long tx_heartbeat_interval_ms = 60UL * 60UL * 1000UL;
-    static constexpr unsigned long rx_heartbeat_interval_ms = 5000UL;
-    static constexpr unsigned long tx_debounce_s = 5UL;
+    static constexpr uint32_t tx_heartbeat_interval_ms = 60UL * 60UL * 1000UL;
+    static constexpr uint32_t rx_heartbeat_interval_ms = 5000UL;
+    static constexpr uint32_t tx_debounce_s = 5UL;
 }
 
 namespace settings::board
@@ -65,16 +65,16 @@ namespace settings::ntp
     static constexpr char timezone[] = "CET-1CEST,M3.5.0/2,M10.5.0/3";
     static constexpr char server[] = "pool.ntp.org";
     static constexpr int sync_max_retries = 10;
-    static constexpr unsigned long sync_retry_delay_ms = 500UL;
+    static constexpr uint32_t sync_retry_delay_ms = 500UL;
 }
 
 /** @brief Wi-Fi settings. */
 namespace settings::wifi
 {
-    static constexpr unsigned long connect_timeout_ms = 10000UL;
-    static constexpr unsigned long connect_retry_delay_ms = 500UL;
-    static constexpr unsigned long reconnect_min_interval_ms = 5000UL;
-    static constexpr unsigned long reconnect_timeout_ms = 8000UL;
+    static constexpr uint32_t connect_timeout_ms = 10000UL;
+    static constexpr uint32_t connect_retry_delay_ms = 500UL;
+    static constexpr uint32_t reconnect_min_interval_ms = 5000UL;
+    static constexpr uint32_t reconnect_timeout_ms = 8000UL;
 }
 
 /** @brief LoRa settings. */

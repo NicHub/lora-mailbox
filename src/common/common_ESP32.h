@@ -16,7 +16,7 @@ static constexpr uint64_t MASK = 1ULL << settings::board::wakeup_pin;
 static constexpr char PREFIX[] = "\n[" PROJECT_NAME "] ";
 
 void debounce(uint32_t);
-void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
+void blink(uint32_t, uint32_t, uint32_t, uint32_t, bool);
 
 /**
  * @note Platform counter storage API.

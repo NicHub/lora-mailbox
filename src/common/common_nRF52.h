@@ -16,7 +16,7 @@ static constexpr char PREFIX[] = "\n[" PROJECT_NAME "] ";
 #include "common/common.h"
 
 void debounce(uint32_t);
-void blink(unsigned long, unsigned long, unsigned long, uint32_t, bool);
+void blink(uint32_t, uint32_t, uint32_t, uint32_t, bool);
 
 #ifdef NRF52840_XXAA
 static constexpr uint32_t COUNTER_STORAGE_ADDR = 0xED000;

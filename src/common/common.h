@@ -157,9 +157,9 @@ void debounce(uint32_t wait)
 }
 
 void blink(
-    unsigned long on_duration_ms,
-    unsigned long total_duration_ms,
-    unsigned long repeat,
+    uint32_t on_duration_ms,
+    uint32_t total_duration_ms,
+    uint32_t repeat,
     uint32_t led_pin,
     bool invert)
 {

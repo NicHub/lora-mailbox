@@ -91,11 +91,11 @@ void broadcastResults()
         static uint16_t first_ctr = ctr;
         ctr -= first_ctr;
 
-        unsigned long ms = millis();
-        static unsigned long first_ms = ms;
+        uint32_t ms = millis();
+        static uint32_t first_ms = ms;
         ms -= first_ms;
 
-        Serial.printf("- ctr: %3u , ms: %8lu\n", ctr, ms);
+        Serial.printf("- ctr: %3u , ms: %8u\n", ctr, ms);
     }
     else if (settings::misc::serial_verbosity == 2)
     {
@@ -159,8 +159,8 @@ void addLoraSettingsToJsonDoc()
 
 void heartBeat()
 {
-    unsigned long heartBeat = millis();
-    static unsigned long prevHeartBeat = heartBeat;
+    uint32_t heartBeat = millis();
+    static uint32_t prevHeartBeat = heartBeat;
     if (heartBeat - prevHeartBeat < settings::misc::rx_heartbeat_interval_ms)
         return;
     prevHeartBeat = heartBeat;
