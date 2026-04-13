@@ -206,13 +206,48 @@ mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/B8:F
 
 ```json
 {
+  "LORA": {
+    "LORA_BW": 62.5,
+    "LORA_CR": 8,
+    "LORA_FREQ": 868,
+    "LORA_POWER": 14,
+    "LORA_PREAMBLE_LENGTH": 12,
+    "LORA_SF": 12,
+    "LORA_SYNCWORD": 18,
+    "LORA_TCXO_VOLTAGE": 1.6,
+    "LORA_USE_REGULATOR_LDO": false
+  },
   "RX": {
     "RX_BOARD_ID": "98:3D:AE:ED:0E:E4",
-    "RX_BUILD_LOCAL_TIME": "2026-04-13T16:57:25+02:00",
-    "RX_GIT_HEAD_COMMIT_ID": "b110e4c",
+    "RX_BUILD_LOCAL_TIME": "2026-04-13T17:50:07+02:00",
+    "RX_COUNTER": 137,
+    "RX_CURRENT_LOCAL_TIME": "2026-04-13T18:45:23+02:00",
+    "RX_DEBUG": true,
+    "RX_GIT_HEAD_COMMIT_ID": "80947bf",
     "RX_GIT_UNCOMMITTED_FILES_COUNT": "0",
-    "RX_TRIGGER": "HEARTBEAT_RX",
-    "RX_WEB_UI_URL": "http://10.191.69.98"
+    "RX_TRIGGER": "LORA_PAYLOAD_RECEIVED",
+    "RX_WEB_UI_URL": "http://10.191.69.98",
+    "RX_WS_CLIENT_COUNT": 0
+  },
+  "RX_TX": {
+    "RX_TX_COUNTER_ERROR_COUNT": 0,
+    "RX_TX_COUNTER_STATUS": "OK",
+    "RX_TX_RSSI_DBM": -119,
+    "RX_TX_SNR_DB": -1.25
+  },
+  "TX": {
+    "TX_BOARD_ID": "47167765C8083088",
+    "TX_COUNTER": 137,
+    "TX_DEBUG": true,
+    "TX_GIT_HEAD_COMMIT_ID": "80947bf",
+    "TX_GIT_UNCOMMITTED_FILES_COUNT": "0",
+    "TX_JSON_STRING": "{\"TX_BOARD_ID\":\"47167765C8083088\",\"TX_COUNTER\":137,\"TX_DEBUG\":true,\"TX_GIT_HEAD_COMMIT_ID\":\"80947bf\",\"TX_GIT_UNCOMMITTED_FILES_COUNT\":\"0\",\"TX_TRIGGER\":\"WAKEUP_PIN_HIGH\",\"TX_VBAT_RAW\":388}",
+    "TX_TRIGGER": "WAKEUP_PIN_HIGH",
+    "TX_VBAT_GLYPH": "█",
+    "TX_VBAT_MV": 4137,
+    "TX_VBAT_PERCENT": 90,
+    "TX_VBAT_RAW": 388,
+    "TX_VBAT_STATUS": "OK"
   }
 }
 ```
@@ -221,35 +256,11 @@ mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/B8:F
 {
   "RX": {
     "RX_BOARD_ID": "98:3D:AE:ED:0E:E4",
-    "RX_BUILD_LOCAL_TIME": "2026-04-13T16:57:25+02:00",
-    "RX_COUNTER": 17,
-    "RX_CURRENT_LOCAL_TIME": "2026-04-13T17:05:48+02:00",
-    "RX_DEBUG": true,
-    "RX_GIT_HEAD_COMMIT_ID": "b110e4c",
+    "RX_BUILD_LOCAL_TIME": "2026-04-13T17:50:07+02:00",
+    "RX_GIT_HEAD_COMMIT_ID": "80947bf",
     "RX_GIT_UNCOMMITTED_FILES_COUNT": "0",
-    "RX_TRIGGER": "LORA_PAYLOAD_RECEIVED",
-    "RX_WEB_UI_URL": "http://10.191.69.98",
-    "RX_WS_CLIENT_COUNT": 0
-  },
-  "RX_TX": {
-    "RX_TX_COUNTER_ERROR_COUNT": 1,
-    "RX_TX_COUNTER_STATUS": "OK",
-    "RX_TX_RSSI_DBM": -114,
-    "RX_TX_SNR_DB": 2
-  },
-  "TX": {
-    "TX_BOARD_ID": "47167765C8083088",
-    "TX_COUNTER": 17,
-    "TX_DEBUG": true,
-    "TX_GIT_HEAD_COMMIT_ID": "b110e4c",
-    "TX_GIT_UNCOMMITTED_FILES_COUNT": "0",
-    "TX_JSON_STRING": "{\"TX_BOARD_ID\":\"47167765C8083088\",\"TX_COUNTER\":17,\"TX_DEBUG\":true,\"TX_GIT_HEAD_COMMIT_ID\":\"b110e4c\",\"TX_GIT_UNCOMMITTED_FILES_COUNT\":\"0\",\"TX_TRIGGER\":\"WAKEUP_PIN_HIGH\",\"TX_VBAT_RAW\":391}",
-    "TX_TRIGGER": "WAKEUP_PIN_HIGH",
-    "TX_VBAT_GLYPH": "█",
-    "TX_VBAT_MV": 4169,
-    "TX_VBAT_PERCENT": 95,
-    "TX_VBAT_RAW": 391,
-    "TX_VBAT_STATUS": "OK"
+    "RX_TRIGGER": "HEARTBEAT_RX",
+    "RX_WEB_UI_URL": "http://10.191.69.98"
   }
 }
 ```

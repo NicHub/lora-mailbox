@@ -167,6 +167,7 @@ void heartBeat()
 
     jsonDoc.clear();
     jsonDoc["RX"]["RX_BOARD_ID"] = getMacAddress();
+    jsonDoc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
     jsonDoc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
     jsonDoc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
     jsonDoc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
