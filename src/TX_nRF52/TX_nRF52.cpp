@@ -9,77 +9,36 @@
 #include "common/common_nRF52.h"
 #include "common/common.h"
 
-static volatile bool rtcTimeoutElapsed = false;
-static volatile bool wakeupPinEvent = false;
+#include <FreeRTOS.h>
+#include <semphr.h>
+
+static SemaphoreHandle_t wakeupSem;
 static TxTrigger txTrigger = TxTrigger::Boot;
 static uint32_t nextHeartbeatDeadlineMs = 0;
 
-/** @brief RTC prescaler for an 8 Hz tick from the 32.768 kHz LF clock. */
-static constexpr uint32_t RTC_PRESCALER = 4095;
-static constexpr uint32_t RTC_TICKS_PER_SECOND = 8;
-
-extern "C" void RTC2_IRQHandler(void)
-{
-    if (NRF_RTC2->EVENTS_COMPARE[0])
-    {
-        NRF_RTC2->EVENTS_COMPARE[0] = 0;
-        rtcTimeoutElapsed = true;
-    }
-}
-
 void onWakeupPinRise()
 {
-    wakeupPinEvent = true;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(wakeupSem, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 void setupRtcWakeup()
 {
+    wakeupSem = xSemaphoreCreateBinary();
     pinMode(settings::board::wakeup_pin, INPUT);
     attachInterrupt(digitalPinToInterrupt(settings::board::wakeup_pin), onWakeupPinRise, RISING);
-
-    if ((NRF_CLOCK->LFCLKSTAT & CLOCK_LFCLKSTAT_STATE_Msk) == 0)
-    {
-        NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
-        NRF_CLOCK->TASKS_LFCLKSTART = 1;
-        while (!NRF_CLOCK->EVENTS_LFCLKSTARTED)
-            ;
-    }
 }
 
 /**
- * @brief Sleep for a fixed number of seconds using RTC2 only.
+ * @brief Sleep for a fixed number of seconds.
  * @param seconds Sleep duration in seconds.
  *
- * @note This path does not wake on the external wakeup pin.
+ * @note This uses Arduino delay which natively sleeps using FreeRTOS tickless idle.
  */
 static void sleepSecondsNoPin(uint32_t seconds)
 {
-    uint32_t ticks = seconds * RTC_TICKS_PER_SECOND;
-    if (ticks == 0)
-        ticks = 1;
-    if (ticks > 0x00FFFFFFUL)
-        ticks = 0x00FFFFFFUL;
-
-    rtcTimeoutElapsed = false;
-    NRF_RTC2->TASKS_STOP = 1;
-    NRF_RTC2->TASKS_CLEAR = 1;
-    NRF_RTC2->PRESCALER = RTC_PRESCALER;
-    NRF_RTC2->CC[0] = ticks;
-    NRF_RTC2->EVENTS_COMPARE[0] = 0;
-    NRF_RTC2->INTENSET = RTC_INTENSET_COMPARE0_Msk;
-    NVIC_ClearPendingIRQ(RTC2_IRQn);
-    NVIC_EnableIRQ(RTC2_IRQn);
-    NRF_RTC2->TASKS_START = 1;
-
-    while (!rtcTimeoutElapsed)
-    {
-        __SEV();
-        __WFE();
-        __WFE();
-    }
-
-    NRF_RTC2->TASKS_STOP = 1;
-    NRF_RTC2->INTENCLR = RTC_INTENCLR_COMPARE0_Msk;
+    delay(seconds * 1000);
 }
 
 TxTrigger sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
@@ -88,36 +47,10 @@ TxTrigger sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
     if (digitalRead(settings::board::wakeup_pin))
         return TxTrigger::WakeupPinHigh;
 
-    rtcTimeoutElapsed = false;
-    wakeupPinEvent = false;
-
-    uint32_t timeout_ticks = timeout_seconds * RTC_TICKS_PER_SECOND;
-    if (timeout_ticks == 0)
-        timeout_ticks = 1;
-    if (timeout_ticks > 0x00FFFFFFUL)
-        timeout_ticks = 0x00FFFFFFUL;
-
-    NRF_RTC2->TASKS_STOP = 1;
-    NRF_RTC2->TASKS_CLEAR = 1;
-    NRF_RTC2->PRESCALER = RTC_PRESCALER;
-    NRF_RTC2->CC[0] = timeout_ticks;
-    NRF_RTC2->EVENTS_COMPARE[0] = 0;
-    NRF_RTC2->INTENSET = RTC_INTENSET_COMPARE0_Msk;
-    NVIC_ClearPendingIRQ(RTC2_IRQn);
-    NVIC_EnableIRQ(RTC2_IRQn);
-    NRF_RTC2->TASKS_START = 1;
-
-    while (!rtcTimeoutElapsed && !wakeupPinEvent)
-    {
-        __SEV();
-        __WFE();
-        __WFE();
-    }
-
-    NRF_RTC2->TASKS_STOP = 1;
-    NRF_RTC2->INTENCLR = RTC_INTENCLR_COMPARE0_Msk;
-    if (wakeupPinEvent)
+    xSemaphoreTake(wakeupSem, 0); // clear any pending triggers
+    if (xSemaphoreTake(wakeupSem, pdMS_TO_TICKS(timeout_seconds * 1000)) == pdTRUE)
         return TxTrigger::WakeupPinHigh;
+
     return TxTrigger::HeartbeatTx;
 }
 
