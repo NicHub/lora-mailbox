@@ -17,6 +17,20 @@ LoraMailBox_NTFY lmb_ntfy;
 String jsonString;
 JsonDocument jsonDoc;
 
+static String bytesToHex(const String &input)
+{
+    static constexpr char HEX_DIGITS[] = "0123456789abcdef";
+    String hex;
+    hex.reserve(input.length() * 2);
+    for (size_t i = 0; i < input.length(); ++i)
+    {
+        const uint8_t byteValue = static_cast<uint8_t>(input[i]);
+        hex += HEX_DIGITS[byteValue >> 4];
+        hex += HEX_DIGITS[byteValue & 0x0F];
+    }
+    return hex;
+}
+
 /**
  * @brief Return whether the current payload reports a mailbox event.
  * @return true when the TX trigger equals `WAKEUP_PIN_HIGH`, false otherwise.
@@ -149,12 +163,20 @@ void readLoRa()
     if (state != RADIOLIB_ERR_NONE)
         return;
     JsonDocument txDoc;
-    deserializeJson(txDoc, jsonString);
+    DeserializationError deserializeError = deserializeJson(txDoc, jsonString);
     jsonDoc.clear();
     JsonObject tx = jsonDoc["TX"].to<JsonObject>();
-    for (JsonPairConst kv : txDoc.as<JsonObjectConst>())
-        tx[kv.key()] = kv.value();
-    jsonDoc["TX"]["TX_JSON_STRING"] = jsonString;
+    if (deserializeError)
+    {
+        tx["TX_JSON_DESERIALIZE_ERROR"] = deserializeError.c_str();
+        tx["TX_JSON_STRING_HEX"] = bytesToHex(jsonString);
+    }
+    else
+    {
+        for (JsonPairConst kv : txDoc.as<JsonObjectConst>())
+            tx[kv.key()] = kv.value();
+        tx["TX_JSON_STRING"] = jsonString;
+    }
     jsonDoc["RX"]["RX_BOARD_ID"] = getMacAddress();
     jsonDoc["RX"]["RX_COMPILATION_DATE"] = COMPILATION_DATE;
     jsonDoc["RX"]["RX_COMPILATION_TIME"] = COMPILATION_TIME;
