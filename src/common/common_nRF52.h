@@ -151,9 +151,9 @@ static inline String getBoardUidHex()
     snprintf(
         uid_hex,
         sizeof(uid_hex),
-        "%08X%08X",
-        uid_hi,
-        uid_lo);
+        "%08lX%08lX",
+        (unsigned long)uid_hi,
+        (unsigned long)uid_lo);
     initialized = true;
 
     return String(uid_hex);
