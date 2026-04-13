@@ -60,8 +60,7 @@ static inline uint32_t counterRecordAddress(uint32_t index)
     return COUNTER_STORAGE_ADDR + index * sizeof(CounterRecord);
 }
 
-static inline void buildTxPayload(
-    char* output_buffer, size_t output_size,
+static inline String buildTxPayload(
     const char* board_id,
     uint16_t cnt,
     uint16_t vbat_raw,
@@ -75,7 +74,9 @@ static inline void buildTxPayload(
     doc["TX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
     doc["TX_TRIGGER"] = txTriggerToString(tx_trigger);
     doc["TX_VBAT_RAW"] = vbat_raw;
-    serializeJson(doc, output_buffer, output_size);
+    String output_payload;
+    serializeJson(doc, output_payload);
+    return output_payload;
 }
 
 static inline CounterRecord readCounterRecord(uint32_t index)
