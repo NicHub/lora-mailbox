@@ -9,6 +9,7 @@
 #include <Arduino.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
+
 #include "flash/flash_nrf5x.h"
 
 static constexpr char PREFIX[] = "\n[" PROJECT_NAME "] ";
@@ -150,9 +151,9 @@ static inline String getBoardUidHex()
     snprintf(
         uid_hex,
         sizeof(uid_hex),
-        "%08lX%08lX",
-        (unsigned long)uid_hi,
-        (unsigned long)uid_lo);
+        "%08X%08X",
+        uid_hi,
+        uid_lo);
     initialized = true;
 
     return String(uid_hex);
