@@ -9,10 +9,10 @@
 #include <Arduino.h>
 #include <RadioLib.h>
 #include <ArduinoJson.h>
-#include "common/LoraMailBox_TX_types.h"
-#include "common/LoraMailBox_NTFY_types.h"
+#include "common/tx_types.h"
+#include "common/ntfy_types.h"
 #include "user_settings/user_settings.h"
-#include "common/Blinker.h"
+#include "common/blinker.h"
 
 extern Blinker statusLed;
 

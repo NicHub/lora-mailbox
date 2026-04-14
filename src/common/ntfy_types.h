@@ -8,7 +8,7 @@
 
 #include <Arduino.h>
 #include <stdint.h>
-#include "common/LoraMailBox_TX_types.h"
+#include "common/tx_types.h"
 
 /**
  * @brief NTFY message priority.

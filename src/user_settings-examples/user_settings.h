@@ -8,7 +8,7 @@
 
 #include <RadioLib.h>
 
-#include "common/LoraMailBox_NTFY_types.h"
+#include "common/ntfy_types.h"
 #include "user_settings/user_settings_secrets.h"
 
 /** @brief Miscellaneous settings. */

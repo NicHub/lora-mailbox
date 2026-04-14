@@ -7,9 +7,9 @@
 #include <Arduino.h>
 #include "common/common_ESP32.h"
 #include "common/common.h"
-#include "LoraMailBox_WIFI.h"
-#include "LoraMailBox_MQTT.h"
-#include "LoraMailBox_NTFY.h"
+#include "wifi.h"
+#include "mqtt.h"
+#include "ntfy.h"
 
 LoraMailboxWifi lmb_wifi;
 LoraMailboxMqtt lmb_mqtt;

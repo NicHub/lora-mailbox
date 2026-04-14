@@ -14,7 +14,7 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <time.h>
-#include "common/LoraMailBox_NTFY_types.h"
+#include "common/ntfy_types.h"
 #include "user_settings/user_settings.h"
 
 class LoraMailboxNtfy
