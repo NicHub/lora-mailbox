@@ -54,9 +54,77 @@ TODO: Update this section
 
 ## Code style
 
-This project follows the [`readability-identifier-naming`](https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html) conventions enforced by clang-tidy (see `.clang-tidy`).
+This project follows the [`readability-identifier-naming`](https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html) conventions enforced by clang-tidy (see `scripts/tools/.clang-tidy`).
 
 To check: `./scripts/tools/run_clang_tidy.sh [rx|tx|all]`
+
+## LoRa settings
+
+The LoRa settings are defined in:
+
+- `src/user_settings/user_settings.h`
+- `src/user_settings-examples/user_settings.h`
+
+### Parameter guide
+
+- `FREQ`
+  Carrier frequency in MHz.
+  SX1262 capability: `150.0` to `960.0` MHz.
+  Legal and usable frequencies depend on the target region and local regulations.
+  Impact: changing this mainly changes regulatory compliance, propagation characteristics, and interference exposure.
+  Default in `SX1262.h`: `434.0`.
+
+- `BW`
+  LoRa bandwidth in kHz.
+  Typical values: `10.4`, `15.6`, `20.8`, `31.25`, `41.7`, `62.5`, `125`, `250`, `500`.
+  `BW ↑ => throughput ↑, airtime ↓, sensitivity ↓, robustness in difficult environments ↓`
+  `BW ↓ => throughput ↓, airtime ↑, sensitivity ↑, robustness in difficult environments ↑`
+  Default in `SX1262.h`: `125.0`.
+
+- `SF`
+  LoRa spreading factor. Valid range: `6` to `12`.
+  `SF ↑ => throughput ↓, airtime ↑, sensitivity ↑, range/penetration ↑, battery cost per message ↑`
+  `SF ↓ => throughput ↑, airtime ↓, sensitivity ↓, range/penetration ↓, battery cost per message ↓`
+  Default in `SX1262.h`: `9`.
+
+- `CR`
+  LoRa coding rate denominator. Valid range: `5` to `8`.
+  `CR ↑ => redundancy ↑, airtime ↑, throughput ↓, resilience to errors/interference ↑`
+  `CR ↓ => redundancy ↓, airtime ↓, throughput ↑, resilience to errors/interference ↓`
+  Default in `SX1262.h`: `7`.
+
+- `SYNCWORD`
+  LoRa sync word used to distinguish networks.
+  `0x34` is reserved for LoRaWAN.
+  Impact: changes network separation only; it does not directly improve range, speed, or power use.
+  Default in `SX1262.h`: `RADIOLIB_SX126X_SYNC_WORD_PRIVATE`.
+
+- `POWER`
+  TX output power in dBm.
+  Typical SX1262 range: `2` to `17` dBm.
+  `POWER ↑ => link budget ↑, range margin ↑, battery usage ↑, legal-risk/EMI risk ↑`
+  `POWER ↓ => link budget ↓, range margin ↓, battery usage ↓`
+  Default in `SX1262.h`: `10`.
+
+- `PREAMBLE_LENGTH`
+  Preamble length in symbols.
+  The effective transmitted preamble is `4.25` symbols longer.
+  `PREAMBLE_LENGTH ↑ => sync reliability ↑, airtime ↑, throughput ↓`
+  `PREAMBLE_LENGTH ↓ => sync reliability ↓, airtime ↓, throughput ↑`
+  Default in `SX1262.h`: `8`.
+
+- `TCXO_VOLTAGE`
+  TCXO control voltage in V.
+  Used by `radio.begin()` on boards that drive the SX1262 TCXO.
+  Impact: this is a hardware-matching parameter, not a tuning knob for speed or range.
+  Wrong value can cause startup failure, unstable RF behavior, or no radio link.
+  Default in `SX1262.h`: `1.6`.
+
+- `USE_REGULATOR_LDO`
+  Use the SX1262 LDO regulator instead of DC-DC.
+  `USE_REGULATOR_LDO = true => simplicity/compatibility may ↑, efficiency usually ↓`
+  `USE_REGULATOR_LDO = false => efficiency usually ↑, but depends on board design and stability`
+  Default in `SX1262.h`: `false`.
 
 ## Usefull commands
 
