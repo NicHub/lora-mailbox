@@ -98,8 +98,8 @@ const char *htmlTemplate = R"rawliteral(
                 const messagesElem = document.getElementById("messages");
                 try { // Sort json elements alphabeticaly by keys and display result.
                     const obj = JSON.parse(jsonString);
-                    if (obj["COUNTER"])
-                        obj["COUNTER"]["WS"] = counter++;
+                    if (obj["RX"])
+                        obj["RX"]["RX_WS_CLIENT_COUNT"] = counter++;
                     const sortedObj = {};
                     Object.keys(obj).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).forEach(key => {
                         sortedObj[key] = obj[key];

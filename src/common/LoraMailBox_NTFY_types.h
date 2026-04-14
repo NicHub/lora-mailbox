@@ -6,14 +6,9 @@
 
 #pragma once
 
+#include <Arduino.h>
 #include <stdint.h>
-
-enum class NTFYMessageKind : uint8_t
-{
-    None,
-    MessageReceived,
-    Heartbeat,
-};
+#include "common/LoraMailBox_TX_types.h"
 
 /**
  * @brief NTFY message priority.
@@ -30,7 +25,7 @@ enum class NTFYPriority : uint8_t
 
 struct NTFYMessage
 {
-    NTFYMessageKind kind;
+    TxTrigger tx_trigger;
     NTFYPriority priority;
     String title;
     String body;

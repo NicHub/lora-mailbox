@@ -5,120 +5,29 @@
  */
 
 #include <Arduino.h>
+#include <FreeRTOS.h>
 #include <nrf.h>
+#include <semphr.h>
+
 #include "common/common_nRF52.h"
 #include "common/common.h"
 
-static volatile bool rtcTimeoutElapsed = false;
-static volatile bool wakeupPinEvent = false;
+static SemaphoreHandle_t wakeupSem;
 static TxTrigger txTrigger = TxTrigger::Boot;
 static uint32_t nextHeartbeatDeadlineMs = 0;
 
-/** @brief RTC prescaler for an 8 Hz tick from the 32.768 kHz LF clock. */
-static constexpr uint32_t RTC_PRESCALER = 4095;
-static constexpr uint32_t RTC_TICKS_PER_SECOND = 8;
-
-extern "C" void RTC2_IRQHandler(void)
-{
-    if (NRF_RTC2->EVENTS_COMPARE[0])
-    {
-        NRF_RTC2->EVENTS_COMPARE[0] = 0;
-        rtcTimeoutElapsed = true;
-    }
-}
-
 void onWakeupPinRise()
 {
-    wakeupPinEvent = true;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(wakeupSem, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 void setupRtcWakeup()
 {
+    wakeupSem = xSemaphoreCreateBinary();
     pinMode(settings::board::wakeup_pin, INPUT);
     attachInterrupt(digitalPinToInterrupt(settings::board::wakeup_pin), onWakeupPinRise, RISING);
-
-    if ((NRF_CLOCK->LFCLKSTAT & CLOCK_LFCLKSTAT_STATE_Msk) == 0)
-    {
-        NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
-        NRF_CLOCK->TASKS_LFCLKSTART = 1;
-        while (!NRF_CLOCK->EVENTS_LFCLKSTARTED)
-            ;
-    }
-}
-
-/**
- * @brief Sleep for a fixed number of seconds using RTC2 only.
- * @param seconds Sleep duration in seconds.
- *
- * @note This path does not wake on the external wakeup pin.
- */
-static void sleepSecondsNoPin(uint32_t seconds)
-{
-    uint32_t ticks = seconds * RTC_TICKS_PER_SECOND;
-    if (ticks == 0)
-        ticks = 1;
-    if (ticks > 0x00FFFFFFUL)
-        ticks = 0x00FFFFFFUL;
-
-    rtcTimeoutElapsed = false;
-    NRF_RTC2->TASKS_STOP = 1;
-    NRF_RTC2->TASKS_CLEAR = 1;
-    NRF_RTC2->PRESCALER = RTC_PRESCALER;
-    NRF_RTC2->CC[0] = ticks;
-    NRF_RTC2->EVENTS_COMPARE[0] = 0;
-    NRF_RTC2->INTENSET = RTC_INTENSET_COMPARE0_Msk;
-    NVIC_ClearPendingIRQ(RTC2_IRQn);
-    NVIC_EnableIRQ(RTC2_IRQn);
-    NRF_RTC2->TASKS_START = 1;
-
-    while (!rtcTimeoutElapsed)
-    {
-        __SEV();
-        __WFE();
-        __WFE();
-    }
-
-    NRF_RTC2->TASKS_STOP = 1;
-    NRF_RTC2->INTENCLR = RTC_INTENCLR_COMPARE0_Msk;
-}
-
-TxTrigger sleepUntilWakeupPinOrTimeout(uint32_t timeout_seconds)
-{
-    pinMode(settings::board::wakeup_pin, INPUT);
-    if (digitalRead(settings::board::wakeup_pin))
-        return TxTrigger::WakeupPinHigh;
-
-    rtcTimeoutElapsed = false;
-    wakeupPinEvent = false;
-
-    uint32_t timeout_ticks = timeout_seconds * RTC_TICKS_PER_SECOND;
-    if (timeout_ticks == 0)
-        timeout_ticks = 1;
-    if (timeout_ticks > 0x00FFFFFFUL)
-        timeout_ticks = 0x00FFFFFFUL;
-
-    NRF_RTC2->TASKS_STOP = 1;
-    NRF_RTC2->TASKS_CLEAR = 1;
-    NRF_RTC2->PRESCALER = RTC_PRESCALER;
-    NRF_RTC2->CC[0] = timeout_ticks;
-    NRF_RTC2->EVENTS_COMPARE[0] = 0;
-    NRF_RTC2->INTENSET = RTC_INTENSET_COMPARE0_Msk;
-    NVIC_ClearPendingIRQ(RTC2_IRQn);
-    NVIC_EnableIRQ(RTC2_IRQn);
-    NRF_RTC2->TASKS_START = 1;
-
-    while (!rtcTimeoutElapsed && !wakeupPinEvent)
-    {
-        __SEV();
-        __WFE();
-        __WFE();
-    }
-
-    NRF_RTC2->TASKS_STOP = 1;
-    NRF_RTC2->INTENCLR = RTC_INTENCLR_COMPARE0_Msk;
-    if (wakeupPinEvent)
-        return TxTrigger::WakeupPinHigh;
-    return TxTrigger::HeartbeatTx;
 }
 
 static inline bool isHeartbeatDue(uint32_t now_ms)
@@ -131,7 +40,7 @@ static void advanceHeartbeatDeadline(uint32_t now_ms)
     /** @note Keep a fixed heartbeat cadence, independent of processing jitter. */
     do
     {
-        nextHeartbeatDeadlineMs += settings::lora::tx_heartbeat_interval_ms;
+        nextHeartbeatDeadlineMs += settings::misc::tx_heartbeat_interval_ms;
     } while ((int32_t)(now_ms - nextHeartbeatDeadlineMs) >= 0);
 }
 
@@ -160,7 +69,7 @@ void setup()
     setupGPIOs();
     writeRgbLeds(0, 0, 1);
     setupRtcWakeup();
-    nextHeartbeatDeadlineMs = millis() + settings::lora::tx_heartbeat_interval_ms;
+    nextHeartbeatDeadlineMs = millis() + settings::misc::tx_heartbeat_interval_ms;
     setupSerial();
     setupMsgCounterStorage();
     if (settings::misc::tx_reset_msg_counter_on_reboot)
@@ -179,7 +88,7 @@ void loop()
     String payload = buildTxPayload(getBoardUidHex(), cnt, battery_voltage, txTrigger);
 
     writeRgbLeds(1, 0, 0);
-    sendLoRaPayload(payload);
+    sendLoRaPayload(payload.c_str());
     if (txTrigger == TxTrigger::HeartbeatTx)
         advanceHeartbeatDeadline(millis());
 
@@ -196,25 +105,28 @@ void loop()
     writeRgbLeds(0, 1, 0);
     saveMsgCounter(++cnt);
 
-    /** @note Keep a short debounce window before re-checking wakeup conditions. */
-    sleepSecondsNoPin(settings::lora::tx_debounce_s);
+    writeRgbLeds(0, 0, 0);
 
-    pinMode(settings::board::wakeup_pin, INPUT);
+    /** @note Keep a short debounce window before re-checking wakeup conditions. */
+    delay(settings::misc::tx_debounce_s * 1000);
+
     uint32_t now_ms = millis();
     if (isHeartbeatDue(now_ms))
     {
         txTrigger = TxTrigger::HeartbeatTx;
-        return;
     }
-    if (digitalRead(settings::board::wakeup_pin))
+    else if (digitalRead(settings::board::wakeup_pin))
     {
         txTrigger = TxTrigger::WakeupPinHigh;
-        return;
     }
-
-    writeRgbLeds(0, 0, 0);
-    uint32_t remaining_ms = nextHeartbeatDeadlineMs - now_ms;
-    /** @note Round up milliseconds to whole seconds before entering RTC sleep. */
-    uint32_t sleep_seconds = (remaining_ms + 999) / 1000;
-    txTrigger = sleepUntilWakeupPinOrTimeout(sleep_seconds);
+    else
+    {
+        /** @note Wait exactly until the next heartbeat or until an interrupt wakes us. */
+        uint32_t sleep_ms = nextHeartbeatDeadlineMs - now_ms;
+        xSemaphoreTake(wakeupSem, 0); // Clear any pending events
+        if (xSemaphoreTake(wakeupSem, pdMS_TO_TICKS(sleep_ms)) == pdTRUE)
+            txTrigger = TxTrigger::WakeupPinHigh;
+        else
+            txTrigger = TxTrigger::HeartbeatTx;
+    }
 }
