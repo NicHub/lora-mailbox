@@ -4,7 +4,7 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#include "common/common_ESP32.h"
+#include "common_ESP32.h"
 #include "common/common.h"
 
 

@@ -9,7 +9,7 @@
 #include <nrf.h>
 #include <semphr.h>
 
-#include "common/common_nRF52.h"
+#include "common_nRF52.h"
 #include "common/common.h"
 
 static SemaphoreHandle_t wakeup_sem;
