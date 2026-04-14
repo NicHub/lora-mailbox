@@ -5,7 +5,7 @@
  */
 
 #include <Arduino.h>
-#include "common_ESP32.h"
+#include "ESP32.h"
 #include "common/common.h"
 #include "wifi.h"
 #include "mqtt.h"
