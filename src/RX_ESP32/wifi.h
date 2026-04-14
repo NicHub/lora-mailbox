@@ -13,7 +13,7 @@
 
 class LoraMailboxWifi
 {
-private:
+  private:
     AsyncWebServer server{80};
     AsyncWebSocket ws{"/ws"};
     String latest_message = "";
@@ -23,8 +23,10 @@ private:
     bool waitForConnection(uint32_t timeout_ms);
     void startServerIfNeeded();
 
-public:
-    LoraMailboxWifi() {}
+  public:
+    LoraMailboxWifi()
+    {
+    }
 
     void scanWiFiNetworks();
     bool begin();

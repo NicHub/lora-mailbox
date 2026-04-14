@@ -14,7 +14,6 @@
 
 static constexpr uint64_t MASK = 1ULL << settings::board::WAKEUP_PIN;
 
-
 void debounce(uint32_t);
 void blink(uint32_t, uint32_t, uint32_t, uint32_t, bool);
 
@@ -36,7 +35,6 @@ void goToDeepSleep();
 void switchOffAllLEDs();
 
 uint16_t readBatteryVoltage();
-
 
 /**
  * @brief Return ESP32 station MAC address as `XX:XX:XX:XX:XX:XX`.

@@ -180,7 +180,8 @@ bool LoraMailboxNtfy::sendMsg(const JsonDocument &json_doc, const String &topic)
     https.addHeader("Title", ntfy_message.title);
     https.addHeader("Priority", ntfyPriorityToString(ntfy_message.priority));
 
-    if (String(settings::ntfy::USERNAME).length() > 0 || String(settings::ntfy::PASSWORD).length() > 0)
+    if (String(settings::ntfy::USERNAME).length() > 0 ||
+        String(settings::ntfy::PASSWORD).length() > 0)
         https.setAuthorization(settings::ntfy::USERNAME, settings::ntfy::PASSWORD);
 
     https.addHeader("Markdown", "yes");

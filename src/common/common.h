@@ -17,7 +17,6 @@
 
 extern Blinker statusLed;
 
-
 extern SX1262 radio;
 
 /** @brief Save transmission state between loops. */

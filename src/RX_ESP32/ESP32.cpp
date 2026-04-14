@@ -7,7 +7,6 @@
 #include "ESP32.h"
 #include "common/common.h"
 
-
 /**
  * @note Platform counter storage API.
  * @note ESP32 RX does not currently persist a message counter, but it keeps the

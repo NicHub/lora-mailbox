@@ -29,4 +29,3 @@ static inline const char *txTriggerToString(TxTrigger trigger)
         return "UNKNOWN";
     }
 }
-

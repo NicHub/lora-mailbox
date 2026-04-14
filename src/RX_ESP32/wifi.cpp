@@ -24,21 +24,32 @@ void LoraMailboxWifi::startServerIfNeeded()
     if (server_started)
         return;
 
-    ws.onEvent([this](AsyncWebSocket *server, AsyncWebSocketClient *client,
-                      AwsEventType type, void *arg, uint8_t *data, size_t len)
-               {
-        if (type == WS_EVT_CONNECT) {
-            Serial.printf("\nWebSocket client #%u connected\n", client->id());
-            Serial.printf("Number of clients connected: %u\n", ws.count());
-            if (latest_message.length() > 0) {
-                client->text(latest_message);
+    ws.onEvent(
+        [this](
+            AsyncWebSocket *server,
+            AsyncWebSocketClient *client,
+            AwsEventType type,
+            void *arg,
+            uint8_t *data,
+            size_t len)
+        {
+            if (type == WS_EVT_CONNECT)
+            {
+                Serial.printf("\nWebSocket client #%u connected\n", client->id());
+                Serial.printf("Number of clients connected: %u\n", ws.count());
+                if (latest_message.length() > 0)
+                {
+                    client->text(latest_message);
+                }
             }
-        } });
+        });
 
     server.addHandler(&ws);
 
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(200, "text/html", htmlTemplate); });
+    server.on(
+        "/",
+        HTTP_GET,
+        [](AsyncWebServerRequest *request) { request->send(200, "text/html", htmlTemplate); });
 
     server.begin();
     server_started = true;

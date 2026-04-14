@@ -6,14 +6,14 @@
 
 #include "common/common.h"
 
-Module lora_module(settings::board::LORA_CS,
-                   settings::board::LORA_IRQ,
-                   settings::board::LORA_RST,
-                   settings::board::LORA_GPIO);
+Module lora_module(
+    settings::board::LORA_CS,
+    settings::board::LORA_IRQ,
+    settings::board::LORA_RST,
+    settings::board::LORA_GPIO);
 SX1262 radio(&lora_module);
 
 Blinker statusLed;
-
 
 /** @brief Save transmission state between loops. */
 int transmissionState = RADIOLIB_ERR_NONE;
@@ -49,7 +49,8 @@ void blink(
     bool invert)
 {
     statusLed.start(on_duration_ms, total_duration_ms, repeat, led_pin, invert);
-    while (statusLed.isBlinking()) {
+    while (statusLed.isBlinking())
+    {
         statusLed.update();
         delay(1);
     }

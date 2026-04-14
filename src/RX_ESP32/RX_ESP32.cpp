@@ -73,7 +73,8 @@ bool isBootEvent()
 void broadcastNtfy()
 {
     bool should_notify_ntfy = isPinHighEvent();
-    should_notify_ntfy = should_notify_ntfy || (settings::ntfy::NOTIFY_HEARTBEAT_TX && isHeartbeatTxEvent());
+    should_notify_ntfy =
+        should_notify_ntfy || (settings::ntfy::NOTIFY_HEARTBEAT_TX && isHeartbeatTxEvent());
     should_notify_ntfy = should_notify_ntfy || isBootEvent();
     if (should_notify_ntfy)
         lmb_ntfy.sendMsg(json_doc);
@@ -121,7 +122,7 @@ void counterCheck()
     prev_tx_cnt = tx_cnt;
 }
 
-const char* getCurrentTime()
+const char *getCurrentTime()
 {
     time_t now = time(nullptr);
     struct tm local_tm = *localtime(&now);
@@ -132,15 +133,18 @@ const char* getCurrentTime()
     int offset_h = offset_min / 60;
     int offset_m = abs(offset_min % 60);
     static char time_str[26];
-    snprintf(time_str, sizeof(time_str), "%04d-%02d-%02dT%02d:%02d:%02d%+03d:%02d",
-             local_tm.tm_year + 1900,
-             local_tm.tm_mon + 1,
-             local_tm.tm_mday,
-             local_tm.tm_hour,
-             local_tm.tm_min,
-             local_tm.tm_sec,
-             offset_h,
-             offset_m);
+    snprintf(
+        time_str,
+        sizeof(time_str),
+        "%04d-%02d-%02dT%02d:%02d:%02d%+03d:%02d",
+        local_tm.tm_year + 1900,
+        local_tm.tm_mon + 1,
+        local_tm.tm_mday,
+        local_tm.tm_hour,
+        local_tm.tm_min,
+        local_tm.tm_sec,
+        offset_h,
+        offset_m);
     return time_str;
 }
 

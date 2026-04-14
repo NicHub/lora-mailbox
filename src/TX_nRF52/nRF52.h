@@ -12,8 +12,6 @@
 
 #include "flash/flash_nrf5x.h"
 
-
-
 #include "common/common.h"
 
 void debounce(uint32_t);
@@ -47,7 +45,8 @@ static inline uint16_t counterChecksum(uint16_t counter)
 
 static inline bool isCounterRecordValid(const CounterRecord &record)
 {
-    return record.magic == COUNTER_RECORD_MAGIC && record.checksum == counterChecksum(record.counter);
+    return record.magic == COUNTER_RECORD_MAGIC &&
+           record.checksum == counterChecksum(record.counter);
 }
 
 static inline uint32_t counterRecordCapacity()
@@ -60,11 +59,8 @@ static inline uint32_t counterRecordAddress(uint32_t index)
     return COUNTER_STORAGE_ADDR + index * sizeof(CounterRecord);
 }
 
-static inline String buildTxPayload(
-    const char* board_id,
-    uint16_t cnt,
-    uint16_t vbat_raw,
-    TxTrigger tx_trigger)
+static inline String
+buildTxPayload(const char *board_id, uint16_t cnt, uint16_t vbat_raw, TxTrigger tx_trigger)
 {
     JsonDocument doc;
     doc["TX_BOARD_ID"] = board_id;
@@ -88,7 +84,8 @@ static inline CounterRecord readCounterRecord(uint32_t index)
 
 static inline bool eraseCounterStorage()
 {
-    for (uint32_t addr = COUNTER_STORAGE_ADDR; addr < COUNTER_STORAGE_ADDR + COUNTER_STORAGE_SIZE; addr += FLASH_NRF52_PAGE_SIZE)
+    for (uint32_t addr = COUNTER_STORAGE_ADDR; addr < COUNTER_STORAGE_ADDR + COUNTER_STORAGE_SIZE;
+         addr += FLASH_NRF52_PAGE_SIZE)
     {
         if (!flash_nrf5x_erase(addr))
             return false;
@@ -125,8 +122,7 @@ static inline int32_t getLastCounterRecordIndex()
  */
 static inline uint64_t getBoardUidDec()
 {
-    static const uint64_t UID =
-        ((uint64_t)NRF_FICR->DEVICEID[1] << 32) | NRF_FICR->DEVICEID[0];
+    static const uint64_t UID = ((uint64_t)NRF_FICR->DEVICEID[1] << 32) | NRF_FICR->DEVICEID[0];
     return UID;
 }
 
@@ -134,7 +130,7 @@ static inline uint64_t getBoardUidDec()
  * @brief Return the 64-bit board identifier in hexadecimal form.
  * @return Uppercase 16-character hexadecimal board unique identifier.
  */
-static inline const char* getBoardUidHex()
+static inline const char *getBoardUidHex()
 {
     static char uid_hex[17];
     static bool initialized = false;
@@ -148,12 +144,7 @@ static inline const char* getBoardUidHex()
      */
     uint32_t uid_hi = NRF_FICR->DEVICEID[1];
     uint32_t uid_lo = NRF_FICR->DEVICEID[0];
-    snprintf(
-        uid_hex,
-        sizeof(uid_hex),
-        "%08lX%08lX",
-        (unsigned long)uid_hi,
-        (unsigned long)uid_lo);
+    snprintf(uid_hex, sizeof(uid_hex), "%08lX%08lX", (unsigned long)uid_hi, (unsigned long)uid_lo);
     initialized = true;
 
     return uid_hex;
@@ -169,18 +160,14 @@ uint16_t readMsgCounter();
 
 void saveMsgCounter(uint16_t cnt);
 
-
 void setupMsgCounterStorage();
 
 uint16_t readBatteryVoltage();
 
 void testAllLEDs();
 
-
-static inline void writeRgbLeds(
-    uint32_t led_red_state,
-    uint32_t led_green_state,
-    uint32_t led_blue_state)
+static inline void
+writeRgbLeds(uint32_t led_red_state, uint32_t led_green_state, uint32_t led_blue_state)
 {
     if (settings::misc::DEBUG)
     {

@@ -19,8 +19,10 @@
 
 class LoraMailboxNtfy
 {
-public:
-    LoraMailboxNtfy() {}
+  public:
+    LoraMailboxNtfy()
+    {
+    }
 
     NTFYPriority getNTFYPriority(TxTrigger tx_trigger) const;
     const char *getNTFYIcon(TxTrigger tx_trigger) const;

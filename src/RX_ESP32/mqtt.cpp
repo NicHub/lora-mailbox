@@ -15,7 +15,8 @@ bool LoraMailboxMqtt::ensureWiFiConnected()
     return false;
 }
 
-void LoraMailboxMqtt::addTopicIfUnique(const char *topic, const char **topics, size_t &topic_count, size_t max_topics) const
+void LoraMailboxMqtt::addTopicIfUnique(
+    const char *topic, const char **topics, size_t &topic_count, size_t max_topics) const
 {
     if (topic == nullptr || topic[0] == '\0')
         return;
@@ -29,7 +30,8 @@ void LoraMailboxMqtt::addTopicIfUnique(const char *topic, const char **topics, s
     topics[topic_count++] = topic;
 }
 
-void LoraMailboxMqtt::addTopicStringIfUnique(const String &topic, String *topics, size_t &topic_count, size_t max_topics) const
+void LoraMailboxMqtt::addTopicStringIfUnique(
+    const String &topic, String *topics, size_t &topic_count, size_t max_topics) const
 {
     if (topic.isEmpty())
         return;
@@ -43,7 +45,8 @@ void LoraMailboxMqtt::addTopicStringIfUnique(const String &topic, String *topics
     topics[topic_count++] = topic;
 }
 
-size_t LoraMailboxMqtt::resolveTopics(const JsonDocument &json_doc, const char **topics, size_t max_topics) const
+size_t LoraMailboxMqtt::resolveTopics(
+    const JsonDocument &json_doc, const char **topics, size_t max_topics) const
 {
     size_t topic_count = 0;
     const char *rx_trigger = json_doc["RX"]["RX_TRIGGER"] | "";
@@ -70,11 +73,12 @@ bool LoraMailboxMqtt::publishPayload(const String &payload, const char *topic)
     const int publish_result = client.publish(topic, 0, false, payload.c_str());
     if (publish_result < 0)
     {
-        Serial.printf("MQTT publish failed: connected=%d payload=%u topic=%s uri=%s\n",
-                      mqtt_connected,
-                      static_cast<unsigned>(payload.length()),
-                      topic,
-                      mqtt_uri.c_str());
+        Serial.printf(
+            "MQTT publish failed: connected=%d payload=%u topic=%s uri=%s\n",
+            mqtt_connected,
+            static_cast<unsigned>(payload.length()),
+            topic,
+            mqtt_uri.c_str());
         return false;
     }
     return true;
@@ -157,37 +161,42 @@ void LoraMailboxMqtt::begin()
         client.setCredentials(settings::mqtt::USERNAME, settings::mqtt::PASSWORD);
     client.setBufferSize(1024);
     client.setAutoReconnect(true);
-    client.onConnect([this](bool session_present)
-                     {
-                         mqtt_connected = true;
-                         mqtt_started = true;
-                         Serial.printf("MQTT connected, session_present=%d\n", session_present);
+    client.onConnect(
+        [this](bool session_present)
+        {
+            mqtt_connected = true;
+            mqtt_started = true;
+            Serial.printf("MQTT connected, session_present=%d\n", session_present);
 
-                         if (!pending_payload.isEmpty())
-                         {
-                             String payload = pending_payload;
-                             String topics = pending_topics;
-                             pending_payload = "";
-                             pending_topics = "";
-                             publishPayloadToTopicList(payload, topics);
-                         }
-                     });
-    client.onDisconnect([this](bool session_present)
-                        {
-                            mqtt_connected = false;
-                            mqtt_started = false;
-                            Serial.printf("MQTT disconnected, session_present=%d\n", session_present);
-                        });
-    client.onError([this](esp_mqtt_error_codes_t error)
-                   {
-                       mqtt_connected = false;
-                       Serial.printf("MQTT error: type=%d connect_return=%d esp_tls_last=0x%x tls_stack=0x%x sock_errno=%d\n",
-                                     error.error_type,
-                                     error.connect_return_code,
-                                     error.esp_tls_last_esp_err,
-                                     error.esp_tls_stack_err,
-                                     error.esp_transport_sock_errno);
-                   });
+            if (!pending_payload.isEmpty())
+            {
+                String payload = pending_payload;
+                String topics = pending_topics;
+                pending_payload = "";
+                pending_topics = "";
+                publishPayloadToTopicList(payload, topics);
+            }
+        });
+    client.onDisconnect(
+        [this](bool session_present)
+        {
+            mqtt_connected = false;
+            mqtt_started = false;
+            Serial.printf("MQTT disconnected, session_present=%d\n", session_present);
+        });
+    client.onError(
+        [this](esp_mqtt_error_codes_t error)
+        {
+            mqtt_connected = false;
+            Serial.printf(
+                "MQTT error: type=%d connect_return=%d esp_tls_last=0x%x tls_stack=0x%x "
+                "sock_errno=%d\n",
+                error.error_type,
+                error.connect_return_code,
+                error.esp_tls_last_esp_err,
+                error.esp_tls_stack_err,
+                error.esp_transport_sock_errno);
+        });
     reconnect();
 }
 
@@ -213,7 +222,8 @@ void LoraMailboxMqtt::sendMsg(JsonDocument json_doc)
     for (size_t i = 0; i < topic_count; ++i)
     {
         String routed_topic = topicWithBoardId(topics[i], board_id_hex);
-        addTopicStringIfUnique(routed_topic, final_topics, final_topic_count, MAX_TOPICS_PER_MESSAGE);
+        addTopicStringIfUnique(
+            routed_topic, final_topics, final_topic_count, MAX_TOPICS_PER_MESSAGE);
     }
 
     for (size_t i = 0; i < final_topic_count; ++i)
@@ -228,11 +238,12 @@ void LoraMailboxMqtt::sendMsg(JsonDocument json_doc)
     {
         pending_payload = mqtt_string;
         pending_topics = topic_list;
-        Serial.printf("MQTT publish deferred: connected=%d payload=%u topic_count=%u uri=%s\n",
-                      mqtt_connected,
-                      static_cast<unsigned>(mqtt_string.length()),
-                      static_cast<unsigned>(final_topic_count),
-                      mqtt_uri.c_str());
+        Serial.printf(
+            "MQTT publish deferred: connected=%d payload=%u topic_count=%u uri=%s\n",
+            mqtt_connected,
+            static_cast<unsigned>(mqtt_string.length()),
+            static_cast<unsigned>(final_topic_count),
+            mqtt_uri.c_str());
         return;
     }
 

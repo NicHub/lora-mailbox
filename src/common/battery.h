@@ -42,7 +42,8 @@ static inline BatteryMeasurement vbatRaw2VbatMv(uint16_t vgpio_mv)
 
     /** @note Convert the raw GPIO-derived voltage to an estimated battery voltage. */
     measurement.vbat_mv = static_cast<int>(
-        settings::battery::FIT_SLOPE * static_cast<float>(vgpio_mv) + settings::battery::FIT_OFFSET);
+        settings::battery::FIT_SLOPE * static_cast<float>(vgpio_mv) +
+        settings::battery::FIT_OFFSET);
 
     /** @note Map the estimated battery voltage to a 0..100 percent range. */
     if (measurement.vbat_mv >= settings::battery::MAX)
