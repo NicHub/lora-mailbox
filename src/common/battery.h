@@ -36,29 +36,29 @@ struct BatteryMeasurement
     BatteryStatus status;
 };
 
-static inline BatteryMeasurement vbatRaw2VbatMv(uint16_t vgpioMv)
+static inline BatteryMeasurement vbatRaw2VbatMv(uint16_t vgpio_mv)
 {
     BatteryMeasurement measurement{};
 
     /** @note Convert the raw GPIO-derived voltage to an estimated battery voltage. */
     measurement.vbat_mv = static_cast<int>(
-        settings::battery::fit_slope * static_cast<float>(vgpioMv) + settings::battery::fit_offset);
+        settings::battery::FIT_SLOPE * static_cast<float>(vgpio_mv) + settings::battery::FIT_OFFSET);
 
     /** @note Map the estimated battery voltage to a 0..100 percent range. */
-    if (measurement.vbat_mv >= settings::battery::max)
+    if (measurement.vbat_mv >= settings::battery::MAX)
         measurement.battery_percent = 100;
-    else if (measurement.vbat_mv <= settings::battery::min)
+    else if (measurement.vbat_mv <= settings::battery::MIN)
         measurement.battery_percent = 0;
     else
         measurement.battery_percent = static_cast<int>(
-            (100.f * static_cast<float>(measurement.vbat_mv - settings::battery::min)) /
-                static_cast<float>(settings::battery::max - settings::battery::min) +
+            (100.f * static_cast<float>(measurement.vbat_mv - settings::battery::MIN)) /
+                static_cast<float>(settings::battery::MAX - settings::battery::MIN) +
             0.5f);
 
     /** @note Pick a compact battery glyph for quick display in notifications. */
-    if (measurement.vbat_mv >= settings::battery::max)
+    if (measurement.vbat_mv >= settings::battery::MAX)
         measurement.glyph = BatteryGlyph::Charging;
-    else if (measurement.vbat_mv < settings::battery::no_battery_threshold)
+    else if (measurement.vbat_mv < settings::battery::NO_BATTERY_THRESHOLD)
         measurement.glyph = BatteryGlyph::ExternalPower;
     else if (measurement.battery_percent < 5)
         measurement.glyph = BatteryGlyph::Empty;
@@ -72,11 +72,11 @@ static inline BatteryMeasurement vbatRaw2VbatMv(uint16_t vgpioMv)
         measurement.glyph = BatteryGlyph::Full;
 
     /** @note Derive the coarse battery status used by MQTT/NTFY routing logic. */
-    if (measurement.vbat_mv >= settings::battery::max)
+    if (measurement.vbat_mv >= settings::battery::MAX)
         measurement.status = BatteryStatus::High;
-    else if (measurement.vbat_mv >= settings::battery::min)
+    else if (measurement.vbat_mv >= settings::battery::MIN)
         measurement.status = BatteryStatus::Ok;
-    else if (measurement.vbat_mv >= settings::battery::no_battery_threshold)
+    else if (measurement.vbat_mv >= settings::battery::NO_BATTERY_THRESHOLD)
         measurement.status = BatteryStatus::Low;
     else
         measurement.status = BatteryStatus::NoBattery;

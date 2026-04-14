@@ -26,8 +26,8 @@ void onWakeupPinRise()
 void setupRtcWakeup()
 {
     wakeup_sem = xSemaphoreCreateBinary();
-    pinMode(settings::board::wakeup_pin, INPUT);
-    attachInterrupt(digitalPinToInterrupt(settings::board::wakeup_pin), onWakeupPinRise, RISING);
+    pinMode(settings::board::WAKEUP_PIN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(settings::board::WAKEUP_PIN), onWakeupPinRise, RISING);
 }
 
 static inline bool isHeartbeatDue(uint32_t now_ms)
@@ -40,7 +40,7 @@ static void advanceHeartbeatDeadline(uint32_t now_ms)
     /** @note Keep a fixed heartbeat cadence, independent of processing jitter. */
     do
     {
-        next_heartbeat_deadline_ms += settings::misc::tx_heartbeat_interval_ms;
+        next_heartbeat_deadline_ms += settings::misc::TX_HEARTBEAT_INTERVAL_MS;
     } while ((int32_t)(now_ms - next_heartbeat_deadline_ms) >= 0);
 }
 
@@ -69,10 +69,10 @@ void setup()
     setupGPIOs();
     writeRgbLeds(0, 0, 1);
     setupRtcWakeup();
-    next_heartbeat_deadline_ms = millis() + settings::misc::tx_heartbeat_interval_ms;
+    next_heartbeat_deadline_ms = millis() + settings::misc::TX_HEARTBEAT_INTERVAL_MS;
     setupSerial();
     setupMsgCounterStorage();
-    if (settings::misc::tx_reset_msg_counter_on_reboot)
+    if (settings::misc::TX_RESET_MSG_COUNTER_ON_REBOOT)
     {
         saveMsgCounter(0);
         Serial.println("MSG COUNTER RESET TO 0 (TX_RESET_MSG_COUNTER_ON_REBOOT=true)");
@@ -108,14 +108,14 @@ void loop()
     writeRgbLeds(0, 0, 0);
 
     /** @note Keep a short debounce window before re-checking wakeup conditions. */
-    delay(settings::misc::tx_debounce_s * 1000);
+    delay(settings::misc::TX_DEBOUNCE_S * 1000);
 
     uint32_t now_ms = millis();
     if (isHeartbeatDue(now_ms))
     {
         tx_trigger = TxTrigger::HeartbeatTx;
     }
-    else if (digitalRead(settings::board::wakeup_pin))
+    else if (digitalRead(settings::board::WAKEUP_PIN))
     {
         tx_trigger = TxTrigger::WakeupPinHigh;
     }

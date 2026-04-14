@@ -79,12 +79,12 @@ bool LoraMailboxWifi::begin()
     {
         Serial.println("\nConnecting to WiFi");
 
-        WiFi.begin(settings::wifi::ssid, settings::wifi::password);
-        waitForConnection(settings::wifi::connect_timeout_ms);
+        WiFi.begin(settings::wifi::SSID, settings::wifi::PASSWORD);
+        waitForConnection(settings::wifi::CONNECT_TIMEOUT_MS);
         if (WiFi.status() != WL_CONNECTED)
         {
             Serial.println("\nWiFi connection failed");
-            delay(settings::wifi::connect_retry_delay_ms);
+            delay(settings::wifi::CONNECT_RETRY_DELAY_MS);
             scanWiFiNetworks();
         }
     }
@@ -103,15 +103,15 @@ bool LoraMailboxWifi::ensureWiFiConnected()
         return true;
 
     uint32_t now = millis();
-    if ((now - last_reconnect_attempt_ms) < settings::wifi::reconnect_min_interval_ms)
+    if ((now - last_reconnect_attempt_ms) < settings::wifi::RECONNECT_MIN_INTERVAL_MS)
         return false;
     last_reconnect_attempt_ms = now;
 
     Serial.printf("WiFi disconnected (status=%d), trying reconnect...\n", WiFi.status());
 
     WiFi.disconnect(false, false);
-    WiFi.begin(settings::wifi::ssid, settings::wifi::password);
-    if (!waitForConnection(settings::wifi::reconnect_timeout_ms))
+    WiFi.begin(settings::wifi::SSID, settings::wifi::PASSWORD);
+    if (!waitForConnection(settings::wifi::RECONNECT_TIMEOUT_MS))
     {
         Serial.println("WiFi reconnect failed");
         return false;
@@ -126,21 +126,21 @@ bool LoraMailboxWifi::ensureWiFiConnected()
 bool LoraMailboxWifi::synchronizeNTPTime()
 {
     Serial.println("Synchronizing time with NTP server...");
-    configTzTime(settings::ntp::timezone, settings::ntp::server);
+    configTzTime(settings::ntp::TIMEZONE, settings::ntp::SERVER);
 
     /** @note Wait for time to be set. */
     time_t now = 0;
     struct tm timeinfo;
     int retry = 0;
 
-    while (!getLocalTime(&timeinfo) && retry < settings::ntp::sync_max_retries)
+    while (!getLocalTime(&timeinfo) && retry < settings::ntp::SYNC_MAX_RETRIES)
     {
         Serial.print(".");
-        delay(settings::ntp::sync_retry_delay_ms);
+        delay(settings::ntp::SYNC_RETRY_DELAY_MS);
         retry++;
     }
 
-    if (retry < settings::ntp::sync_max_retries)
+    if (retry < settings::ntp::SYNC_MAX_RETRIES)
     {
         time(&now);
         Serial.println("\nTime synchronized successfully");

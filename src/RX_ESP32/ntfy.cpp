@@ -13,11 +13,11 @@ NTFYPriority LoraMailboxNtfy::getNTFYPriority(TxTrigger tx_trigger) const
     switch (tx_trigger)
     {
     case TxTrigger::WakeupPinHigh:
-        return settings::ntfy::message_received_priority;
+        return settings::ntfy::MESSAGE_RECEIVED_PRIORITY;
     case TxTrigger::HeartbeatTx:
-        return settings::ntfy::heartbeat_priority;
+        return settings::ntfy::HEARTBEAT_PRIORITY;
     case TxTrigger::Boot:
-        return settings::ntfy::boot_priority;
+        return settings::ntfy::BOOT_PRIORITY;
     default:
         return NTFYPriority::Default;
     }
@@ -28,11 +28,11 @@ const char *LoraMailboxNtfy::getNTFYIcon(TxTrigger tx_trigger) const
     switch (tx_trigger)
     {
     case TxTrigger::WakeupPinHigh:
-        return settings::ntfy::message_received_icon;
+        return settings::ntfy::MESSAGE_RECEIVED_ICON;
     case TxTrigger::HeartbeatTx:
-        return settings::ntfy::heartbeat_icon;
+        return settings::ntfy::HEARTBEAT_ICON;
     case TxTrigger::Boot:
-        return settings::ntfy::boot_icon;
+        return settings::ntfy::BOOT_ICON;
     default:
         return "";
     }
@@ -43,11 +43,11 @@ const char *LoraMailboxNtfy::getNTFYTitleSuffix(TxTrigger tx_trigger) const
     switch (tx_trigger)
     {
     case TxTrigger::WakeupPinHigh:
-        return settings::ntfy::message_received_title_suffix;
+        return settings::ntfy::MESSAGE_RECEIVED_TITLE_SUFFIX;
     case TxTrigger::HeartbeatTx:
-        return settings::ntfy::heartbeat_title_suffix;
+        return settings::ntfy::HEARTBEAT_TITLE_SUFFIX;
     case TxTrigger::Boot:
-        return settings::ntfy::boot_title_suffix;
+        return settings::ntfy::BOOT_TITLE_SUFFIX;
     default:
         return "";
     }
@@ -55,20 +55,20 @@ const char *LoraMailboxNtfy::getNTFYTitleSuffix(TxTrigger tx_trigger) const
 
 TxTrigger LoraMailboxNtfy::getNTFYTrigger(const JsonDocument &json_doc) const
 {
-    if (!settings::ntfy::enabled)
+    if (!settings::ntfy::ENABLED)
         return TxTrigger::Boot;
 
     const char *tx_trigger = json_doc["TX"]["TX_TRIGGER"] | "";
     if (strcmp(tx_trigger, "WAKEUP_PIN_HIGH") == 0)
         return TxTrigger::WakeupPinHigh;
-    if (settings::ntfy::notify_heartbeat_tx && strcmp(tx_trigger, "HEARTBEAT_TX") == 0)
+    if (settings::ntfy::NOTIFY_HEARTBEAT_TX && strcmp(tx_trigger, "HEARTBEAT_TX") == 0)
         return TxTrigger::HeartbeatTx;
     return TxTrigger::Boot;
 }
 
 String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
 {
-    if (!settings::ntfy::enabled)
+    if (!settings::ntfy::ENABLED)
     {
         (void)json_doc;
         return "";
@@ -83,7 +83,7 @@ String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
     const char *tx_vbat_status = json_doc["TX"]["TX_VBAT_STATUS"] | "";
     float rx_tx_rssi_dbm = json_doc["RX_TX"]["RX_TX_RSSI_DBM"] | 0.0f;
     float rx_tx_snr_db = json_doc["RX_TX"]["RX_TX_SNR_DB"] | 0.0f;
-    const char *md_code_tag = settings::ntfy::md_code_tag;
+    const char *md_code_tag = settings::ntfy::MD_CODE_TAG;
 
     String text;
     text += md_code_tag;
@@ -123,7 +123,7 @@ String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
 
 NTFYMessage LoraMailboxNtfy::buildNTFYMessage(const JsonDocument &json_doc) const
 {
-    if (!settings::ntfy::enabled)
+    if (!settings::ntfy::ENABLED)
     {
         (void)json_doc;
         return NTFYMessage{TxTrigger::Boot, NTFYPriority::Default, "", ""};
@@ -143,7 +143,7 @@ NTFYMessage LoraMailboxNtfy::buildNTFYMessage(const JsonDocument &json_doc) cons
         title = String(ntfy_icon) + " ";
     if (time_str[0] != '\0')
         title += String(time_str);
-    title += " @" + String(settings::misc::recipient_name);
+    title += " @" + String(settings::misc::RECIPIENT_NAME);
     title += ntfy_title_suffix;
 
     return NTFYMessage{
@@ -156,7 +156,7 @@ NTFYMessage LoraMailboxNtfy::buildNTFYMessage(const JsonDocument &json_doc) cons
 
 bool LoraMailboxNtfy::sendMsg(const JsonDocument &json_doc, const String &topic)
 {
-    if (!settings::ntfy::enabled)
+    if (!settings::ntfy::ENABLED)
     {
         (void)json_doc;
         (void)topic;
@@ -170,7 +170,7 @@ bool LoraMailboxNtfy::sendMsg(const JsonDocument &json_doc, const String &topic)
     client.setInsecure();
 
     HTTPClient https;
-    String url = String(settings::ntfy::server) + topic;
+    String url = String(settings::ntfy::SERVER) + topic;
 
     bool ok = false;
     if (!https.begin(client, url))
@@ -180,8 +180,8 @@ bool LoraMailboxNtfy::sendMsg(const JsonDocument &json_doc, const String &topic)
     https.addHeader("Title", ntfy_message.title);
     https.addHeader("Priority", ntfyPriorityToString(ntfy_message.priority));
 
-    if (String(settings::ntfy::username).length() > 0 || String(settings::ntfy::password).length() > 0)
-        https.setAuthorization(settings::ntfy::username, settings::ntfy::password);
+    if (String(settings::ntfy::USERNAME).length() > 0 || String(settings::ntfy::PASSWORD).length() > 0)
+        https.setAuthorization(settings::ntfy::USERNAME, settings::ntfy::PASSWORD);
 
     https.addHeader("Markdown", "yes");
     https.addHeader("Content-Type", "text/markdown; charset=utf-8");

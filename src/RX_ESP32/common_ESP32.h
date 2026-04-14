@@ -12,7 +12,7 @@
 #include <WiFi.h>
 #include "user_settings/user_settings.h"
 
-static constexpr uint64_t MASK = 1ULL << settings::board::wakeup_pin;
+static constexpr uint64_t MASK = 1ULL << settings::board::WAKEUP_PIN;
 
 
 void debounce(uint32_t);

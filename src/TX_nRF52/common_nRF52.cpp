@@ -9,7 +9,7 @@
 
 void goToDeepSleep()
 {
-    pinMode(settings::board::wakeup_pin, INPUT_SENSE_HIGH);
+    pinMode(settings::board::WAKEUP_PIN, INPUT_SENSE_HIGH);
     debounce(1000);
     NRF_POWER->SYSTEMOFF = 1;
 }

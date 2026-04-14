@@ -49,16 +49,16 @@ size_t LoraMailboxMqtt::resolveTopics(const JsonDocument &json_doc, const char *
     const char *rx_trigger = json_doc["RX"]["RX_TRIGGER"] | "";
     const char *tx_trigger = json_doc["TX"]["TX_TRIGGER"] | "";
     if (strcmp(rx_trigger, "HEARTBEAT_RX") == 0)
-        addTopicIfUnique(settings::mqtt::topic_heartbeat_rx, topics, topic_count, max_topics);
+        addTopicIfUnique(settings::mqtt::TOPIC_HEARTBEAT_RX, topics, topic_count, max_topics);
 
     if (strcmp(tx_trigger, "WAKEUP_PIN_HIGH") == 0)
-        addTopicIfUnique(settings::mqtt::topic_got_mail, topics, topic_count, max_topics);
+        addTopicIfUnique(settings::mqtt::TOPIC_GOT_MAIL, topics, topic_count, max_topics);
 
     if (strcmp(tx_trigger, "HEARTBEAT_TX") == 0)
-        addTopicIfUnique(settings::mqtt::topic_heartbeat_tx, topics, topic_count, max_topics);
+        addTopicIfUnique(settings::mqtt::TOPIC_HEARTBEAT_TX, topics, topic_count, max_topics);
 
     if (strcmp(tx_trigger, "BOOT") == 0)
-        addTopicIfUnique(settings::mqtt::topic_wake_boot, topics, topic_count, max_topics);
+        addTopicIfUnique(settings::mqtt::TOPIC_WAKE_BOOT, topics, topic_count, max_topics);
 
     if (topic_count == 0)
         addTopicIfUnique(mqtt_default_topic, topics, topic_count, max_topics);
@@ -124,7 +124,7 @@ bool LoraMailboxMqtt::publishPayloadToTopicList(const String &payload, const Str
 LoraMailboxMqtt::LoraMailboxMqtt(const char *server, int port, const char *topic)
     : mqtt_server(server), mqtt_port(port), mqtt_default_topic(topic)
 {
-    if (settings::mqtt::use_tls)
+    if (settings::mqtt::USE_TLS)
         mqtt_uri = String("mqtts://") + mqtt_server + ":" + mqtt_port;
     else
         mqtt_uri = String("mqtt://") + mqtt_server + ":" + mqtt_port;
@@ -132,7 +132,7 @@ LoraMailboxMqtt::LoraMailboxMqtt(const char *server, int port, const char *topic
 
 void LoraMailboxMqtt::reconnect()
 {
-    if (!settings::mqtt::enabled)
+    if (!settings::mqtt::ENABLED)
         return;
 
     if (!ensureWiFiConnected())
@@ -147,14 +147,14 @@ void LoraMailboxMqtt::reconnect()
 
 void LoraMailboxMqtt::begin()
 {
-    if (!settings::mqtt::enabled)
+    if (!settings::mqtt::ENABLED)
         return;
 
     client.setServer(mqtt_uri.c_str());
-    if (settings::mqtt::use_tls)
+    if (settings::mqtt::USE_TLS)
         client.setCACert(MQTT_ROOT_CA);
-    if (strlen(settings::mqtt::username) > 0)
-        client.setCredentials(settings::mqtt::username, settings::mqtt::password);
+    if (strlen(settings::mqtt::USERNAME) > 0)
+        client.setCredentials(settings::mqtt::USERNAME, settings::mqtt::PASSWORD);
     client.setBufferSize(1024);
     client.setAutoReconnect(true);
     client.onConnect([this](bool session_present)
@@ -193,7 +193,7 @@ void LoraMailboxMqtt::begin()
 
 void LoraMailboxMqtt::sendMsg(JsonDocument json_doc)
 {
-    if (!settings::mqtt::enabled)
+    if (!settings::mqtt::ENABLED)
         return;
 
     if (!ensureWiFiConnected())

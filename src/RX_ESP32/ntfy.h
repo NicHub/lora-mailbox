@@ -28,5 +28,5 @@ public:
     TxTrigger getNTFYTrigger(const JsonDocument &json_doc) const;
     String buildNTFYBody(const JsonDocument &json_doc) const;
     NTFYMessage buildNTFYMessage(const JsonDocument &json_doc) const;
-    bool sendMsg(const JsonDocument &json_doc, const String &topic = settings::ntfy::topic);
+    bool sendMsg(const JsonDocument &json_doc, const String &topic = settings::ntfy::TOPIC);
 };

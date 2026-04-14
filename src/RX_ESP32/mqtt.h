@@ -15,7 +15,7 @@
 class LoraMailboxMqtt
 {
 private:
-    static constexpr const char *MQTT_ROOT_CA = settings::mqtt::root_ca_pem;
+    static constexpr const char *MQTT_ROOT_CA = settings::mqtt::ROOT_CA_PEM;
 
     PsychicMqttClient client;
     const char *mqtt_server;
@@ -38,9 +38,9 @@ private:
     bool publishPayloadToTopicList(const String &payload, const String &topic_list);
 
 public:
-    LoraMailboxMqtt(const char *server = settings::mqtt::server,
-                    int port = settings::mqtt::port,
-                    const char *topic = settings::mqtt::topic);
+    LoraMailboxMqtt(const char *server = settings::mqtt::SERVER,
+                    int port = settings::mqtt::PORT,
+                    const char *topic = settings::mqtt::TOPIC);
 
     void reconnect();
     void begin();

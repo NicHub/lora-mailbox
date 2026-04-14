@@ -73,7 +73,7 @@ bool isBootEvent()
 void broadcastNtfy()
 {
     bool should_notify_ntfy = isPinHighEvent();
-    should_notify_ntfy = should_notify_ntfy || (settings::ntfy::notify_heartbeat_tx && isHeartbeatTxEvent());
+    should_notify_ntfy = should_notify_ntfy || (settings::ntfy::NOTIFY_HEARTBEAT_TX && isHeartbeatTxEvent());
     should_notify_ntfy = should_notify_ntfy || isBootEvent();
     if (should_notify_ntfy)
         lmb_ntfy.sendMsg(json_doc);
@@ -85,7 +85,7 @@ void broadcastResults()
     lmb_wifi.sendMsg(json_string);
     lmb_mqtt.sendMsg(json_doc);
     broadcastNtfy();
-    if (settings::misc::serial_verbosity == 1)
+    if (settings::misc::SERIAL_VERBOSITY == 1)
     {
         uint16_t ctr = json_doc["RX"]["RX_COUNTER"] | 0;
         static uint16_t first_ctr = ctr;
@@ -97,7 +97,7 @@ void broadcastResults()
 
         Serial.printf("- ctr: %3u , ms: %8u\n", ctr, ms);
     }
-    else if (settings::misc::serial_verbosity == 2)
+    else if (settings::misc::SERIAL_VERBOSITY == 2)
     {
         Serial.println(json_string);
     }
@@ -146,22 +146,22 @@ const char* getCurrentTime()
 
 void addLoraSettingsToJsonDoc()
 {
-    json_doc["LORA"]["LORA_FREQ"] = settings::lora::freq;
-    json_doc["LORA"]["LORA_BW"] = settings::lora::bw;
-    json_doc["LORA"]["LORA_SF"] = settings::lora::sf;
-    json_doc["LORA"]["LORA_CR"] = settings::lora::cr;
-    json_doc["LORA"]["LORA_SYNCWORD"] = settings::lora::syncword;
-    json_doc["LORA"]["LORA_POWER"] = settings::lora::power;
-    json_doc["LORA"]["LORA_PREAMBLE_LENGTH"] = settings::lora::preamble_length;
-    json_doc["LORA"]["LORA_TCXO_VOLTAGE"] = settings::lora::tcxo_voltage;
-    json_doc["LORA"]["LORA_USE_REGULATOR_LDO"] = settings::lora::use_regulator_ldo;
+    json_doc["LORA"]["LORA_FREQ"] = settings::lora::FREQ;
+    json_doc["LORA"]["LORA_BW"] = settings::lora::BW;
+    json_doc["LORA"]["LORA_SF"] = settings::lora::SF;
+    json_doc["LORA"]["LORA_CR"] = settings::lora::CR;
+    json_doc["LORA"]["LORA_SYNCWORD"] = settings::lora::SYNCWORD;
+    json_doc["LORA"]["LORA_POWER"] = settings::lora::POWER;
+    json_doc["LORA"]["LORA_PREAMBLE_LENGTH"] = settings::lora::PREAMBLE_LENGTH;
+    json_doc["LORA"]["LORA_TCXO_VOLTAGE"] = settings::lora::TCXO_VOLTAGE;
+    json_doc["LORA"]["LORA_USE_REGULATOR_LDO"] = settings::lora::USE_REGULATOR_LDO;
 }
 
 void heartBeat()
 {
     uint32_t now_ms = millis();
     static uint32_t prev_heart_beat = now_ms;
-    if (now_ms - prev_heart_beat < settings::misc::rx_heartbeat_interval_ms)
+    if (now_ms - prev_heart_beat < settings::misc::RX_HEARTBEAT_INTERVAL_MS)
         return;
     prev_heart_beat = now_ms;
 
@@ -175,7 +175,7 @@ void heartBeat()
     json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
 
     serializeJson(json_doc, json_string);
-    if (settings::misc::serial_verbosity == 2)
+    if (settings::misc::SERIAL_VERBOSITY == 2)
         Serial.println(json_string);
     lmb_wifi.sendMsg(json_string);
     lmb_mqtt.sendMsg(json_doc);
@@ -183,10 +183,10 @@ void heartBeat()
 
 void readLoRa()
 {
-    digitalWrite(settings::board::lora_led_green, HIGH);
+    digitalWrite(settings::board::LORA_LED_GREEN, HIGH);
     radio.startReceive();
     int state = radio.readData(json_string);
-    digitalWrite(settings::board::lora_led_green, LOW);
+    digitalWrite(settings::board::LORA_LED_GREEN, LOW);
 
     json_doc["RX_LORA_STATE"] = state;
     if (state != RADIOLIB_ERR_NONE)
@@ -209,7 +209,7 @@ void readLoRa()
     json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
     json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
     json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
-    json_doc["RX"]["RX_DEBUG"] = settings::misc::debug;
+    json_doc["RX"]["RX_DEBUG"] = settings::misc::DEBUG;
     json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
     json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
     json_doc["RX"]["RX_TRIGGER"] = "LORA_PAYLOAD_RECEIVED";
@@ -252,18 +252,18 @@ void setupLoRaRX()
 void setupGPIOs()
 {
     /**
-     * @note On XIAO ESP32S3 with SX1262 shield, `settings::board::lora_user_button` and
+     * @note On XIAO ESP32S3 with SX1262 shield, `settings::board::LORA_USER_BUTTON` and
      * `LED_BUILTIN` share GPIO21. Driving `LED_BUILTIN` high while pressing
      * the user button can create a short-circuit to GND.
      * @note Keep `pinMode(LED_BUILTIN, OUTPUT);` disabled for safety.
      */
-    pinMode(settings::board::lora_led_green, OUTPUT);
+    pinMode(settings::board::LORA_LED_GREEN, OUTPUT);
 }
 
 void setup()
 {
     setupGPIOs();
-    blink(8UL, 200UL, 5UL, settings::board::lora_led_green, false);
+    blink(8UL, 200UL, 5UL, settings::board::LORA_LED_GREEN, false);
     setupSerial();
     setupLoRa();
     setupLoRaRX();
@@ -283,5 +283,5 @@ void loop()
     readLoRa();
     counterCheck();
     broadcastResults();
-    statusLed.start(8UL, 60UL, 10UL, settings::board::lora_led_green, false);
+    statusLed.start(8UL, 60UL, 10UL, settings::board::LORA_LED_GREEN, false);
 }

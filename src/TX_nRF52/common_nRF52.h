@@ -69,7 +69,7 @@ static inline String buildTxPayload(
     JsonDocument doc;
     doc["TX_BOARD_ID"] = board_id;
     doc["TX_COUNTER"] = cnt;
-    doc["TX_DEBUG"] = settings::misc::debug;
+    doc["TX_DEBUG"] = settings::misc::DEBUG;
     doc["TX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
     doc["TX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
     doc["TX_TRIGGER"] = txTriggerToString(tx_trigger);
@@ -99,7 +99,7 @@ static inline bool eraseCounterStorage()
 
 static inline int32_t findLastCounterRecordIndex()
 {
-    int32_t lastValidIndex = -1;
+    int32_t last_valid_index = -1;
     for (uint32_t index = 0; index < counterRecordCapacity(); ++index)
     {
         CounterRecord record = readCounterRecord(index);
@@ -107,9 +107,9 @@ static inline int32_t findLastCounterRecordIndex()
             break;
         if (!isCounterRecordValid(record))
             break;
-        lastValidIndex = static_cast<int32_t>(index);
+        last_valid_index = static_cast<int32_t>(index);
     }
-    return lastValidIndex;
+    return last_valid_index;
 }
 
 static inline int32_t getLastCounterRecordIndex()
@@ -125,9 +125,9 @@ static inline int32_t getLastCounterRecordIndex()
  */
 static inline uint64_t getBoardUidDec()
 {
-    static const uint64_t uid =
+    static const uint64_t UID =
         ((uint64_t)NRF_FICR->DEVICEID[1] << 32) | NRF_FICR->DEVICEID[0];
-    return uid;
+    return UID;
 }
 
 /**
@@ -182,7 +182,7 @@ static inline void writeRgbLeds(
     uint32_t led_green_state,
     uint32_t led_blue_state)
 {
-    if (settings::misc::debug)
+    if (settings::misc::DEBUG)
     {
         /** @note On XIAO nRF52, `LED_BUILTIN == LED_RED`. */
         digitalWrite(LED_RED, !led_red_state);

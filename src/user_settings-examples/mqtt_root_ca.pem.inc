@@ -1,4 +1,4 @@
-static const char root_ca_pem[] = R"rawliteral(
+static const char ROOT_CA_PEM[] = R"rawliteral(
     -----BEGIN CERTIFICATE-----
 MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
 ...

@@ -6,10 +6,10 @@
 
 #include "common/common.h"
 
-Module lora_module(settings::board::lora_cs,
-                   settings::board::lora_irq,
-                   settings::board::lora_rst,
-                   settings::board::lora_gpio);
+Module lora_module(settings::board::LORA_CS,
+                   settings::board::LORA_IRQ,
+                   settings::board::LORA_RST,
+                   settings::board::LORA_GPIO);
 SX1262 radio(&lora_module);
 
 Blinker statusLed;
@@ -78,15 +78,15 @@ void setupLoRa()
     Serial.print(PREFIX);
     Serial.print(F("Initializing LoRa..."));
     int state = radio.begin(
-        settings::lora::freq,
-        settings::lora::bw,
-        settings::lora::sf,
-        settings::lora::cr,
-        settings::lora::syncword,
-        settings::lora::power,
-        settings::lora::preamble_length,
-        settings::lora::tcxo_voltage,
-        settings::lora::use_regulator_ldo);
+        settings::lora::FREQ,
+        settings::lora::BW,
+        settings::lora::SF,
+        settings::lora::CR,
+        settings::lora::SYNCWORD,
+        settings::lora::POWER,
+        settings::lora::PREAMBLE_LENGTH,
+        settings::lora::TCXO_VOLTAGE,
+        settings::lora::USE_REGULATOR_LDO);
     if (state != RADIOLIB_ERR_NONE)
     {
         Serial.printf(" failed, code %d\n", state);

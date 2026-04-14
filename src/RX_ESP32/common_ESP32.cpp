@@ -42,14 +42,14 @@ void goToDeepSleep()
 
     setupDeepSleep();
     debounce(1000);
-    digitalWrite(settings::board::lora_led_green, LOW);
+    digitalWrite(settings::board::LORA_LED_GREEN, LOW);
     esp_deep_sleep_start();
 }
 
 void switchOffAllLEDs()
 {
     digitalWrite(LED_BUILTIN, HIGH);
-    digitalWrite(settings::board::lora_led_green, LOW);
+    digitalWrite(settings::board::LORA_LED_GREEN, LOW);
 }
 
 uint16_t readBatteryVoltage()
