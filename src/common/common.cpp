@@ -6,11 +6,11 @@
 
 #include "common/common.h"
 
-Module loraModule(settings::board::lora_cs,
-                  settings::board::lora_irq,
-                  settings::board::lora_rst,
-                  settings::board::lora_gpio);
-SX1262 radio(&loraModule);
+Module lora_module(settings::board::lora_cs,
+                   settings::board::lora_irq,
+                   settings::board::lora_rst,
+                   settings::board::lora_gpio);
+SX1262 radio(&lora_module);
 
 Blinker statusLed;
 

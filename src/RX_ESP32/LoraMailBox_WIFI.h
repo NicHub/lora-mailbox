@@ -9,26 +9,26 @@
 #include <AsyncTCP.h>
 #include "user_settings/user_settings.h"
 
-class LoraMailBox_WIFI
+class LoraMailboxWifi
 {
 private:
     AsyncWebServer server{80};
     AsyncWebSocket ws{"/ws"};
-    String latestMessage = "";
-    uint32_t lastReconnectAttemptMs = 0;
-    bool serverStarted = false;
+    String latest_message = "";
+    uint32_t last_reconnect_attempt_ms = 0;
+    bool server_started = false;
 
 #include "index.html"
 
     /**
      * @brief Wait for Wi-Fi connection for a bounded amount of time.
-     * @param timeoutMs Timeout in milliseconds.
+     * @param timeout_ms Timeout in milliseconds.
      * @return true when connected before timeout.
      */
-    bool waitForConnection(uint32_t timeoutMs)
+    bool waitForConnection(uint32_t timeout_ms)
     {
         uint32_t start = millis();
-        while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeoutMs)
+        while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeout_ms)
         {
             delay(250);
             Serial.print(".");
@@ -41,7 +41,7 @@ private:
      */
     void startServerIfNeeded()
     {
-        if (serverStarted)
+        if (server_started)
             return;
 
         ws.onEvent([this](AsyncWebSocket *server, AsyncWebSocketClient *client,
@@ -50,8 +50,8 @@ private:
             if (type == WS_EVT_CONNECT) {
                 Serial.printf("\nWebSocket client #%u connected\n", client->id());
                 Serial.printf("Number of clients connected: %u\n", ws.count());
-                if (latestMessage.length() > 0) {
-                    client->text(latestMessage);
+                if (latest_message.length() > 0) {
+                    client->text(latest_message);
                 }
             } });
 
@@ -61,24 +61,24 @@ private:
                   { request->send(200, "text/html", htmlTemplate); });
 
         server.begin();
-        serverStarted = true;
+        server_started = true;
     }
 
 public:
-    LoraMailBox_WIFI() {}
+    LoraMailboxWifi() {}
 
     void scanWiFiNetworks()
     {
         Serial.println("Scanning for WiFi networks...");
-        int networksFound = WiFi.scanNetworks();
-        if (networksFound == 0)
+        int networks_found = WiFi.scanNetworks();
+        if (networks_found == 0)
         {
             Serial.println("No networks found!");
             return;
         }
-        Serial.print(networksFound);
+        Serial.print(networks_found);
         Serial.println(" networks found:");
-        for (int i = 0; i < networksFound; ++i)
+        for (int i = 0; i < networks_found; ++i)
         {
             /** @note Print SSID and RSSI for each network found. */
             Serial.print(i + 1);
@@ -130,9 +130,9 @@ public:
             return true;
 
         uint32_t now = millis();
-        if ((now - lastReconnectAttemptMs) < settings::wifi::reconnect_min_interval_ms)
+        if ((now - last_reconnect_attempt_ms) < settings::wifi::reconnect_min_interval_ms)
             return false;
-        lastReconnectAttemptMs = now;
+        last_reconnect_attempt_ms = now;
 
         Serial.printf("WiFi disconnected (status=%d), trying reconnect...\n", WiFi.status());
 
@@ -185,8 +185,8 @@ public:
 
     void sendMsg(const String &message)
     {
-        latestMessage = message;
-        ws.textAll(latestMessage);
+        latest_message = message;
+        ws.textAll(latest_message);
         ws.cleanupClients();
     }
 

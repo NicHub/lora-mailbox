@@ -12,27 +12,27 @@
 #include "common/common_nRF52.h"
 #include "common/common.h"
 
-static SemaphoreHandle_t wakeupSem;
-static TxTrigger txTrigger = TxTrigger::Boot;
-static uint32_t nextHeartbeatDeadlineMs = 0;
+static SemaphoreHandle_t wakeup_sem;
+static TxTrigger tx_trigger = TxTrigger::Boot;
+static uint32_t next_heartbeat_deadline_ms = 0;
 
 void onWakeupPinRise()
 {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xSemaphoreGiveFromISR(wakeupSem, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    BaseType_t higher_priority_woken = pdFALSE;
+    xSemaphoreGiveFromISR(wakeup_sem, &higher_priority_woken);
+    portYIELD_FROM_ISR(higher_priority_woken);
 }
 
 void setupRtcWakeup()
 {
-    wakeupSem = xSemaphoreCreateBinary();
+    wakeup_sem = xSemaphoreCreateBinary();
     pinMode(settings::board::wakeup_pin, INPUT);
     attachInterrupt(digitalPinToInterrupt(settings::board::wakeup_pin), onWakeupPinRise, RISING);
 }
 
 static inline bool isHeartbeatDue(uint32_t now_ms)
 {
-    return (int32_t)(now_ms - nextHeartbeatDeadlineMs) >= 0;
+    return (int32_t)(now_ms - next_heartbeat_deadline_ms) >= 0;
 }
 
 static void advanceHeartbeatDeadline(uint32_t now_ms)
@@ -40,8 +40,8 @@ static void advanceHeartbeatDeadline(uint32_t now_ms)
     /** @note Keep a fixed heartbeat cadence, independent of processing jitter. */
     do
     {
-        nextHeartbeatDeadlineMs += settings::misc::tx_heartbeat_interval_ms;
-    } while ((int32_t)(now_ms - nextHeartbeatDeadlineMs) >= 0);
+        next_heartbeat_deadline_ms += settings::misc::tx_heartbeat_interval_ms;
+    } while ((int32_t)(now_ms - next_heartbeat_deadline_ms) >= 0);
 }
 
 void setupGPIOs()
@@ -69,7 +69,7 @@ void setup()
     setupGPIOs();
     writeRgbLeds(0, 0, 1);
     setupRtcWakeup();
-    nextHeartbeatDeadlineMs = millis() + settings::misc::tx_heartbeat_interval_ms;
+    next_heartbeat_deadline_ms = millis() + settings::misc::tx_heartbeat_interval_ms;
     setupSerial();
     setupMsgCounterStorage();
     if (settings::misc::tx_reset_msg_counter_on_reboot)
@@ -85,11 +85,11 @@ void loop()
     writeRgbLeds(0, 1, 0);
     uint16_t battery_voltage = readBatteryVoltage();
     uint16_t cnt = readMsgCounter();
-    String payload = buildTxPayload(getBoardUidHex(), cnt, battery_voltage, txTrigger);
+    String payload = buildTxPayload(getBoardUidHex(), cnt, battery_voltage, tx_trigger);
 
     writeRgbLeds(1, 0, 0);
     sendLoRaPayload(payload.c_str());
-    if (txTrigger == TxTrigger::HeartbeatTx)
+    if (tx_trigger == TxTrigger::HeartbeatTx)
         advanceHeartbeatDeadline(millis());
 
     /**
@@ -113,20 +113,20 @@ void loop()
     uint32_t now_ms = millis();
     if (isHeartbeatDue(now_ms))
     {
-        txTrigger = TxTrigger::HeartbeatTx;
+        tx_trigger = TxTrigger::HeartbeatTx;
     }
     else if (digitalRead(settings::board::wakeup_pin))
     {
-        txTrigger = TxTrigger::WakeupPinHigh;
+        tx_trigger = TxTrigger::WakeupPinHigh;
     }
     else
     {
         /** @note Wait exactly until the next heartbeat or until an interrupt wakes us. */
-        uint32_t sleep_ms = nextHeartbeatDeadlineMs - now_ms;
-        xSemaphoreTake(wakeupSem, 0); // Clear any pending events
-        if (xSemaphoreTake(wakeupSem, pdMS_TO_TICKS(sleep_ms)) == pdTRUE)
-            txTrigger = TxTrigger::WakeupPinHigh;
+        uint32_t sleep_ms = next_heartbeat_deadline_ms - now_ms;
+        xSemaphoreTake(wakeup_sem, 0); // Clear any pending events
+        if (xSemaphoreTake(wakeup_sem, pdMS_TO_TICKS(sleep_ms)) == pdTRUE)
+            tx_trigger = TxTrigger::WakeupPinHigh;
         else
-            txTrigger = TxTrigger::HeartbeatTx;
+            tx_trigger = TxTrigger::HeartbeatTx;
     }
 }

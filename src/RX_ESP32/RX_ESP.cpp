@@ -11,11 +11,11 @@
 #include "LoraMailBox_MQTT.h"
 #include "LoraMailBox_NTFY.h"
 
-LoraMailBox_WIFI lmb_wifi;
-LoraMailBox_MQTT lmb_mqtt;
-LoraMailBox_NTFY lmb_ntfy;
-String jsonString;
-JsonDocument jsonDoc;
+LoraMailboxWifi lmb_wifi;
+LoraMailboxMqtt lmb_mqtt;
+LoraMailboxNtfy lmb_ntfy;
+String json_string;
+JsonDocument json_doc;
 
 static String bytesToHex(const String &input)
 {
@@ -24,9 +24,9 @@ static String bytesToHex(const String &input)
     hex.reserve(input.length() * 2);
     for (size_t i = 0; i < input.length(); ++i)
     {
-        const uint8_t byteValue = static_cast<uint8_t>(input[i]);
-        hex += HEX_DIGITS[byteValue >> 4];
-        hex += HEX_DIGITS[byteValue & 0x0F];
+        const uint8_t byte_value = static_cast<uint8_t>(input[i]);
+        hex += HEX_DIGITS[byte_value >> 4];
+        hex += HEX_DIGITS[byte_value & 0x0F];
     }
     return hex;
 }
@@ -37,7 +37,7 @@ static String bytesToHex(const String &input)
  */
 bool isPinHighEvent()
 {
-    const char *trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
+    const char *trigger = json_doc["TX"]["TX_TRIGGER"] | "";
     if (trigger[0] == '\0')
         return false;
     return strcmp(trigger, "WAKEUP_PIN_HIGH") == 0;
@@ -49,7 +49,7 @@ bool isPinHighEvent()
  */
 bool isHeartbeatTxEvent()
 {
-    const char *trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
+    const char *trigger = json_doc["TX"]["TX_TRIGGER"] | "";
     if (trigger[0] == '\0')
         return false;
     return strcmp(trigger, "HEARTBEAT_TX") == 0;
@@ -61,7 +61,7 @@ bool isHeartbeatTxEvent()
  */
 bool isBootEvent()
 {
-    const char *trigger = jsonDoc["TX"]["TX_TRIGGER"] | "";
+    const char *trigger = json_doc["TX"]["TX_TRIGGER"] | "";
     if (trigger[0] == '\0')
         return false;
     return strcmp(trigger, "BOOT") == 0;
@@ -72,22 +72,22 @@ bool isBootEvent()
  */
 void broadcastNtfy()
 {
-    bool shouldNotifyNtfy = isPinHighEvent();
-    shouldNotifyNtfy = shouldNotifyNtfy || (settings::ntfy::notify_heartbeat_tx && isHeartbeatTxEvent());
-    shouldNotifyNtfy = shouldNotifyNtfy || isBootEvent();
-    if (shouldNotifyNtfy)
-        lmb_ntfy.sendMsg(jsonDoc);
+    bool should_notify_ntfy = isPinHighEvent();
+    should_notify_ntfy = should_notify_ntfy || (settings::ntfy::notify_heartbeat_tx && isHeartbeatTxEvent());
+    should_notify_ntfy = should_notify_ntfy || isBootEvent();
+    if (should_notify_ntfy)
+        lmb_ntfy.sendMsg(json_doc);
 }
 
 void broadcastResults()
 {
-    serializeJson(jsonDoc, jsonString);
-    lmb_wifi.sendMsg(jsonString);
-    lmb_mqtt.sendMsg(jsonDoc);
+    serializeJson(json_doc, json_string);
+    lmb_wifi.sendMsg(json_string);
+    lmb_mqtt.sendMsg(json_doc);
     broadcastNtfy();
     if (settings::misc::serial_verbosity == 1)
     {
-        uint16_t ctr = jsonDoc["RX"]["RX_COUNTER"] | 0;
+        uint16_t ctr = json_doc["RX"]["RX_COUNTER"] | 0;
         static uint16_t first_ctr = ctr;
         ctr -= first_ctr;
 
@@ -99,26 +99,26 @@ void broadcastResults()
     }
     else if (settings::misc::serial_verbosity == 2)
     {
-        Serial.println(jsonString);
+        Serial.println(json_string);
     }
 }
 
 void counterCheck()
 {
-    if (jsonDoc["TX"]["TX_COUNTER"].isNull())
+    if (json_doc["TX"]["TX_COUNTER"].isNull())
         return;
-    uint16_t txCnt = jsonDoc["TX"]["TX_COUNTER"].as<uint16_t>();
-    static uint16_t prevTxCnt = txCnt - 1;
-    static uint16_t errorCount = 0;
-    uint16_t rxCnt = prevTxCnt + 1;
-    bool counterStatus = txCnt != rxCnt;
-    errorCount += counterStatus;
+    uint16_t tx_cnt = json_doc["TX"]["TX_COUNTER"].as<uint16_t>();
+    static uint16_t prev_tx_cnt = tx_cnt - 1;
+    static uint16_t error_count = 0;
+    uint16_t rx_cnt = prev_tx_cnt + 1;
+    bool counter_status = tx_cnt != rx_cnt;
+    error_count += counter_status;
 
-    jsonDoc["RX"]["RX_COUNTER"] = rxCnt;
-    jsonDoc["RX_TX"]["RX_TX_COUNTER_ERROR_COUNT"] = errorCount;
-    jsonDoc["RX_TX"]["RX_TX_COUNTER_STATUS"] = counterStatus ? "NOT OK" : "OK";
+    json_doc["RX"]["RX_COUNTER"] = rx_cnt;
+    json_doc["RX_TX"]["RX_TX_COUNTER_ERROR_COUNT"] = error_count;
+    json_doc["RX_TX"]["RX_TX_COUNTER_STATUS"] = counter_status ? "NOT OK" : "OK";
 
-    prevTxCnt = txCnt;
+    prev_tx_cnt = tx_cnt;
 }
 
 const char* getCurrentTime()
@@ -131,8 +131,8 @@ const char* getCurrentTime()
         offset_min += (local_tm.tm_hour < 12) ? 1440 : -1440;
     int offset_h = offset_min / 60;
     int offset_m = abs(offset_min % 60);
-    static char timeStr[26];
-    snprintf(timeStr, sizeof(timeStr), "%04d-%02d-%02dT%02d:%02d:%02d%+03d:%02d",
+    static char time_str[26];
+    snprintf(time_str, sizeof(time_str), "%04d-%02d-%02dT%02d:%02d:%02d%+03d:%02d",
              local_tm.tm_year + 1900,
              local_tm.tm_mon + 1,
              local_tm.tm_mday,
@@ -141,97 +141,97 @@ const char* getCurrentTime()
              local_tm.tm_sec,
              offset_h,
              offset_m);
-    return timeStr;
+    return time_str;
 }
 
 void addLoraSettingsToJsonDoc()
 {
-    jsonDoc["LORA"]["LORA_FREQ"] = settings::lora::freq;
-    jsonDoc["LORA"]["LORA_BW"] = settings::lora::bw;
-    jsonDoc["LORA"]["LORA_SF"] = settings::lora::sf;
-    jsonDoc["LORA"]["LORA_CR"] = settings::lora::cr;
-    jsonDoc["LORA"]["LORA_SYNCWORD"] = settings::lora::syncword;
-    jsonDoc["LORA"]["LORA_POWER"] = settings::lora::power;
-    jsonDoc["LORA"]["LORA_PREAMBLE_LENGTH"] = settings::lora::preamble_length;
-    jsonDoc["LORA"]["LORA_TCXO_VOLTAGE"] = settings::lora::tcxo_voltage;
-    jsonDoc["LORA"]["LORA_USE_REGULATOR_LDO"] = settings::lora::use_regulator_ldo;
+    json_doc["LORA"]["LORA_FREQ"] = settings::lora::freq;
+    json_doc["LORA"]["LORA_BW"] = settings::lora::bw;
+    json_doc["LORA"]["LORA_SF"] = settings::lora::sf;
+    json_doc["LORA"]["LORA_CR"] = settings::lora::cr;
+    json_doc["LORA"]["LORA_SYNCWORD"] = settings::lora::syncword;
+    json_doc["LORA"]["LORA_POWER"] = settings::lora::power;
+    json_doc["LORA"]["LORA_PREAMBLE_LENGTH"] = settings::lora::preamble_length;
+    json_doc["LORA"]["LORA_TCXO_VOLTAGE"] = settings::lora::tcxo_voltage;
+    json_doc["LORA"]["LORA_USE_REGULATOR_LDO"] = settings::lora::use_regulator_ldo;
 }
 
 void heartBeat()
 {
-    uint32_t heartBeat = millis();
-    static uint32_t prevHeartBeat = heartBeat;
-    if (heartBeat - prevHeartBeat < settings::misc::rx_heartbeat_interval_ms)
+    uint32_t now_ms = millis();
+    static uint32_t prev_heart_beat = now_ms;
+    if (now_ms - prev_heart_beat < settings::misc::rx_heartbeat_interval_ms)
         return;
-    prevHeartBeat = heartBeat;
+    prev_heart_beat = now_ms;
 
-    jsonDoc.clear();
-    jsonDoc["RX"]["RX_BOARD_ID"] = getMacAddress();
-    jsonDoc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
-    jsonDoc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
-    jsonDoc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
-    jsonDoc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
-    jsonDoc["RX"]["RX_TRIGGER"] = "HEARTBEAT_RX";
-    jsonDoc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    json_doc.clear();
+    json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
+    json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
+    json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
+    json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
+    json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
+    json_doc["RX"]["RX_TRIGGER"] = "HEARTBEAT_RX";
+    json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
 
-    serializeJson(jsonDoc, jsonString);
+    serializeJson(json_doc, json_string);
     if (settings::misc::serial_verbosity == 2)
-        Serial.println(jsonString);
-    lmb_wifi.sendMsg(jsonString);
-    lmb_mqtt.sendMsg(jsonDoc);
+        Serial.println(json_string);
+    lmb_wifi.sendMsg(json_string);
+    lmb_mqtt.sendMsg(json_doc);
 }
 
 void readLoRa()
 {
     digitalWrite(settings::board::lora_led_green, HIGH);
     radio.startReceive();
-    int state = radio.readData(jsonString);
+    int state = radio.readData(json_string);
     digitalWrite(settings::board::lora_led_green, LOW);
 
-    jsonDoc["RX_LORA_STATE"] = state;
+    json_doc["RX_LORA_STATE"] = state;
     if (state != RADIOLIB_ERR_NONE)
         return;
-    JsonDocument txDoc;
-    DeserializationError deserializeError = deserializeJson(txDoc, jsonString);
-    jsonDoc.clear();
-    JsonObject tx = jsonDoc["TX"].to<JsonObject>();
-    if (deserializeError)
+    JsonDocument tx_doc;
+    DeserializationError deserialize_error = deserializeJson(tx_doc, json_string);
+    json_doc.clear();
+    JsonObject tx = json_doc["TX"].to<JsonObject>();
+    if (deserialize_error)
     {
-        tx["TX_JSON_DESERIALIZE_ERROR"] = deserializeError.c_str();
-        tx["TX_JSON_STRING_HEX"] = bytesToHex(jsonString);
+        tx["TX_JSON_DESERIALIZE_ERROR"] = deserialize_error.c_str();
+        tx["TX_JSON_STRING_HEX"] = bytesToHex(json_string);
     }
     else
     {
-        for (JsonPairConst kv : txDoc.as<JsonObjectConst>())
+        for (JsonPairConst kv : tx_doc.as<JsonObjectConst>())
             tx[kv.key()] = kv.value();
-        tx["TX_JSON_STRING"] = jsonString;
+        tx["TX_JSON_STRING"] = json_string;
     }
-    jsonDoc["RX"]["RX_BOARD_ID"] = getMacAddress();
-    jsonDoc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
-    jsonDoc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
-    jsonDoc["RX"]["RX_DEBUG"] = settings::misc::debug;
-    jsonDoc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
-    jsonDoc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
-    jsonDoc["RX"]["RX_TRIGGER"] = "LORA_PAYLOAD_RECEIVED";
-    jsonDoc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
-    jsonDoc["RX"]["RX_WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
+    json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
+    json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
+    json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
+    json_doc["RX"]["RX_DEBUG"] = settings::misc::debug;
+    json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
+    json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
+    json_doc["RX"]["RX_TRIGGER"] = "LORA_PAYLOAD_RECEIVED";
+    json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    json_doc["RX"]["RX_WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
     addLoraSettingsToJsonDoc();
-    jsonDoc["RX_TX"]["RX_TX_RSSI_DBM"] = radio.getRSSI();
-    jsonDoc["RX_TX"]["RX_TX_SNR_DB"] = radio.getSNR();
-    if (!jsonDoc["TX"]["TX_VBAT_RAW"].isNull())
+    json_doc["RX_TX"]["RX_TX_RSSI_DBM"] = radio.getRSSI();
+    json_doc["RX_TX"]["RX_TX_SNR_DB"] = radio.getSNR();
+    if (!json_doc["TX"]["TX_VBAT_RAW"].isNull())
     {
-        BatteryMeasurement battery = Vbat_raw2Vbat_mv(jsonDoc["TX"]["TX_VBAT_RAW"].as<uint16_t>());
-        jsonDoc["TX"]["TX_VBAT_MV"] = battery.vbatMv;
-        jsonDoc["TX"]["TX_VBAT_PERCENT"] = battery.batteryPercent;
-        jsonDoc["TX"]["TX_VBAT_GLYPH"] = batteryGlyphToString(battery.glyph);
-        jsonDoc["TX"]["TX_VBAT_STATUS"] = batteryStatusToString(battery.status);
+        BatteryMeasurement battery = vbatRaw2VbatMv(json_doc["TX"]["TX_VBAT_RAW"].as<uint16_t>());
+        json_doc["TX"]["TX_VBAT_MV"] = battery.vbat_mv;
+        json_doc["TX"]["TX_VBAT_PERCENT"] = battery.battery_percent;
+        json_doc["TX"]["TX_VBAT_GLYPH"] = batteryGlyphToString(battery.glyph);
+        json_doc["TX"]["TX_VBAT_STATUS"] = batteryStatusToString(battery.status);
     }
 }
 
 void setupMQTT()
 {
     lmb_mqtt.begin();
-    lmb_mqtt.sendMsg(jsonDoc);
+    lmb_mqtt.sendMsg(json_doc);
 }
 
 void setupWiFi()

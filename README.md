@@ -52,6 +52,12 @@ TODO: Update this section
 
     -   `python3 -m pip install -r requirements.txt`
 
+## Code style
+
+This project follows the [`readability-identifier-naming`](https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html) conventions enforced by clang-tidy (see `.clang-tidy`).
+
+To check: `./scripts/tools/run_clang_tidy.sh [rx|tx|all]`
+
 ## Usefull commands
 
 ```zsh

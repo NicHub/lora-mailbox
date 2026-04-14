@@ -38,7 +38,7 @@ static_assert(sizeof(CounterRecord) == 8, "CounterRecord must stay 8 bytes");
 
 static constexpr uint32_t COUNTER_RECORD_MAGIC = 0x4D424358UL;
 static constexpr uint16_t COUNTER_RECORD_XOR = 0xA5C3U;
-static int32_t counterRecordIndexCache = -2;
+static int32_t counter_record_index_cache = -2;
 
 static inline uint16_t counterChecksum(uint16_t counter)
 {
@@ -114,9 +114,9 @@ static inline int32_t findLastCounterRecordIndex()
 
 static inline int32_t getLastCounterRecordIndex()
 {
-    if (counterRecordIndexCache == -2)
-        counterRecordIndexCache = findLastCounterRecordIndex();
-    return counterRecordIndexCache;
+    if (counter_record_index_cache == -2)
+        counter_record_index_cache = findLastCounterRecordIndex();
+    return counter_record_index_cache;
 }
 
 /**
@@ -178,21 +178,21 @@ void testAllLEDs();
 
 
 static inline void writeRgbLeds(
-    uint32_t LED_RED_STATE,
-    uint32_t LED_GREEN_STATE,
-    uint32_t LED_BLUE_STATE)
+    uint32_t led_red_state,
+    uint32_t led_green_state,
+    uint32_t led_blue_state)
 {
     if (settings::misc::debug)
     {
         /** @note On XIAO nRF52, `LED_BUILTIN == LED_RED`. */
-        digitalWrite(LED_RED, !LED_RED_STATE);
-        digitalWrite(LED_GREEN, !LED_GREEN_STATE);
-        digitalWrite(LED_BLUE, !LED_BLUE_STATE);
+        digitalWrite(LED_RED, !led_red_state);
+        digitalWrite(LED_GREEN, !led_green_state);
+        digitalWrite(LED_BLUE, !led_blue_state);
     }
     else
     {
-        (void)LED_RED_STATE;
-        (void)LED_GREEN_STATE;
-        (void)LED_BLUE_STATE;
+        (void)led_red_state;
+        (void)led_green_state;
+        (void)led_blue_state;
     }
 }

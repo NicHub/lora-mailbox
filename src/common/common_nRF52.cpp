@@ -18,26 +18,26 @@ void goToDeepSleep()
 
 uint16_t readMsgCounter()
 {
-    int32_t lastRecordIndex = getLastCounterRecordIndex();
-    if (lastRecordIndex < 0)
+    int32_t last_record_index = getLastCounterRecordIndex();
+    if (last_record_index < 0)
         return 0;
-    return readCounterRecord(static_cast<uint32_t>(lastRecordIndex)).counter;
+    return readCounterRecord(static_cast<uint32_t>(last_record_index)).counter;
 }
 
 void saveMsgCounter(uint16_t cnt)
 {
     uint32_t t1 = millis();
-    int32_t lastRecordIndex = getLastCounterRecordIndex();
-    uint32_t nextRecordIndex = static_cast<uint32_t>(lastRecordIndex + 1);
-    if (nextRecordIndex >= counterRecordCapacity())
+    int32_t last_record_index = getLastCounterRecordIndex();
+    uint32_t next_record_index = static_cast<uint32_t>(last_record_index + 1);
+    if (next_record_index >= counterRecordCapacity())
     {
         if (!eraseCounterStorage())
         {
             Serial.println("Counter storage erase failed");
             return;
         }
-        nextRecordIndex = 0;
-        counterRecordIndexCache = -1;
+        next_record_index = 0;
+        counter_record_index_cache = -1;
     }
 
     CounterRecord record{
@@ -45,13 +45,13 @@ void saveMsgCounter(uint16_t cnt)
         .checksum = counterChecksum(cnt),
         .magic = COUNTER_RECORD_MAGIC,
     };
-    if (flash_nrf5x_write(counterRecordAddress(nextRecordIndex), &record, sizeof(record)) < 0)
+    if (flash_nrf5x_write(counterRecordAddress(next_record_index), &record, sizeof(record)) < 0)
     {
         Serial.println("Counter storage write failed");
         return;
     }
     flash_nrf5x_flush();
-    counterRecordIndexCache = static_cast<int32_t>(nextRecordIndex);
+    counter_record_index_cache = static_cast<int32_t>(next_record_index);
 
     Serial.print("\n\nmillis(), Time elapsed to saveMsgCounter = ");
     Serial.print(millis());
@@ -61,9 +61,9 @@ void saveMsgCounter(uint16_t cnt)
 
 void setupMsgCounterStorage()
 {
-    counterRecordIndexCache = findLastCounterRecordIndex();
-    int32_t lastRecordIndex = counterRecordIndexCache;
-    if (lastRecordIndex >= 0)
+    counter_record_index_cache = findLastCounterRecordIndex();
+    int32_t last_record_index = counter_record_index_cache;
+    if (last_record_index >= 0)
         return;
 
     if (!eraseCounterStorage())
