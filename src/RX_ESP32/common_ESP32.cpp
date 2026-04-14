@@ -4,8 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#if defined(ESP8266) || defined(ESP32)
-
 #include "common/common_ESP32.h"
 #include "common/common.h"
 
@@ -59,5 +57,3 @@ uint16_t readBatteryVoltage()
     /** @todo Implement battery voltage reading on ESP32 builds. */
     return 0;
 }
-
-#endif // ESP8266 || ESP32

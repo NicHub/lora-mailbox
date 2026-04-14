@@ -4,8 +4,6 @@
  * Copyright (C) 2025, GPL-3.0-or-later, Nicolas Jeanmonod, ouilogique.com
  */
 
-#if defined(NRF52_SERIES)
-
 #include "common/common_nRF52.h"
 #include "common/common.h"
 
@@ -158,5 +156,3 @@ void testAllLEDs()
     Serial.println("LED_BLUE, LED_OFF");
     delay(wait_2);
 }
-
-#endif // NRF52_SERIES
