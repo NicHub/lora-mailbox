@@ -9,6 +9,7 @@ CLANG_TIDY_BIN="${CLANG_TIDY_BIN:-}"
 PIO_BIN="${PIO_BIN:-pio}"
 TARGET="${1:-all}"
 SANITIZED_DB_DIR=".pio/clang-tidy"
+CLANG_TIDY_CONFIG="${CLANG_TIDY_CONFIG:-${SCRIPT_DIR}/.clang-tidy}"
 
 if [[ -z "${CLANG_TIDY_BIN}" ]]; then
     if command -v clang-tidy >/dev/null 2>&1; then
@@ -23,6 +24,11 @@ fi
 
 if ! command -v "${PIO_BIN}" >/dev/null 2>&1; then
     echo "Error: PlatformIO not found. Set PIO_BIN if needed." >&2
+    exit 1
+fi
+
+if [[ ! -f "${CLANG_TIDY_CONFIG}" ]]; then
+    echo "Error: clang-tidy config not found: ${CLANG_TIDY_CONFIG}" >&2
     exit 1
 fi
 
@@ -88,7 +94,7 @@ run_target() {
         mkdir -p "${sanitized_db}"
         sanitize_compile_commands "${env_name}" "${PROJECT_ROOT}/compile_commands.json" "${sanitized_db}/compile_commands.json"
         ensure_env_supported "${env_name}"
-        "${CLANG_TIDY_BIN}" -p "${sanitized_db}" "${paths[@]}"
+        "${CLANG_TIDY_BIN}" --config-file "${CLANG_TIDY_CONFIG}" -p "${sanitized_db}" "${paths[@]}"
     )
 }
 

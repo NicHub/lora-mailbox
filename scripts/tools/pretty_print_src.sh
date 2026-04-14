@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 TARGET_DIR="${1:-src}"
 MODE="${MODE:-fix}"
+CLANG_FORMAT_CONFIG="${CLANG_FORMAT_CONFIG:-${SCRIPT_DIR}/.clang-format}"
 
 find_clang_format() {
     if [[ -n "${CLANG_FORMAT_BIN:-}" ]]; then
@@ -51,6 +52,11 @@ main() {
         exit 1
     fi
 
+    if [[ ! -f "${CLANG_FORMAT_CONFIG}" ]]; then
+        echo "Error: clang-format config not found: ${CLANG_FORMAT_CONFIG}" >&2
+        exit 1
+    fi
+
     files=()
     while IFS= read -r file; do
         files+=("${file}")
@@ -67,13 +73,13 @@ main() {
         fix)
             (
                 cd "${PROJECT_ROOT}"
-                "${clang_format_bin}" -i --style=file "${files[@]}"
+                "${clang_format_bin}" -i --style="file:${CLANG_FORMAT_CONFIG}" "${files[@]}"
             )
             ;;
         check)
             (
                 cd "${PROJECT_ROOT}"
-                "${clang_format_bin}" --dry-run --Werror --style=file "${files[@]}"
+                "${clang_format_bin}" --dry-run --Werror --style="file:${CLANG_FORMAT_CONFIG}" "${files[@]}"
             )
             ;;
         *)
