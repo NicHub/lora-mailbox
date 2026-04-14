@@ -81,14 +81,61 @@ static constexpr uint32_t RECONNECT_TIMEOUT_MS = 8000UL;
 /** @brief LoRa settings. */
 namespace settings::lora
 {
+/** @brief Carrier frequency in MHz.
+ * SX1262 capability: 150.0 to 960.0 MHz.
+ * Legal/usable frequencies depend on the target region and local regulations.
+ * Impact: changing this mainly changes regulatory compliance, propagation characteristics, and interference exposure.
+ * Default in `SX1262.h`: `434.0`. */
 static constexpr float FREQ = 868.0;
+
+/** @brief LoRa bandwidth in kHz.
+ * Typical values: 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125, 250, 500.
+ * BW ↑ => throughput ↑, airtime ↓, sensitivity ↓, robustness in difficult environments ↓.
+ * Default in `SX1262.h`: `125.0`. */
 static constexpr float BW = 62.5;
+
+/** @brief LoRa spreading factor. Valid range: 6 to 12.
+ * Higher values improve sensitivity but reduce throughput.
+ * SF ↑ => throughput ↓, airtime ↑, sensitivity ↑, range/penetration ↑, battery cost per message ↑.
+ * Default in `SX1262.h`: `9`. */
 static constexpr uint8_t SF = 12;
+
+/** @brief LoRa coding rate denominator.
+ * Valid range: 5 to 8.
+ * CR ↑ => redundancy ↑, airtime ↑, throughput ↓, resilience to errors/interference ↑.
+ * Default in `SX1262.h`: `7`. */
 static constexpr uint8_t CR = 8;
+
+/** @brief LoRa sync word used to distinguish networks.
+ * `0x34` is reserved for LoRaWAN.
+ * Impact: changes network separation only; it does not directly improve range, speed, or power use.
+ * Default in `SX1262.h`: `RADIOLIB_SX126X_SYNC_WORD_PRIVATE`. */
 static constexpr uint8_t SYNCWORD = RADIOLIB_SX126X_SYNC_WORD_PRIVATE;
+
+/** @brief TX output power in dBm.
+ * Typical SX1262 range: 2 to 17 dBm.
+ * POWER ↑ => link budget ↑, range margin ↑, battery usage ↑, legal-risk/EMI risk ↑.
+ * Default in `SX1262.h`: `10`. */
 static constexpr int8_t POWER = 14;
+
+/** @brief Preamble length in symbols.
+ * The effective transmitted preamble is 4.25 symbols longer.
+ * PREAMBLE_LENGTH ↑ => sync reliability ↑, airtime ↑, throughput ↓.
+ * Default in `SX1262.h`: `8`. */
 static constexpr uint16_t PREAMBLE_LENGTH = 12;
+
+/** @brief TCXO control voltage in V.
+ * Used by `radio.begin()` on boards that drive the SX1262 TCXO.
+ * Impact: this is a hardware-matching parameter, not a tuning knob for speed or range.
+ * Wrong value => startup failure, unstable RF behavior, or no radio link.
+ * Default in `SX1262.h`: `1.6`. */
 static constexpr float TCXO_VOLTAGE = 1.6;
+
+/** @brief Use the SX1262 LDO regulator instead of DC-DC.
+ * `false` is generally preferred for lower power.
+ * USE_REGULATOR_LDO = true  => simplicity/compatibility may ↑, efficiency usually ↓.
+ * USE_REGULATOR_LDO = false => efficiency usually ↑, but depends on board design and stability.
+ * Default in `SX1262.h`: `false`. */
 static constexpr bool USE_REGULATOR_LDO = false;
 } // namespace settings::lora
 
