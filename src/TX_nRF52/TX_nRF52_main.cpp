@@ -23,12 +23,19 @@ static constexpr uint32_t RTC2_TICKS_PER_SECOND = 8;
 static constexpr uint32_t RTC2_MAX_TICKS = 0x00FFFFFFUL;
 
 static volatile bool wakeup_pin_fired = false;
+static volatile bool rtc2_compare_fired = false;
 static TxTrigger tx_trigger = TxTrigger::Boot;
 static uint32_t next_heartbeat_deadline_ms = 0;
 
 extern "C" void RTC2_IRQHandler(void)
 {
+    /**
+     * @note Clearing `EVENTS_COMPARE[0]` here is required to deassert the IRQ,
+     * so the main loop cannot rely on that register to detect the timeout —
+     * it would always read 0 after the ISR. Use a dedicated flag instead.
+     */
     NRF_RTC2->EVENTS_COMPARE[0] = 0;
+    rtc2_compare_fired = true;
 }
 
 static void onWakeupPinRise()
@@ -59,6 +66,7 @@ static bool sleepSecondsOrPin(uint32_t seconds, bool pin_enabled)
         return true;
 
     wakeup_pin_fired = false;
+    rtc2_compare_fired = false;
 
     uint32_t ticks = seconds * RTC2_TICKS_PER_SECOND;
     if (ticks == 0)
@@ -72,7 +80,9 @@ static bool sleepSecondsOrPin(uint32_t seconds, bool pin_enabled)
     NRF_RTC2->CC[0] = ticks;
     NRF_RTC2->TASKS_START = 1;
 
-    while (!NRF_RTC2->EVENTS_COMPARE[0] && !(pin_enabled && wakeup_pin_fired))
+    /** @note Level-check on WAKEUP_PIN safeguards against a missed rising-edge IRQ. */
+    while (!rtc2_compare_fired &&
+           !(pin_enabled && (wakeup_pin_fired || digitalRead(settings::board::WAKEUP_PIN))))
     {
         __SEV();
         __WFE();
@@ -80,7 +90,7 @@ static bool sleepSecondsOrPin(uint32_t seconds, bool pin_enabled)
     }
 
     NRF_RTC2->TASKS_STOP = 1;
-    return pin_enabled && wakeup_pin_fired;
+    return pin_enabled && (wakeup_pin_fired || digitalRead(settings::board::WAKEUP_PIN));
 }
 
 static inline bool isHeartbeatDue(uint32_t now_ms)
