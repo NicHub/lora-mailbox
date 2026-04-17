@@ -125,11 +125,6 @@ void setup()
     next_heartbeat_deadline_ms = millis() + settings::misc::TX_HEARTBEAT_INTERVAL_MS;
     setupSerial();
     setupMsgCounterStorage();
-    if (settings::misc::TX_RESET_MSG_COUNTER_ON_REBOOT)
-    {
-        saveMsgCounter(0);
-        Serial.println("MSG COUNTER RESET TO 0 (TX_RESET_MSG_COUNTER_ON_REBOOT=true)");
-    }
     setupLoRa();
 }
 
@@ -138,7 +133,8 @@ void loop()
     writeRgbLeds(0, 1, 0);
     uint16_t battery_voltage = readBatteryVoltage();
     uint16_t cnt = readMsgCounter();
-    String payload = buildTxPayload(getBoardUidHex(), cnt, battery_voltage, tx_trigger);
+    uint16_t v_initial_raw = readVInitialRaw();
+    String payload = buildTxPayload(getBoardUidHex(), cnt, battery_voltage, v_initial_raw, tx_trigger);
 
     writeRgbLeds(1, 0, 0);
     sendLoRaPayload(payload.c_str());

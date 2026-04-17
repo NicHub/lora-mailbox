@@ -17,6 +17,7 @@ This script can be used in two ways:
 - BUILD_PYTHON_PATH='"/opt/homebrew/Cellar/python@3.14/3.14.4/Frameworks/Python.framework/Versions/3.14/bin/python3.14"'
 - GIT_HEAD_COMMIT_ID='"ee1a16c"'
 - GIT_UNCOMMITTED_FILES_COUNT='"5"'
+- BUILD_ID=1745923200u  (numeric, unique per build invocation)
 
 If no Git commit exists yet, the value ``no_git_commit_yet`` is used and the
 uncommitted file count is forced to 0.
@@ -88,7 +89,11 @@ def get_git_uncommitted_files_count():
 
 
 def get_flag_dict():
-    """Build the dictionary of preprocessor flag names and values."""
+    """Build the dictionary of preprocessor flag names and values.
+
+    Each value is a ``(value, is_numeric)`` pair. Numeric values are emitted
+    without surrounding quotes so they can be used as integer literals in C.
+    """
     build_local_time = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
     build_source_path = get_build_source_path().replace("\\", "\\\\")
     build_python_version = (
@@ -101,24 +106,30 @@ def get_flag_dict():
     git_uncommitted_files_count = (
         0 if git_head_commit_id == NO_GIT_COMMIT_YET else get_git_uncommitted_files_count()
     )
+    # Unique per build invocation, used to detect a fresh flash.
+    build_id = int(datetime.datetime.now().timestamp())
     flag_list = (
-        ("BUILD_LOCAL_TIME", build_local_time),
-        ("BUILD_SOURCE_PATH", build_source_path),
-        ("BUILD_PYTHON_VERSION", build_python_version),
-        ("BUILD_PYTHON_PATH", build_python_path),
-        ("GIT_HEAD_COMMIT_ID", git_head_commit_id[:7]),
-        ("GIT_UNCOMMITTED_FILES_COUNT", str(git_uncommitted_files_count)),
+        ("BUILD_LOCAL_TIME", build_local_time, False),
+        ("BUILD_SOURCE_PATH", build_source_path, False),
+        ("BUILD_PYTHON_VERSION", build_python_version, False),
+        ("BUILD_PYTHON_PATH", build_python_path, False),
+        ("GIT_HEAD_COMMIT_ID", git_head_commit_id[:7], False),
+        ("GIT_UNCOMMITTED_FILES_COUNT", str(git_uncommitted_files_count), False),
+        ("BUILD_ID", f"{build_id}u", True),
     )
 
-    return dict(flag_list)
+    return {name: (value, is_numeric) for name, value, is_numeric in flag_list}
 
 
 def main():
     """Format generated metadata as PlatformIO-compatible ``-D`` flags."""
     flag_dict = get_flag_dict()
     flags = ""
-    for name, value in flag_dict.items():
-        flags += f"-D {name}='\"{value}\"'\n"
+    for name, (value, is_numeric) in flag_dict.items():
+        if is_numeric:
+            flags += f"-D {name}={value}\n"
+        else:
+            flags += f"-D {name}='\"{value}\"'\n"
 
     return flags
 

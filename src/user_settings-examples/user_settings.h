@@ -18,10 +18,9 @@ namespace settings::misc
     static constexpr char RECIPIENT_NAME[] = "rolf";
     static constexpr bool DEBUG = true;
     static constexpr int SERIAL_VERBOSITY = 2;
-    static constexpr bool TX_RESET_MSG_COUNTER_ON_REBOOT = false;
-    static constexpr uint32_t TX_HEARTBEAT_INTERVAL_MS = 60UL * 60UL * 1000UL;
-    static constexpr uint32_t RX_HEARTBEAT_INTERVAL_MS = 5000UL;
+    static constexpr uint32_t TX_HEARTBEAT_INTERVAL_MS = 1000UL;
     static constexpr uint32_t TX_DEBOUNCE_S = 5UL;
+    static constexpr uint32_t RX_HEARTBEAT_INTERVAL_MS = 5000UL;
 }
 
 namespace settings::board

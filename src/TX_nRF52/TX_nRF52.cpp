@@ -22,9 +22,16 @@ uint16_t readMsgCounter()
     return readCounterRecord(static_cast<uint32_t>(last_record_index)).counter;
 }
 
-void saveMsgCounter(uint16_t cnt)
+uint16_t readVInitialRaw()
 {
-    uint32_t t1 = millis();
+    int32_t last_record_index = getLastCounterRecordIndex();
+    if (last_record_index < 0)
+        return 0;
+    return readCounterRecord(static_cast<uint32_t>(last_record_index)).v_initial_raw;
+}
+
+static bool writeCounterRecord(uint16_t cnt, uint16_t v_initial_raw)
+{
     int32_t last_record_index = getLastCounterRecordIndex();
     uint32_t next_record_index = static_cast<uint32_t>(last_record_index + 1);
     if (next_record_index >= counterRecordCapacity())
@@ -32,24 +39,36 @@ void saveMsgCounter(uint16_t cnt)
         if (!eraseCounterStorage())
         {
             Serial.println("Counter storage erase failed");
-            return;
+            return false;
         }
         next_record_index = 0;
         counter_record_index_cache = -1;
     }
 
     CounterRecord record{
-        .counter = cnt,
-        .checksum = counterChecksum(cnt),
         .magic = COUNTER_RECORD_MAGIC,
+        .build_id = BUILD_ID,
+        .counter = cnt,
+        .v_initial_raw = v_initial_raw,
+        .checksum = counterChecksum(BUILD_ID, cnt, v_initial_raw),
     };
     if (flash_nrf5x_write(counterRecordAddress(next_record_index), &record, sizeof(record)) < 0)
     {
         Serial.println("Counter storage write failed");
-        return;
+        return false;
     }
     flash_nrf5x_flush();
     counter_record_index_cache = static_cast<int32_t>(next_record_index);
+    return true;
+}
+
+void saveMsgCounter(uint16_t cnt)
+{
+    uint32_t t1 = millis();
+    /** @note Preserve v_initial_raw across saves; it is only (re)captured on flash. */
+    uint16_t v_initial_raw = readVInitialRaw();
+    if (!writeCounterRecord(cnt, v_initial_raw))
+        return;
 
     Serial.print("\n\nmillis(), Time elapsed to saveMsgCounter = ");
     Serial.print(millis());
@@ -62,7 +81,12 @@ void setupMsgCounterStorage()
     counter_record_index_cache = findLastCounterRecordIndex();
     int32_t last_record_index = counter_record_index_cache;
     if (last_record_index >= 0)
-        return;
+    {
+        CounterRecord record = readCounterRecord(static_cast<uint32_t>(last_record_index));
+        if (record.build_id == BUILD_ID)
+            return;
+        Serial.println("New BUILD_ID detected: resetting counter and capturing v_initial_raw");
+    }
 
     if (!eraseCounterStorage())
     {
@@ -70,8 +94,14 @@ void setupMsgCounterStorage()
         blink(10, 100, 10, LED_RED, true);
         return;
     }
-    saveMsgCounter(0);
-    if (readMsgCounter() != 0)
+    counter_record_index_cache = -1;
+    uint16_t v_initial_raw = readBatteryVoltage();
+    if (!writeCounterRecord(0, v_initial_raw))
+    {
+        blink(10, 100, 10, LED_RED, true);
+        return;
+    }
+    if (readMsgCounter() != 0 || readVInitialRaw() != v_initial_raw)
     {
         Serial.println("Counter storage verification failed");
         blink(10, 100, 10, LED_RED, true);

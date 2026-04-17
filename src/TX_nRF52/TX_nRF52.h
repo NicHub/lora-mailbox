@@ -25,28 +25,41 @@ static constexpr uint32_t COUNTER_STORAGE_ADDR = 0x6D000;
 
 static constexpr uint32_t COUNTER_STORAGE_SIZE = 7 * FLASH_NRF52_PAGE_SIZE;
 
+#ifndef BUILD_ID
+#define BUILD_ID 0u
+#endif
+
+/**
+ * @brief Persisted message counter and battery baseline.
+ * @note `v_initial_raw` is captured the first time a record is written for a
+ * given `BUILD_ID` (i.e. on a fresh flash) and copied unchanged on every
+ * subsequent save, so the consumer can derive battery drop per message.
+ */
 struct CounterRecord
 {
-    uint16_t counter;
-    uint16_t checksum;
     uint32_t magic;
+    uint32_t build_id;
+    uint16_t counter;
+    uint16_t v_initial_raw;
+    uint32_t checksum;
 };
 
-static_assert(sizeof(CounterRecord) == 8, "CounterRecord must stay 8 bytes");
+static_assert(sizeof(CounterRecord) == 16, "CounterRecord must stay 16 bytes");
 
-static constexpr uint32_t COUNTER_RECORD_MAGIC = 0x4D424358UL;
-static constexpr uint16_t COUNTER_RECORD_XOR = 0xA5C3U;
+/** @note Bumped from 0x4D424358 when the record layout changed. */
+static constexpr uint32_t COUNTER_RECORD_MAGIC = 0x4D424359UL;
 static int32_t counter_record_index_cache = -2;
 
-static inline uint16_t counterChecksum(uint16_t counter)
+static inline uint32_t counterChecksum(uint32_t build_id, uint16_t counter, uint16_t v_initial_raw)
 {
-    return static_cast<uint16_t>(counter ^ COUNTER_RECORD_XOR);
+    return COUNTER_RECORD_MAGIC ^ build_id ^
+           (static_cast<uint32_t>(counter) << 16) ^ v_initial_raw;
 }
 
 static inline bool isCounterRecordValid(const CounterRecord &record)
 {
     return record.magic == COUNTER_RECORD_MAGIC &&
-           record.checksum == counterChecksum(record.counter);
+           record.checksum == counterChecksum(record.build_id, record.counter, record.v_initial_raw);
 }
 
 static inline uint32_t counterRecordCapacity()
@@ -60,8 +73,13 @@ static inline uint32_t counterRecordAddress(uint32_t index)
 }
 
 static inline String
-buildTxPayload(const char *board_id, uint16_t cnt, uint16_t vbat_raw, TxTrigger tx_trigger)
+buildTxPayload(const char *board_id, uint16_t cnt, uint16_t vbat_raw, uint16_t v_initial_raw, TxTrigger tx_trigger)
 {
+    /** @note Signed delta: a negative value signals a battery change (new cell fuller than baseline). */
+    float drop_per_msg = (cnt > 0)
+        ? static_cast<float>(static_cast<int32_t>(v_initial_raw) - static_cast<int32_t>(vbat_raw)) / cnt
+        : 0.0f;
+
     JsonDocument doc;
     doc["TX_BOARD_ID"] = board_id;
     doc["TX_COUNTER"] = cnt;
@@ -70,6 +88,7 @@ buildTxPayload(const char *board_id, uint16_t cnt, uint16_t vbat_raw, TxTrigger 
     doc["TX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
     doc["TX_TRIGGER"] = txTriggerToString(tx_trigger);
     doc["TX_VBAT_RAW"] = vbat_raw;
+    doc["TX_VBAT_DROP_PER_MSG_RAW"] = drop_per_msg;
     String output_payload;
     serializeJson(doc, output_payload);
     return output_payload;
@@ -157,6 +176,8 @@ static inline const char *getBoardUidHex()
 void goToDeepSleep();
 
 uint16_t readMsgCounter();
+
+uint16_t readVInitialRaw();
 
 void saveMsgCounter(uint16_t cnt);
 
