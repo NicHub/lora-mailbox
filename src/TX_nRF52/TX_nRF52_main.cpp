@@ -5,29 +5,82 @@
  */
 
 #include <Arduino.h>
-#include <FreeRTOS.h>
 #include <nrf.h>
-#include <semphr.h>
 
 #include "TX_nRF52.h"
 #include "common/common.h"
 
-static SemaphoreHandle_t wakeup_sem;
+/**
+ * @note Sleep strategy: System-ON Low Power via raw `__WFE` driven by RTC2.
+ * @note The FreeRTOS-based variant tested earlier kept the chip too active
+ * (TinyUSB/SoftDevice tasks defeat tickless idle) and drew ~1000x more current.
+ * @note See README "TX low-power sleep strategy" for the rationale.
+ */
+
+/** @brief RTC2 prescaler producing an 8 Hz tick from the 32.768 kHz LF clock. */
+static constexpr uint32_t RTC2_PRESCALER = 4095;
+static constexpr uint32_t RTC2_TICKS_PER_SECOND = 8;
+static constexpr uint32_t RTC2_MAX_TICKS = 0x00FFFFFFUL;
+
+static volatile bool wakeup_pin_fired = false;
 static TxTrigger tx_trigger = TxTrigger::Boot;
 static uint32_t next_heartbeat_deadline_ms = 0;
 
-void onWakeupPinRise()
+extern "C" void RTC2_IRQHandler(void)
 {
-    BaseType_t higher_priority_woken = pdFALSE;
-    xSemaphoreGiveFromISR(wakeup_sem, &higher_priority_woken);
-    portYIELD_FROM_ISR(higher_priority_woken);
+    NRF_RTC2->EVENTS_COMPARE[0] = 0;
+}
+
+static void onWakeupPinRise()
+{
+    wakeup_pin_fired = true;
 }
 
 void setupRtcWakeup()
 {
-    wakeup_sem = xSemaphoreCreateBinary();
     pinMode(settings::board::WAKEUP_PIN, INPUT);
     attachInterrupt(digitalPinToInterrupt(settings::board::WAKEUP_PIN), onWakeupPinRise, RISING);
+
+    NRF_RTC2->PRESCALER = RTC2_PRESCALER;
+    NRF_RTC2->INTENSET = RTC_INTENSET_COMPARE0_Msk;
+    NVIC_SetPriority(RTC2_IRQn, 7);
+    NVIC_EnableIRQ(RTC2_IRQn);
+}
+
+/**
+ * @brief Sleep up to `seconds`, optionally waking on the wakeup pin.
+ * @param seconds Maximum sleep duration in seconds.
+ * @param pin_enabled If true, return early when the wakeup pin rises.
+ * @return true if the wakeup pin caused the wake, false on timeout.
+ */
+static bool sleepSecondsOrPin(uint32_t seconds, bool pin_enabled)
+{
+    if (pin_enabled && digitalRead(settings::board::WAKEUP_PIN))
+        return true;
+
+    wakeup_pin_fired = false;
+
+    uint32_t ticks = seconds * RTC2_TICKS_PER_SECOND;
+    if (ticks == 0)
+        ticks = 1;
+    if (ticks > RTC2_MAX_TICKS)
+        ticks = RTC2_MAX_TICKS;
+
+    NRF_RTC2->TASKS_STOP = 1;
+    NRF_RTC2->TASKS_CLEAR = 1;
+    NRF_RTC2->EVENTS_COMPARE[0] = 0;
+    NRF_RTC2->CC[0] = ticks;
+    NRF_RTC2->TASKS_START = 1;
+
+    while (!NRF_RTC2->EVENTS_COMPARE[0] && !(pin_enabled && wakeup_pin_fired))
+    {
+        __SEV();
+        __WFE();
+        __WFE();
+    }
+
+    NRF_RTC2->TASKS_STOP = 1;
+    return pin_enabled && wakeup_pin_fired;
 }
 
 static inline bool isHeartbeatDue(uint32_t now_ms)
@@ -107,8 +160,8 @@ void loop()
 
     writeRgbLeds(0, 0, 0);
 
-    /** @note Keep a short debounce window before re-checking wakeup conditions. */
-    delay(settings::misc::TX_DEBOUNCE_S * 1000);
+    /** @note Short debounce window before re-checking wakeup conditions. */
+    sleepSecondsOrPin(settings::misc::TX_DEBOUNCE_S, false);
 
     uint32_t now_ms = millis();
     if (isHeartbeatDue(now_ms))
@@ -121,12 +174,10 @@ void loop()
     }
     else
     {
-        /** @note Wait exactly until the next heartbeat or until an interrupt wakes us. */
-        uint32_t sleep_ms = next_heartbeat_deadline_ms - now_ms;
-        xSemaphoreTake(wakeup_sem, 0); // Clear any pending events
-        if (xSemaphoreTake(wakeup_sem, pdMS_TO_TICKS(sleep_ms)) == pdTRUE)
-            tx_trigger = TxTrigger::WakeupPinHigh;
-        else
-            tx_trigger = TxTrigger::HeartbeatTx;
+        /** @note Wait until the next heartbeat or until the wakeup pin rises. */
+        uint32_t remaining_ms = next_heartbeat_deadline_ms - now_ms;
+        uint32_t sleep_seconds = (remaining_ms + 999) / 1000;
+        tx_trigger = sleepSecondsOrPin(sleep_seconds, true) ? TxTrigger::WakeupPinHigh
+                                                            : TxTrigger::HeartbeatTx;
     }
 }

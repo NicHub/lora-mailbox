@@ -58,6 +58,25 @@ This project follows the [`readability-identifier-naming`](https://clang.llvm.or
 
 To check: `./scripts/tools/run_clang_tidy.sh [rx|tx|all]`
 
+## TX low-power sleep strategy
+
+The TX firmware (`src/TX_nRF52`) sleeps between transmissions using the
+nRF52 **System-ON Low Power** mode driven directly by `RTC2` and `__WFE`
+(see `sleepSecondsOrPin()` in `TX_nRF52_main.cpp`). This keeps the
+heartbeat alive while drawing only a few µA.
+
+Two alternatives were considered:
+
+| Mode              | Idle current | Heartbeat | Wake on pin | Notes                                                    |
+| ----------------- | ------------ | --------- | ----------- | -------------------------------------------------------- |
+| ✔ **SystemOnRtc** | ~5 µA        | yes       | yes         | Selected. RTC2 + `__WFE`, no FreeRTOS.                   |
+| ✗ SystemOff       | ~0.4 µA      | **no**    | yes         | Reset on wake; RTC cannot wake the chip from System-OFF. |
+
+A FreeRTOS-based variant (`xSemaphoreTake` / `delay`) was tried and
+rejected: with `SOFTDEVICE_PRESENT` and `USE_TINYUSB` enabled by the
+board file, the `usbd` and SoftDevice tasks defeat tickless idle, raising
+the idle current by roughly three orders of magnitude.
+
 ## LoRa settings
 
 The LoRa settings are defined in:
