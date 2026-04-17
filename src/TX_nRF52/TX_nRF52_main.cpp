@@ -160,13 +160,14 @@ void loop()
     sleepSecondsOrPin(settings::misc::TX_DEBOUNCE_S, false);
 
     uint32_t now_ms = millis();
-    if (isHeartbeatDue(now_ms))
+    if (digitalRead(settings::board::WAKEUP_PIN))
+    {
+        /** @note PIR first: a motion event must never be masked by a due heartbeat. */
+        tx_trigger = TxTrigger::WakeupPinHigh;
+    }
+    else if (isHeartbeatDue(now_ms))
     {
         tx_trigger = TxTrigger::HeartbeatTx;
-    }
-    else if (digitalRead(settings::board::WAKEUP_PIN))
-    {
-        tx_trigger = TxTrigger::WakeupPinHigh;
     }
     else
     {
