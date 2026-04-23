@@ -36,7 +36,6 @@ class LoraMailboxWifi
     bool was_connected = false;
     bool just_reconnected = false;
 
-    bool waitForConnection(uint32_t timeout_ms);
     void startServerIfNeeded();
     void registerNetworks();
 

@@ -8,17 +8,6 @@
 
 #include "index.html"
 
-bool LoraMailboxWifi::waitForConnection(uint32_t timeout_ms)
-{
-    uint32_t start = millis();
-    while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeout_ms)
-    {
-        delay(250);
-        Serial.print(".");
-    }
-    return WiFi.status() == WL_CONNECTED;
-}
-
 void LoraMailboxWifi::startServerIfNeeded()
 {
     if (server_started)

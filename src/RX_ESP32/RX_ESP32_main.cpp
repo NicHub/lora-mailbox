@@ -158,8 +158,9 @@ static bool isConfiguredSsid(const String &ssid)
     return false;
 }
 
-void addWifiNetworksToJsonDoc(uint8_t verbosity)
+void addWifiReportToJsonDoc(uint8_t verbosity)
 {
+    json_doc["RX"]["RX_WIFI_NETWORKS_REPORT_VERBOSITY"] = verbosity;
     if (verbosity == 0)
         return;
 
@@ -224,10 +225,15 @@ void addWifiNetworksToJsonDoc(uint8_t verbosity)
     }
 }
 
-void addWifiReportToJsonDoc(uint8_t verbosity)
+void addRxCommonFieldsToJsonDoc(const char *trigger)
 {
-    json_doc["RX"]["RX_WIFI_NETWORKS_REPORT_VERBOSITY"] = verbosity;
-    addWifiNetworksToJsonDoc(verbosity);
+    json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
+    json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
+    json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
+    json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
+    json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
+    json_doc["RX"]["RX_TRIGGER"] = trigger;
+    json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
 }
 
 void addLoraSettingsToJsonDoc()
@@ -252,13 +258,7 @@ void heartBeat()
     prev_heart_beat = now_ms;
 
     json_doc.clear();
-    json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
-    json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
-    json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
-    json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
-    json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
-    json_doc["RX"]["RX_TRIGGER"] = "HEARTBEAT_RX";
-    json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    addRxCommonFieldsToJsonDoc("HEARTBEAT_RX");
     addWifiReportToJsonDoc(1);
 
     serializeJson(json_doc, json_string);
@@ -293,14 +293,8 @@ void readLoRa()
             tx[kv.key()] = kv.value();
         tx["TX_JSON_STRING"] = json_string;
     }
-    json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
-    json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
-    json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
+    addRxCommonFieldsToJsonDoc("LORA_PAYLOAD_RECEIVED");
     json_doc["RX"]["RX_DEBUG"] = settings::misc::DEBUG;
-    json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
-    json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
-    json_doc["RX"]["RX_TRIGGER"] = "LORA_PAYLOAD_RECEIVED";
-    json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
     json_doc["RX"]["RX_WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
     addWifiReportToJsonDoc(1);
     addLoraSettingsToJsonDoc();
@@ -319,13 +313,7 @@ void readLoRa()
 void publishRxBootMessage()
 {
     json_doc.clear();
-    json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
-    json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
-    json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
-    json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
-    json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
-    json_doc["RX"]["RX_TRIGGER"] = "RX_BOOT";
-    json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    addRxCommonFieldsToJsonDoc("RX_BOOT");
     addWifiReportToJsonDoc(2);
     lmb_mqtt.sendMsg(json_doc);
 }
@@ -333,13 +321,7 @@ void publishRxBootMessage()
 void publishRxWifiReconnectedMessage()
 {
     json_doc.clear();
-    json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
-    json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
-    json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
-    json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
-    json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
-    json_doc["RX"]["RX_TRIGGER"] = "RX_WIFI_RECONNECTED";
-    json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    addRxCommonFieldsToJsonDoc("RX_WIFI_RECONNECTED");
     addWifiReportToJsonDoc(3);
 
     serializeJson(json_doc, json_string);
