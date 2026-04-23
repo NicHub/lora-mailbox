@@ -75,6 +75,8 @@ namespace settings::wifi
     static constexpr uint32_t CONNECT_RETRY_DELAY_MS = 500UL;
     static constexpr uint32_t RECONNECT_MIN_INTERVAL_MS = 5000UL;
     static constexpr uint32_t RECONNECT_TIMEOUT_MS = 8000UL;
+    /** @brief Delay before retrying after a reconnection attempt (covering all known APs) failed. */
+    static constexpr uint32_t RECONNECT_RETRY_DELAY_MS = 30000UL;
 }
 
 /** @brief LoRa settings. */

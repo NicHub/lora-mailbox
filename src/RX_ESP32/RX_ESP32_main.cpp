@@ -148,6 +148,88 @@ const char *getCurrentTime()
     return time_str;
 }
 
+static bool isConfiguredSsid(const String &ssid)
+{
+    for (const auto &cred : settings::wifi::NETWORKS)
+    {
+        if (cred.ssid != nullptr && cred.ssid[0] != '\0' && ssid == cred.ssid)
+            return true;
+    }
+    return false;
+}
+
+void addWifiNetworksToJsonDoc(uint8_t verbosity)
+{
+    if (verbosity == 0)
+        return;
+
+    JsonArray networks = json_doc["RX"]["RX_WIFI_NETWORKS"].to<JsonArray>();
+    const String connected_ssid = lmb_wifi.getConnectedSSID();
+    const String connected_bssid = lmb_wifi.getConnectedBSSID();
+
+    if (verbosity == 1)
+    {
+        /** @note No scan: single entry built from the live connection, no encryption. */
+        if (connected_ssid.length() == 0)
+            return;
+        JsonObject o = networks.add<JsonObject>();
+        o["ssid"] = connected_ssid;
+        o["bssid"] = connected_bssid;
+        o["rssi_dbm"] = lmb_wifi.getConnectedRSSI();
+        o["visible"] = true;
+        o["configured"] = isConfiguredSsid(connected_ssid);
+        o["connected"] = true;
+        return;
+    }
+
+    const auto &scan = lmb_wifi.getLastScan();
+    const bool include_unknown = (verbosity >= 3);
+
+    for (const auto &entry : scan)
+    {
+        bool is_configured = isConfiguredSsid(entry.ssid);
+        bool is_connected = (entry.ssid == connected_ssid && entry.bssid == connected_bssid);
+        if (!include_unknown && !is_configured && !is_connected)
+            continue;
+        JsonObject o = networks.add<JsonObject>();
+        o["ssid"] = entry.ssid;
+        o["bssid"] = entry.bssid;
+        o["rssi_dbm"] = entry.rssi_dbm;
+        o["encryption"] = LoraMailboxWifi::encryptionToString(entry.encryption_type);
+        o["visible"] = true;
+        o["configured"] = is_configured;
+        o["connected"] = is_connected;
+    }
+
+    for (const auto &cred : settings::wifi::NETWORKS)
+    {
+        if (cred.ssid == nullptr || cred.ssid[0] == '\0')
+            continue;
+        bool in_scan = false;
+        for (const auto &entry : scan)
+        {
+            if (entry.ssid == cred.ssid)
+            {
+                in_scan = true;
+                break;
+            }
+        }
+        if (in_scan)
+            continue;
+        JsonObject o = networks.add<JsonObject>();
+        o["ssid"] = cred.ssid;
+        o["visible"] = false;
+        o["configured"] = true;
+        o["connected"] = false;
+    }
+}
+
+void addWifiReportToJsonDoc(uint8_t verbosity)
+{
+    json_doc["RX"]["RX_WIFI_NETWORKS_REPORT_VERBOSITY"] = verbosity;
+    addWifiNetworksToJsonDoc(verbosity);
+}
+
 void addLoraSettingsToJsonDoc()
 {
     json_doc["LORA"]["LORA_FREQ"] = settings::lora::FREQ;
@@ -177,6 +259,7 @@ void heartBeat()
     json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
     json_doc["RX"]["RX_TRIGGER"] = "HEARTBEAT_RX";
     json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    addWifiReportToJsonDoc(1);
 
     serializeJson(json_doc, json_string);
     if (settings::misc::SERIAL_VERBOSITY == 2)
@@ -219,6 +302,7 @@ void readLoRa()
     json_doc["RX"]["RX_TRIGGER"] = "LORA_PAYLOAD_RECEIVED";
     json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
     json_doc["RX"]["RX_WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
+    addWifiReportToJsonDoc(1);
     addLoraSettingsToJsonDoc();
     json_doc["RX_TX"]["RX_TX_RSSI_DBM"] = radio.getRSSI();
     json_doc["RX_TX"]["RX_TX_SNR_DB"] = radio.getSNR();
@@ -232,16 +316,48 @@ void readLoRa()
     }
 }
 
+void publishRxBootMessage()
+{
+    json_doc.clear();
+    json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
+    json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
+    json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
+    json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
+    json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
+    json_doc["RX"]["RX_TRIGGER"] = "RX_BOOT";
+    json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    addWifiReportToJsonDoc(2);
+    lmb_mqtt.sendMsg(json_doc);
+}
+
+void publishRxWifiReconnectedMessage()
+{
+    json_doc.clear();
+    json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
+    json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
+    json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
+    json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
+    json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
+    json_doc["RX"]["RX_TRIGGER"] = "RX_WIFI_RECONNECTED";
+    json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
+    addWifiReportToJsonDoc(3);
+
+    serializeJson(json_doc, json_string);
+    if (settings::misc::SERIAL_VERBOSITY == 2)
+        Serial.println(json_string);
+    lmb_wifi.sendMsg(json_string);
+    lmb_mqtt.sendMsg(json_doc);
+}
+
 void setupMQTT()
 {
     lmb_mqtt.begin();
-    lmb_mqtt.sendMsg(json_doc);
+    publishRxBootMessage();
 }
 
 void setupWiFi()
 {
     lmb_wifi.begin();
-    lmb_wifi.synchronizeNTPTime();
 }
 
 void setupLoRaRX()
@@ -279,6 +395,8 @@ void loop()
 {
     statusLed.update();
     lmb_wifi.ensureWiFiConnected();
+    if (lmb_wifi.consumeReconnectedEvent())
+        publishRxWifiReconnectedMessage();
     heartBeat();
     yield();
     if (!loraEvent)

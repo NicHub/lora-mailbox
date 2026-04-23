@@ -55,28 +55,80 @@ void LoraMailboxWifi::startServerIfNeeded()
     server_started = true;
 }
 
-void LoraMailboxWifi::scanWiFiNetworks()
+const char *LoraMailboxWifi::encryptionToString(uint8_t type)
 {
+    switch (type)
+    {
+        case WIFI_AUTH_OPEN:             return "open";
+        case WIFI_AUTH_WEP:              return "WEP";
+        case WIFI_AUTH_WPA_PSK:          return "WPA";
+        case WIFI_AUTH_WPA2_PSK:         return "WPA2";
+        case WIFI_AUTH_WPA_WPA2_PSK:     return "WPA/WPA2";
+        case WIFI_AUTH_WPA2_ENTERPRISE:  return "WPA2-Enterprise";
+        case WIFI_AUTH_WPA3_PSK:         return "WPA3";
+        case WIFI_AUTH_WPA2_WPA3_PSK:    return "WPA2/WPA3";
+        case WIFI_AUTH_WAPI_PSK:         return "WAPI";
+        default:                         return "unknown";
+    }
+}
+
+void LoraMailboxWifi::scanAndCacheNetworks()
+{
+    last_scan.clear();
+
     Serial.println("Scanning for WiFi networks...");
     int networks_found = WiFi.scanNetworks();
-    if (networks_found == 0)
+    if (networks_found <= 0)
     {
-        Serial.println("No networks found!");
+        Serial.println(networks_found == 0 ? "No networks found!" : "WiFi scan failed");
         return;
     }
-    Serial.print(networks_found);
-    Serial.println(" networks found:");
+    last_scan.reserve(networks_found);
     for (int i = 0; i < networks_found; ++i)
     {
-        /** @note Print SSID and RSSI for each network found. */
-        Serial.print(i + 1);
-        Serial.print(": ");
-        Serial.print(WiFi.SSID(i));
-        Serial.print(" (");
-        Serial.print(WiFi.RSSI(i));
-        Serial.print(" dBm)");
-        Serial.println((WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " [open]" : " [encrypted]");
-        delay(10);
+        ScanEntry entry;
+        entry.ssid = WiFi.SSID(i);
+        entry.bssid = WiFi.BSSIDstr(i);
+        entry.rssi_dbm = WiFi.RSSI(i);
+        entry.encryption_type = static_cast<uint8_t>(WiFi.encryptionType(i));
+        last_scan.push_back(std::move(entry));
+    }
+
+    Serial.printf("%d networks found:\n", networks_found);
+    const String connected_ssid = getConnectedSSID();
+    const String connected_bssid = getConnectedBSSID();
+    for (size_t i = 0; i < last_scan.size(); ++i)
+    {
+        const ScanEntry &e = last_scan[i];
+        bool is_configured = false;
+        for (const auto &cred : settings::wifi::NETWORKS)
+        {
+            if (cred.ssid != nullptr && cred.ssid[0] != '\0' && e.ssid == cred.ssid)
+            {
+                is_configured = true;
+                break;
+            }
+        }
+        bool is_connected = (e.ssid == connected_ssid && e.bssid == connected_bssid);
+        Serial.printf(
+            "  %u: %s (%d dBm) [%s]%s%s\n",
+            static_cast<unsigned>(i + 1),
+            e.ssid.c_str(),
+            e.rssi_dbm,
+            encryptionToString(e.encryption_type),
+            is_configured ? " [configured]" : "",
+            is_connected ? " [connected]" : "");
+    }
+}
+
+void LoraMailboxWifi::registerNetworks()
+{
+    for (const auto &cred : settings::wifi::NETWORKS)
+    {
+        if (cred.ssid == nullptr || cred.ssid[0] == '\0')
+            continue;
+        wifi_multi.addAP(cred.ssid, cred.password);
+        Serial.printf("Registered WiFi network: \"%s\"\n", cred.ssid);
     }
 }
 
@@ -84,26 +136,33 @@ bool LoraMailboxWifi::begin()
 {
     WiFi.mode(WIFI_STA);
     WiFi.persistent(false);
-    WiFi.setAutoReconnect(true);
+    /**
+     * @note setAutoReconnect(false): the ESP32 stack would otherwise silently re-attempt
+     * the last used SSID on disconnect, which conflicts with WiFiMulti's scan-and-pick
+     * strategy. We let WiFiMulti.run() drive every (re)connection.
+     */
+    WiFi.setAutoReconnect(false);
+
+    registerNetworks();
 
     while (WiFi.status() != WL_CONNECTED)
     {
-        Serial.println("\nConnecting to WiFi");
-
-        WiFi.begin(settings::wifi::SSID, settings::wifi::PASSWORD);
-        waitForConnection(settings::wifi::CONNECT_TIMEOUT_MS);
-        if (WiFi.status() != WL_CONNECTED)
+        Serial.println("\nConnecting to WiFi (WiFiMulti)");
+        uint8_t result = wifi_multi.run(settings::wifi::CONNECT_TIMEOUT_MS);
+        if (result != WL_CONNECTED)
         {
-            Serial.println("\nWiFi connection failed");
+            Serial.printf("\nWiFi connection failed (status=%u), retrying...\n", result);
             delay(settings::wifi::CONNECT_RETRY_DELAY_MS);
-            scanWiFiNetworks();
         }
     }
 
-    Serial.println("\nConnected to WiFi");
+    Serial.printf("\nConnected to WiFi \"%s\" (%d dBm)\n", WiFi.SSID().c_str(), WiFi.RSSI());
     Serial.print("IP address: \nhttp://");
     Serial.println(WiFi.localIP());
+    was_connected = true;
 
+    scanAndCacheNetworks();
+    synchronizeNTPTime();
     startServerIfNeeded();
     return true;
 }
@@ -111,26 +170,48 @@ bool LoraMailboxWifi::begin()
 bool LoraMailboxWifi::ensureWiFiConnected()
 {
     if (WiFi.status() == WL_CONNECTED)
+    {
+        was_connected = true;
         return true;
+    }
 
     uint32_t now = millis();
     if ((now - last_reconnect_attempt_ms) < settings::wifi::RECONNECT_MIN_INTERVAL_MS)
         return false;
     last_reconnect_attempt_ms = now;
 
-    Serial.printf("WiFi disconnected (status=%d), trying reconnect...\n", WiFi.status());
+    Serial.printf("WiFi disconnected (status=%d), trying WiFiMulti.run()...\n", WiFi.status());
 
-    WiFi.disconnect(false, false);
-    WiFi.begin(settings::wifi::SSID, settings::wifi::PASSWORD);
-    if (!waitForConnection(settings::wifi::RECONNECT_TIMEOUT_MS))
+    uint8_t result = wifi_multi.run(settings::wifi::RECONNECT_TIMEOUT_MS);
+    if (result != WL_CONNECTED)
     {
-        Serial.println("WiFi reconnect failed");
+        Serial.printf("WiFi reconnect failed (status=%u)\n", result);
+        /** @note Extra delay after a full reconnection round failed. */
+        if (was_connected)
+        {
+            last_reconnect_attempt_ms =
+                now + settings::wifi::RECONNECT_RETRY_DELAY_MS
+                - settings::wifi::RECONNECT_MIN_INTERVAL_MS;
+            was_connected = false;
+        }
         return false;
     }
 
-    Serial.print("WiFi reconnected, IP: ");
+    Serial.printf(
+        "WiFi reconnected to \"%s\" (%d dBm), IP: ", WiFi.SSID().c_str(), WiFi.RSSI());
     Serial.println(WiFi.localIP());
+    was_connected = true;
+    just_reconnected = true;
+    scanAndCacheNetworks();
     synchronizeNTPTime();
+    return true;
+}
+
+bool LoraMailboxWifi::consumeReconnectedEvent()
+{
+    if (!just_reconnected)
+        return false;
+    just_reconnected = false;
     return true;
 }
 
@@ -182,4 +263,19 @@ IPAddress LoraMailboxWifi::getLocalIP()
 uint32_t LoraMailboxWifi::getWsClientCount()
 {
     return ws.count();
+}
+
+String LoraMailboxWifi::getConnectedSSID() const
+{
+    return (WiFi.status() == WL_CONNECTED) ? WiFi.SSID() : String();
+}
+
+String LoraMailboxWifi::getConnectedBSSID() const
+{
+    return (WiFi.status() == WL_CONNECTED) ? WiFi.BSSIDstr() : String();
+}
+
+int32_t LoraMailboxWifi::getConnectedRSSI() const
+{
+    return (WiFi.status() == WL_CONNECTED) ? WiFi.RSSI() : 0;
 }
