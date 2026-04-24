@@ -121,6 +121,7 @@ namespace settings::ntfy
 {
     static constexpr bool ENABLED = true;
     static constexpr bool NOTIFY_HEARTBEAT_TX = true;
+    static constexpr bool NOTIFY_WIFI_RECONNECTED = true;
     static constexpr char SERVER[] = "https://ntfy.ouilogique.ch/";
     static constexpr char TOPIC[] = ROOT_TOPIC;
     static constexpr char MD_CODE_TAG[] = "";
@@ -136,4 +137,8 @@ namespace settings::ntfy
     static constexpr NTFYPriority BOOT_PRIORITY = NTFYPriority::Default;
     static constexpr char BOOT_ICON[] = "🚀";
     static constexpr char BOOT_TITLE_SUFFIX[] = " boot";
+
+    static constexpr NTFYPriority WIFI_RECONNECTED_PRIORITY = NTFYPriority::High;
+    static constexpr char WIFI_RECONNECTED_ICON[] = "📶";
+    static constexpr char WIFI_RECONNECTED_TITLE_SUFFIX[] = " wifi reconnected";
 }

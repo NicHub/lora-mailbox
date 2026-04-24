@@ -53,6 +53,12 @@ const char *LoraMailboxNtfy::getNTFYTitleSuffix(TxTrigger tx_trigger) const
     }
 }
 
+bool LoraMailboxNtfy::isRxWifiReconnectedEvent(const JsonDocument &json_doc) const
+{
+    RxTrigger rx_trigger = rxTriggerFromString(json_doc["RX"]["RX_TRIGGER"] | "");
+    return rx_trigger == RxTrigger::WifiReconnected;
+}
+
 TxTrigger LoraMailboxNtfy::getNTFYTrigger(const JsonDocument &json_doc) const
 {
     if (!settings::ntfy::ENABLED)
@@ -87,6 +93,24 @@ String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
         return "";
     }
 
+    const char *md_code_tag = settings::ntfy::MD_CODE_TAG;
+    String connected_wifi_ssid = getConnectedWifiSsid(json_doc);
+
+    if (isRxWifiReconnectedEvent(json_doc))
+    {
+        String text;
+        text += md_code_tag;
+        text += "SSID ";
+        text += connected_wifi_ssid;
+        text += md_code_tag;
+        text += "\n";
+        text += md_code_tag;
+        text += "URL ";
+        text += json_doc["RX"]["RX_WEB_UI_URL"] | "";
+        text += md_code_tag;
+        return text;
+    }
+
     uint16_t counter_value = json_doc["RX"]["RX_COUNTER"] | 0;
     const char *counter_status = json_doc["RX_TX"]["RX_TX_COUNTER_STATUS"] | "";
     uint16_t tx_vbat_raw = json_doc["TX"]["TX_VBAT_RAW"] | 0;
@@ -96,9 +120,6 @@ String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
     const char *tx_vbat_status = json_doc["TX"]["TX_VBAT_STATUS"] | "";
     float rx_tx_rssi_dbm = json_doc["RX_TX"]["RX_TX_RSSI_DBM"] | 0.0f;
     float rx_tx_snr_db = json_doc["RX_TX"]["RX_TX_SNR_DB"] | 0.0f;
-    const char *md_code_tag = settings::ntfy::MD_CODE_TAG;
-    String connected_wifi_ssid = getConnectedWifiSsid(json_doc);
-
     String text;
     text += md_code_tag;
     text += "bat ";
@@ -155,6 +176,21 @@ NTFYMessage LoraMailboxNtfy::buildNTFYMessage(const JsonDocument &json_doc) cons
     if (getLocalTime(&timeinfo))
         strftime(time_str, sizeof(time_str), "%H:%M:%S", &timeinfo);
 
+    if (isRxWifiReconnectedEvent(json_doc))
+    {
+        String title = String(settings::ntfy::WIFI_RECONNECTED_ICON) + " ";
+        if (time_str[0] != '\0')
+            title += String(time_str);
+        title += " @" + String(settings::misc::RECIPIENT_NAME);
+        title += settings::ntfy::WIFI_RECONNECTED_TITLE_SUFFIX;
+        return NTFYMessage{
+            TxTrigger::Boot,
+            settings::ntfy::WIFI_RECONNECTED_PRIORITY,
+            title,
+            buildNTFYBody(json_doc),
+        };
+    }
+
     const char *ntfy_icon = getNTFYIcon(tx_trigger);
     const char *ntfy_title_suffix = getNTFYTitleSuffix(tx_trigger);
     String title;
@@ -181,6 +217,9 @@ bool LoraMailboxNtfy::sendMsg(const JsonDocument &json_doc, const String &topic)
         (void)topic;
         return false;
     }
+
+    if (isRxWifiReconnectedEvent(json_doc) && !settings::ntfy::NOTIFY_WIFI_RECONNECTED)
+        return false;
 
     if (WiFi.status() != WL_CONNECTED)
         return false;
