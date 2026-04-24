@@ -61,6 +61,16 @@ const char *LoraMailboxWifi::encryptionToString(uint8_t type)
     }
 }
 
+bool LoraMailboxWifi::isConfiguredSsid(const String &ssid) const
+{
+    for (const auto &cred : settings::wifi::NETWORKS)
+    {
+        if (cred.ssid != nullptr && cred.ssid[0] != '\0' && ssid == cred.ssid)
+            return true;
+    }
+    return false;
+}
+
 void LoraMailboxWifi::scanAndCacheNetworks()
 {
     last_scan.clear();
@@ -89,15 +99,7 @@ void LoraMailboxWifi::scanAndCacheNetworks()
     for (size_t i = 0; i < last_scan.size(); ++i)
     {
         const ScanEntry &e = last_scan[i];
-        bool is_configured = false;
-        for (const auto &cred : settings::wifi::NETWORKS)
-        {
-            if (cred.ssid != nullptr && cred.ssid[0] != '\0' && e.ssid == cred.ssid)
-            {
-                is_configured = true;
-                break;
-            }
-        }
+        bool is_configured = isConfiguredSsid(e.ssid);
         bool is_connected = (e.ssid == connected_ssid && e.bssid == connected_bssid);
         Serial.printf(
             "  %u: %s (%d dBm) [%s]%s%s\n",

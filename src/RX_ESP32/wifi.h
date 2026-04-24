@@ -54,6 +54,7 @@ class LoraMailboxWifi
     String getConnectedSSID() const;
     String getConnectedBSSID() const;
     int32_t getConnectedRSSI() const;
+    bool isConfiguredSsid(const String &ssid) const;
     const std::vector<ScanEntry> &getLastScan() const { return last_scan; }
     /** @brief Returns true once after a successful reconnection; self-clears. */
     bool consumeReconnectedEvent();

@@ -148,16 +148,6 @@ const char *getCurrentTime()
     return time_str;
 }
 
-static bool isConfiguredSsid(const String &ssid)
-{
-    for (const auto &cred : settings::wifi::NETWORKS)
-    {
-        if (cred.ssid != nullptr && cred.ssid[0] != '\0' && ssid == cred.ssid)
-            return true;
-    }
-    return false;
-}
-
 void addWifiReportToJsonDoc(uint8_t verbosity)
 {
     json_doc["RX"]["RX_WIFI_NETWORKS_REPORT_VERBOSITY"] = verbosity;
@@ -178,7 +168,7 @@ void addWifiReportToJsonDoc(uint8_t verbosity)
         o["bssid"] = connected_bssid;
         o["rssi_dbm"] = lmb_wifi.getConnectedRSSI();
         o["visible"] = true;
-        o["configured"] = isConfiguredSsid(connected_ssid);
+        o["configured"] = lmb_wifi.isConfiguredSsid(connected_ssid);
         o["connected"] = true;
         return;
     }
@@ -188,7 +178,7 @@ void addWifiReportToJsonDoc(uint8_t verbosity)
 
     for (const auto &entry : scan)
     {
-        bool is_configured = isConfiguredSsid(entry.ssid);
+        bool is_configured = lmb_wifi.isConfiguredSsid(entry.ssid);
         bool is_connected = (entry.ssid == connected_ssid && entry.bssid == connected_bssid);
         if (!include_unknown && !is_configured && !is_connected)
             continue;
