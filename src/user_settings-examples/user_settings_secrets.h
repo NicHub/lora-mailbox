@@ -14,8 +14,8 @@ namespace settings::wifi
         const char *password;
     };
 
-    /** @brief Declare any number of WiFi networks. RX connects to the one with the best RSSI
-     * among those visible, and falls back to another when the current one becomes unreachable. */
+    /** @brief Declare any number of WiFi networks. RX either tries them in this exact order or
+     * picks the strongest visible one, depending on CONNECTION_PRIORITY. */
     static constexpr Credentials NETWORKS[] = {
         {"ssid example 0", "password example 0"},
         {"ssid example 1", "password example 1"},

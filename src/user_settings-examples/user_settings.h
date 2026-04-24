@@ -68,14 +68,29 @@ namespace settings::ntp
     static constexpr uint32_t SYNC_RETRY_DELAY_MS = 500UL;
 }
 
-/** @brief Wi-Fi settings. */
+/** @brief Wi-Fi settings:
+ * CONNECTION_PRIORITY selects whether RX prefers the strongest configured SSID
+ * currently visible (`SignalStrength`) or simply tries the configured SSIDs in
+ * declaration order (`SettingsOrder`).
+ * CONNECT_TIMEOUT_MS is the maximum duration of one initial connection attempt.
+ * CONNECT_RETRY_DELAY_MS is the pause before retrying after an initial failure.
+ * RECONNECT_MIN_INTERVAL_MS is the minimum spacing between reconnect attempts.
+ * RECONNECT_TIMEOUT_MS is the maximum duration of one reconnect attempt.
+ * RECONNECT_RETRY_DELAY_MS is the extra backoff after a full reconnect round
+ * over all candidate networks failed.
+ */
 namespace settings::wifi
 {
+    enum class ConnectionPriority : uint8_t
+    {
+        SignalStrength,
+        SettingsOrder,
+    };
+    static constexpr ConnectionPriority CONNECTION_PRIORITY = ConnectionPriority::SettingsOrder;
     static constexpr uint32_t CONNECT_TIMEOUT_MS = 10000UL;
     static constexpr uint32_t CONNECT_RETRY_DELAY_MS = 500UL;
     static constexpr uint32_t RECONNECT_MIN_INTERVAL_MS = 5000UL;
     static constexpr uint32_t RECONNECT_TIMEOUT_MS = 8000UL;
-    /** @brief Delay before retrying after a reconnection attempt (covering all known APs) failed. */
     static constexpr uint32_t RECONNECT_RETRY_DELAY_MS = 30000UL;
 }
 

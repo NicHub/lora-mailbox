@@ -38,6 +38,9 @@ class LoraMailboxWifi
 
     void startServerIfNeeded();
     void registerNetworks();
+    bool connectBySignalStrength(uint32_t timeout_ms);
+    bool connectInSettingsOrder(uint32_t timeout_ms);
+    bool connectConfiguredNetwork(const char *ssid, const char *password, uint32_t timeout_ms);
 
   public:
     LoraMailboxWifi()

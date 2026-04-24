@@ -123,6 +123,47 @@ void LoraMailboxWifi::registerNetworks()
     }
 }
 
+bool LoraMailboxWifi::connectConfiguredNetwork(
+    const char *ssid,
+    const char *password,
+    uint32_t timeout_ms)
+{
+    if (ssid == nullptr || ssid[0] == '\0')
+        return false;
+
+    Serial.printf("Trying WiFi network in settings order: \"%s\"\n", ssid);
+    WiFi.disconnect(true, true);
+    delay(50);
+    WiFi.begin(ssid, password);
+
+    uint32_t start_ms = millis();
+    while (millis() - start_ms < timeout_ms)
+    {
+        if (WiFi.status() == WL_CONNECTED)
+            return true;
+        delay(100);
+    }
+
+    Serial.printf("WiFi connection timed out for \"%s\" (status=%d)\n", ssid, WiFi.status());
+    return false;
+}
+
+bool LoraMailboxWifi::connectBySignalStrength(uint32_t timeout_ms)
+{
+    uint8_t result = wifi_multi.run(timeout_ms);
+    return result == WL_CONNECTED;
+}
+
+bool LoraMailboxWifi::connectInSettingsOrder(uint32_t timeout_ms)
+{
+    for (const auto &cred : settings::wifi::NETWORKS)
+    {
+        if (connectConfiguredNetwork(cred.ssid, cred.password, timeout_ms))
+            return true;
+    }
+    return false;
+}
+
 bool LoraMailboxWifi::begin()
 {
     WiFi.mode(WIFI_STA);
@@ -138,11 +179,22 @@ bool LoraMailboxWifi::begin()
 
     while (WiFi.status() != WL_CONNECTED)
     {
-        Serial.println("\nConnecting to WiFi (WiFiMulti)");
-        uint8_t result = wifi_multi.run(settings::wifi::CONNECT_TIMEOUT_MS);
-        if (result != WL_CONNECTED)
+        bool connected = false;
+        switch (settings::wifi::CONNECTION_PRIORITY)
         {
-            Serial.printf("\nWiFi connection failed (status=%u), retrying...\n", result);
+            case settings::wifi::ConnectionPriority::SettingsOrder:
+                Serial.println("\nConnecting to WiFi (settings order)");
+                connected = connectInSettingsOrder(settings::wifi::CONNECT_TIMEOUT_MS);
+                break;
+            case settings::wifi::ConnectionPriority::SignalStrength:
+            default:
+                Serial.println("\nConnecting to WiFi (best configured RSSI)");
+                connected = connectBySignalStrength(settings::wifi::CONNECT_TIMEOUT_MS);
+                break;
+        }
+        if (!connected)
+        {
+            Serial.printf("\nWiFi connection failed (status=%d), retrying...\n", WiFi.status());
             delay(settings::wifi::CONNECT_RETRY_DELAY_MS);
         }
     }
@@ -171,12 +223,26 @@ bool LoraMailboxWifi::ensureWiFiConnected()
         return false;
     last_reconnect_attempt_ms = now;
 
-    Serial.printf("WiFi disconnected (status=%d), trying WiFiMulti.run()...\n", WiFi.status());
-
-    uint8_t result = wifi_multi.run(settings::wifi::RECONNECT_TIMEOUT_MS);
-    if (result != WL_CONNECTED)
+    bool connected = false;
+    switch (settings::wifi::CONNECTION_PRIORITY)
     {
-        Serial.printf("WiFi reconnect failed (status=%u)\n", result);
+        case settings::wifi::ConnectionPriority::SettingsOrder:
+            Serial.printf(
+                "WiFi disconnected (status=%d), trying configured networks in settings order...\n",
+                WiFi.status());
+            connected = connectInSettingsOrder(settings::wifi::RECONNECT_TIMEOUT_MS);
+            break;
+        case settings::wifi::ConnectionPriority::SignalStrength:
+        default:
+            Serial.printf(
+                "WiFi disconnected (status=%d), trying WiFiMulti.run()...\n", WiFi.status());
+            connected = connectBySignalStrength(settings::wifi::RECONNECT_TIMEOUT_MS);
+            break;
+    }
+
+    if (!connected)
+    {
+        Serial.printf("WiFi reconnect failed (status=%d)\n", WiFi.status());
         /** @note Extra delay after a full reconnection round failed. */
         if (was_connected)
         {
