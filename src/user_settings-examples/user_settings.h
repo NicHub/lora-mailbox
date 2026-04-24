@@ -72,12 +72,9 @@ namespace settings::ntp
  * CONNECTION_PRIORITY selects whether RX prefers the strongest configured SSID
  * currently visible (`SignalStrength`) or simply tries the configured SSIDs in
  * declaration order (`SettingsOrder`).
- * CONNECT_TIMEOUT_MS is the maximum duration of one initial connection attempt.
- * CONNECT_RETRY_DELAY_MS is the pause before retrying after an initial failure.
- * RECONNECT_MIN_INTERVAL_MS is the minimum spacing between reconnect attempts.
- * RECONNECT_TIMEOUT_MS is the maximum duration of one reconnect attempt.
- * RECONNECT_RETRY_DELAY_MS is the extra backoff after a full reconnect round
- * over all candidate networks failed.
+ * CONNECT_TIMEOUT_MS is the maximum duration of one connection attempt,
+ * whether during boot or after a disconnect.
+ * RETRY_DELAY_MS is the pause before a new attempt after a failure.
  */
 namespace settings::wifi
 {
@@ -88,10 +85,7 @@ namespace settings::wifi
     };
     static constexpr ConnectionPriority CONNECTION_PRIORITY = ConnectionPriority::SettingsOrder;
     static constexpr uint32_t CONNECT_TIMEOUT_MS = 10000UL;
-    static constexpr uint32_t CONNECT_RETRY_DELAY_MS = 500UL;
-    static constexpr uint32_t RECONNECT_MIN_INTERVAL_MS = 5000UL;
-    static constexpr uint32_t RECONNECT_TIMEOUT_MS = 8000UL;
-    static constexpr uint32_t RECONNECT_RETRY_DELAY_MS = 30000UL;
+    static constexpr uint32_t RETRY_DELAY_MS = 30000UL;
 }
 
 /** @brief LoRa settings. */

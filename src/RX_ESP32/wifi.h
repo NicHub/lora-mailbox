@@ -31,7 +31,7 @@ class LoraMailboxWifi
     WiFiMulti wifi_multi;
     String latest_message = "";
     std::vector<ScanEntry> last_scan;
-    uint32_t last_reconnect_attempt_ms = 0;
+    uint32_t next_reconnect_attempt_ms = 0;
     bool server_started = false;
     bool was_connected = false;
     bool just_reconnected = false;

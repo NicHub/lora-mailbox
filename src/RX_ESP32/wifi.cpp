@@ -195,7 +195,7 @@ bool LoraMailboxWifi::begin()
         if (!connected)
         {
             Serial.printf("\nWiFi connection failed (status=%d), retrying...\n", WiFi.status());
-            delay(settings::wifi::CONNECT_RETRY_DELAY_MS);
+            delay(settings::wifi::RETRY_DELAY_MS);
         }
     }
 
@@ -219,9 +219,8 @@ bool LoraMailboxWifi::ensureWiFiConnected()
     }
 
     uint32_t now = millis();
-    if ((now - last_reconnect_attempt_ms) < settings::wifi::RECONNECT_MIN_INTERVAL_MS)
+    if (now < next_reconnect_attempt_ms)
         return false;
-    last_reconnect_attempt_ms = now;
 
     bool connected = false;
     switch (settings::wifi::CONNECTION_PRIORITY)
@@ -230,27 +229,21 @@ bool LoraMailboxWifi::ensureWiFiConnected()
             Serial.printf(
                 "WiFi disconnected (status=%d), trying configured networks in settings order...\n",
                 WiFi.status());
-            connected = connectInSettingsOrder(settings::wifi::RECONNECT_TIMEOUT_MS);
+            connected = connectInSettingsOrder(settings::wifi::CONNECT_TIMEOUT_MS);
             break;
         case settings::wifi::ConnectionPriority::SignalStrength:
         default:
             Serial.printf(
                 "WiFi disconnected (status=%d), trying WiFiMulti.run()...\n", WiFi.status());
-            connected = connectBySignalStrength(settings::wifi::RECONNECT_TIMEOUT_MS);
+            connected = connectBySignalStrength(settings::wifi::CONNECT_TIMEOUT_MS);
             break;
     }
 
     if (!connected)
     {
         Serial.printf("WiFi reconnect failed (status=%d)\n", WiFi.status());
-        /** @note Extra delay after a full reconnection round failed. */
-        if (was_connected)
-        {
-            last_reconnect_attempt_ms =
-                now + settings::wifi::RECONNECT_RETRY_DELAY_MS
-                - settings::wifi::RECONNECT_MIN_INTERVAL_MS;
-            was_connected = false;
-        }
+        next_reconnect_attempt_ms = now + settings::wifi::RETRY_DELAY_MS;
+        was_connected = false;
         return false;
     }
 
@@ -259,6 +252,7 @@ bool LoraMailboxWifi::ensureWiFiConnected()
     Serial.println(WiFi.localIP());
     was_connected = true;
     just_reconnected = true;
+    next_reconnect_attempt_ms = 0;
     scanAndCacheNetworks();
     synchronizeNTPTime();
     return true;
