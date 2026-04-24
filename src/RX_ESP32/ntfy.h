@@ -15,7 +15,7 @@
 #include <WiFiClientSecure.h>
 #include <time.h>
 #include "common/ntfy_types.h"
-#include "common/rx_types.h"
+#include "common/tx_types.h"
 #include "user_settings/user_settings.h"
 
 class LoraMailboxNtfy
@@ -28,10 +28,10 @@ class LoraMailboxNtfy
     NTFYPriority getNTFYPriority(TxTrigger tx_trigger) const;
     const char *getNTFYIcon(TxTrigger tx_trigger) const;
     const char *getNTFYTitleSuffix(TxTrigger tx_trigger) const;
-    bool isRxWifiReconnectedEvent(const JsonDocument &json_doc) const;
     TxTrigger getNTFYTrigger(const JsonDocument &json_doc) const;
     String getConnectedWifiSsid(const JsonDocument &json_doc) const;
-    String buildNTFYBody(const JsonDocument &json_doc) const;
+    String buildNTFYTitle(const char *icon, const char *time_str, const char *suffix) const;
+    String buildNTFYBody(const JsonDocument &json_doc, bool is_wifi_reconnected) const;
     NTFYMessage buildNTFYMessage(const JsonDocument &json_doc) const;
     bool sendMsg(const JsonDocument &json_doc, const String &topic = settings::ntfy::TOPIC);
 };

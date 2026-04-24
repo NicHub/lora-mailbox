@@ -320,7 +320,8 @@ void publishRxWifiReconnectedMessage()
         Serial.println(json_string);
     lmb_wifi.sendMsg(json_string);
     lmb_mqtt.sendMsg(json_doc);
-    lmb_ntfy.sendMsg(json_doc);
+    if (settings::ntfy::NOTIFY_WIFI_RECONNECTED)
+        lmb_ntfy.sendMsg(json_doc);
 }
 
 void setupMQTT()

@@ -7,6 +7,7 @@
  */
 
 #include "ntfy.h"
+#include "common/rx_types.h"
 
 NTFYPriority LoraMailboxNtfy::getNTFYPriority(TxTrigger tx_trigger) const
 {
@@ -53,12 +54,6 @@ const char *LoraMailboxNtfy::getNTFYTitleSuffix(TxTrigger tx_trigger) const
     }
 }
 
-bool LoraMailboxNtfy::isRxWifiReconnectedEvent(const JsonDocument &json_doc) const
-{
-    RxTrigger rx_trigger = rxTriggerFromString(json_doc["RX"]["RX_TRIGGER"] | "");
-    return rx_trigger == RxTrigger::WifiReconnected;
-}
-
 TxTrigger LoraMailboxNtfy::getNTFYTrigger(const JsonDocument &json_doc) const
 {
     if (!settings::ntfy::ENABLED)
@@ -85,7 +80,7 @@ String LoraMailboxNtfy::getConnectedWifiSsid(const JsonDocument &json_doc) const
     return "";
 }
 
-String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
+String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc, bool is_wifi_reconnected) const
 {
     if (!settings::ntfy::ENABLED)
     {
@@ -96,7 +91,7 @@ String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
     const char *md_code_tag = settings::ntfy::MD_CODE_TAG;
     String connected_wifi_ssid = getConnectedWifiSsid(json_doc);
 
-    if (isRxWifiReconnectedEvent(json_doc))
+    if (is_wifi_reconnected)
     {
         String text;
         text += md_code_tag;
@@ -161,14 +156,28 @@ String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
     return text;
 }
 
+String LoraMailboxNtfy::buildNTFYTitle(const char *icon, const char *time_str, const char *suffix) const
+{
+    String title;
+    if (icon[0] != '\0')
+        title = String(icon) + " ";
+    if (time_str[0] != '\0')
+        title += String(time_str);
+    title += " @" + String(settings::misc::RECIPIENT_NAME);
+    title += suffix;
+    return title;
+}
+
 NTFYMessage LoraMailboxNtfy::buildNTFYMessage(const JsonDocument &json_doc) const
 {
     if (!settings::ntfy::ENABLED)
     {
         (void)json_doc;
-        return NTFYMessage{TxTrigger::Boot, NTFYPriority::Default, "", ""};
+        return NTFYMessage{NTFYPriority::Default, "", ""};
     }
 
+    bool is_wifi_reconnected =
+        rxTriggerFromString(json_doc["RX"]["RX_TRIGGER"] | "") == RxTrigger::WifiReconnected;
     TxTrigger tx_trigger = getNTFYTrigger(json_doc);
 
     struct tm timeinfo;
@@ -176,36 +185,17 @@ NTFYMessage LoraMailboxNtfy::buildNTFYMessage(const JsonDocument &json_doc) cons
     if (getLocalTime(&timeinfo))
         strftime(time_str, sizeof(time_str), "%H:%M:%S", &timeinfo);
 
-    if (isRxWifiReconnectedEvent(json_doc))
-    {
-        String title = String(settings::ntfy::WIFI_RECONNECTED_ICON) + " ";
-        if (time_str[0] != '\0')
-            title += String(time_str);
-        title += " @" + String(settings::misc::RECIPIENT_NAME);
-        title += settings::ntfy::WIFI_RECONNECTED_TITLE_SUFFIX;
-        return NTFYMessage{
-            TxTrigger::Boot,
-            settings::ntfy::WIFI_RECONNECTED_PRIORITY,
-            title,
-            buildNTFYBody(json_doc),
-        };
-    }
-
-    const char *ntfy_icon = getNTFYIcon(tx_trigger);
-    const char *ntfy_title_suffix = getNTFYTitleSuffix(tx_trigger);
-    String title;
-    if (ntfy_icon[0] != '\0')
-        title = String(ntfy_icon) + " ";
-    if (time_str[0] != '\0')
-        title += String(time_str);
-    title += " @" + String(settings::misc::RECIPIENT_NAME);
-    title += ntfy_title_suffix;
+    const char *icon =
+        is_wifi_reconnected ? settings::ntfy::WIFI_RECONNECTED_ICON : getNTFYIcon(tx_trigger);
+    const char *suffix = is_wifi_reconnected ? settings::ntfy::WIFI_RECONNECTED_TITLE_SUFFIX
+                                              : getNTFYTitleSuffix(tx_trigger);
+    NTFYPriority priority = is_wifi_reconnected ? settings::ntfy::WIFI_RECONNECTED_PRIORITY
+                                                : getNTFYPriority(tx_trigger);
 
     return NTFYMessage{
-        tx_trigger,
-        getNTFYPriority(tx_trigger),
-        title,
-        buildNTFYBody(json_doc),
+        priority,
+        buildNTFYTitle(icon, time_str, suffix),
+        buildNTFYBody(json_doc, is_wifi_reconnected),
     };
 }
 
@@ -217,9 +207,6 @@ bool LoraMailboxNtfy::sendMsg(const JsonDocument &json_doc, const String &topic)
         (void)topic;
         return false;
     }
-
-    if (isRxWifiReconnectedEvent(json_doc) && !settings::ntfy::NOTIFY_WIFI_RECONNECTED)
-        return false;
 
     if (WiFi.status() != WL_CONNECTED)
         return false;

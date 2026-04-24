@@ -8,7 +8,6 @@
 
 #include <Arduino.h>
 #include <stdint.h>
-#include "common/tx_types.h"
 
 /**
  * @brief NTFY message priority.
@@ -25,7 +24,6 @@ enum class NTFYPriority : uint8_t
 
 struct NTFYMessage
 {
-    TxTrigger tx_trigger;
     NTFYPriority priority;
     String title;
     String body;
