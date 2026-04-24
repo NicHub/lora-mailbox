@@ -66,6 +66,19 @@ TxTrigger LoraMailboxNtfy::getNTFYTrigger(const JsonDocument &json_doc) const
     return TxTrigger::Boot;
 }
 
+String LoraMailboxNtfy::getConnectedWifiSsid(const JsonDocument &json_doc) const
+{
+    JsonArrayConst networks = json_doc["RX"]["RX_WIFI_NETWORKS"].as<JsonArrayConst>();
+    for (JsonObjectConst network : networks)
+    {
+        if (!(network["connected"] | false))
+            continue;
+        const char *ssid = network["ssid"] | "";
+        return String(ssid);
+    }
+    return "";
+}
+
 String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
 {
     if (!settings::ntfy::ENABLED)
@@ -84,6 +97,7 @@ String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
     float rx_tx_rssi_dbm = json_doc["RX_TX"]["RX_TX_RSSI_DBM"] | 0.0f;
     float rx_tx_snr_db = json_doc["RX_TX"]["RX_TX_SNR_DB"] | 0.0f;
     const char *md_code_tag = settings::ntfy::MD_CODE_TAG;
+    String connected_wifi_ssid = getConnectedWifiSsid(json_doc);
 
     String text;
     text += md_code_tag;
@@ -116,6 +130,11 @@ String LoraMailboxNtfy::buildNTFYBody(const JsonDocument &json_doc) const
     text += "SNR ";
     text += String(rx_tx_snr_db, 1);
     text += "dB";
+    text += md_code_tag;
+    text += "\n";
+    text += md_code_tag;
+    text += "SSID ";
+    text += connected_wifi_ssid;
     text += md_code_tag;
 
     return text;

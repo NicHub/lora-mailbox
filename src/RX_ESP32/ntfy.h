@@ -28,6 +28,7 @@ class LoraMailboxNtfy
     const char *getNTFYIcon(TxTrigger tx_trigger) const;
     const char *getNTFYTitleSuffix(TxTrigger tx_trigger) const;
     TxTrigger getNTFYTrigger(const JsonDocument &json_doc) const;
+    String getConnectedWifiSsid(const JsonDocument &json_doc) const;
     String buildNTFYBody(const JsonDocument &json_doc) const;
     NTFYMessage buildNTFYMessage(const JsonDocument &json_doc) const;
     bool sendMsg(const JsonDocument &json_doc, const String &topic = settings::ntfy::TOPIC);
