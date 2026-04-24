@@ -5,6 +5,7 @@
  */
 
 #include "mqtt.h"
+#include "common/rx_types.h"
 
 bool LoraMailboxMqtt::ensureWiFiConnected()
 {
@@ -49,9 +50,9 @@ size_t LoraMailboxMqtt::resolveTopics(
     const JsonDocument &json_doc, const char **topics, size_t max_topics) const
 {
     size_t topic_count = 0;
-    const char *rx_trigger = json_doc["RX"]["RX_TRIGGER"] | "";
+    RxTrigger rx_trigger = rxTriggerFromString(json_doc["RX"]["RX_TRIGGER"] | "");
     const char *tx_trigger = json_doc["TX"]["TX_TRIGGER"] | "";
-    if (strcmp(rx_trigger, "HEARTBEAT_RX") == 0)
+    if (rx_trigger == RxTrigger::HeartbeatRx)
         addTopicIfUnique(settings::mqtt::TOPIC_HEARTBEAT_RX, topics, topic_count, max_topics);
 
     if (strcmp(tx_trigger, "WAKEUP_PIN_HIGH") == 0)

@@ -7,6 +7,7 @@
 #include <Arduino.h>
 #include "RX_ESP32.h"
 #include "common/common.h"
+#include "common/rx_types.h"
 #include "wifi.h"
 #include "mqtt.h"
 #include "ntfy.h"
@@ -215,14 +216,14 @@ void addWifiReportToJsonDoc(uint8_t verbosity)
     }
 }
 
-void addRxCommonFieldsToJsonDoc(const char *trigger)
+void addRxCommonFieldsToJsonDoc(RxTrigger trigger)
 {
     json_doc["RX"]["RX_BOARD_ID"] = getMacAddress();
     json_doc["RX"]["RX_CURRENT_LOCAL_TIME"] = getCurrentTime();
     json_doc["RX"]["RX_BUILD_LOCAL_TIME"] = BUILD_LOCAL_TIME;
     json_doc["RX"]["RX_GIT_HEAD_COMMIT_ID"] = GIT_HEAD_COMMIT_ID;
     json_doc["RX"]["RX_GIT_UNCOMMITTED_FILES_COUNT"] = GIT_UNCOMMITTED_FILES_COUNT;
-    json_doc["RX"]["RX_TRIGGER"] = trigger;
+    json_doc["RX"]["RX_TRIGGER"] = rxTriggerToString(trigger);
     json_doc["RX"]["RX_WEB_UI_URL"] = String("http://") + lmb_wifi.getLocalIP().toString();
 }
 
@@ -248,7 +249,7 @@ void heartBeat()
     prev_heart_beat = now_ms;
 
     json_doc.clear();
-    addRxCommonFieldsToJsonDoc("HEARTBEAT_RX");
+    addRxCommonFieldsToJsonDoc(RxTrigger::HeartbeatRx);
     addWifiReportToJsonDoc(1);
 
     serializeJson(json_doc, json_string);
@@ -283,7 +284,7 @@ void readLoRa()
             tx[kv.key()] = kv.value();
         tx["TX_JSON_STRING"] = json_string;
     }
-    addRxCommonFieldsToJsonDoc("LORA_PAYLOAD_RECEIVED");
+    addRxCommonFieldsToJsonDoc(RxTrigger::LoraPayloadReceived);
     json_doc["RX"]["RX_DEBUG"] = settings::misc::DEBUG;
     json_doc["RX"]["RX_WS_CLIENT_COUNT"] = lmb_wifi.getWsClientCount();
     addWifiReportToJsonDoc(1);
@@ -303,7 +304,7 @@ void readLoRa()
 void publishRxBootMessage()
 {
     json_doc.clear();
-    addRxCommonFieldsToJsonDoc("RX_BOOT");
+    addRxCommonFieldsToJsonDoc(RxTrigger::Boot);
     addWifiReportToJsonDoc(2);
     lmb_mqtt.sendMsg(json_doc);
 }
@@ -311,7 +312,7 @@ void publishRxBootMessage()
 void publishRxWifiReconnectedMessage()
 {
     json_doc.clear();
-    addRxCommonFieldsToJsonDoc("RX_WIFI_RECONNECTED");
+    addRxCommonFieldsToJsonDoc(RxTrigger::WifiReconnected);
     addWifiReportToJsonDoc(3);
 
     serializeJson(json_doc, json_string);
