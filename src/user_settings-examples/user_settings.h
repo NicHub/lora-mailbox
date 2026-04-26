@@ -147,7 +147,7 @@ namespace settings::lora
     };
 
     static constexpr size_t LORA_PROFILE_COUNT = sizeof(LORA_PROFILES) / sizeof(LORA_PROFILES[0]);
-    static constexpr char DEFAULT_LORA_PROFILE_NAME[] = "lora_profile_fast";
+    static constexpr char DEFAULT_LORA_PROFILE_NAME[] = "lora_profile_faraday_cage";
     static constexpr size_t DEFAULT_LORA_PROFILE_INDEX = 1;
     static_assert(LORA_PROFILE_COUNT > 0, "At least one LoRa profile must be defined");
     static_assert(DEFAULT_LORA_PROFILE_INDEX < LORA_PROFILE_COUNT, "Invalid default LoRa profile index");
