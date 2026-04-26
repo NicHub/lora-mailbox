@@ -105,7 +105,7 @@ namespace settings::lora
         bool use_regulator_ldo;
     };
 
-    static constexpr Parameters PROFILES[] = {
+    static constexpr Parameters LORA_PROFILES[] = {
         {
             868.0,
             62.5,
@@ -119,42 +119,42 @@ namespace settings::lora
         },
     };
 
-    static constexpr size_t PROFILE_COUNT = sizeof(PROFILES) / sizeof(PROFILES[0]);
-    static constexpr size_t DEFAULT_PROFILE_INDEX = 0;
-    static_assert(PROFILE_COUNT > 0, "At least one LoRa profile must be defined");
-    static_assert(DEFAULT_PROFILE_INDEX < PROFILE_COUNT, "Invalid default LoRa profile index");
+    static constexpr size_t LORA_PROFILE_COUNT = sizeof(LORA_PROFILES) / sizeof(LORA_PROFILES[0]);
+    static constexpr size_t DEFAULT_LORA_PROFILE_INDEX = 0;
+    static_assert(LORA_PROFILE_COUNT > 0, "At least one LoRa profile must be defined");
+    static_assert(DEFAULT_LORA_PROFILE_INDEX < LORA_PROFILE_COUNT, "Invalid default LoRa profile index");
 
     namespace detail
     {
-        extern size_t current_profile_index;
+        extern size_t current_lora_profile_index;
     }
 
-    static inline bool isValidProfileIndex(size_t index)
+    static inline bool isValidLoraProfileIndex(size_t index)
     {
-        return index < PROFILE_COUNT;
+        return index < LORA_PROFILE_COUNT;
     }
 
-    static inline size_t getProfileIndex()
+    static inline size_t getLoraProfileIndex()
     {
-        return detail::current_profile_index;
+        return detail::current_lora_profile_index;
     }
 
-    static inline bool setProfileIndex(size_t index)
+    static inline bool setLoraProfileIndex(size_t index)
     {
-        if (!isValidProfileIndex(index))
+        if (!isValidLoraProfileIndex(index))
             return false;
-        detail::current_profile_index = index;
+        detail::current_lora_profile_index = index;
         return true;
     }
 
-    static inline const Parameters &profile(size_t index)
+    static inline const Parameters &loraProfile(size_t index)
     {
-        return PROFILES[isValidProfileIndex(index) ? index : DEFAULT_PROFILE_INDEX];
+        return LORA_PROFILES[isValidLoraProfileIndex(index) ? index : DEFAULT_LORA_PROFILE_INDEX];
     }
 
     static inline const Parameters &current()
     {
-        return profile(detail::current_profile_index);
+        return loraProfile(detail::current_lora_profile_index);
     }
 }
 

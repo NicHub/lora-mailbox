@@ -20,7 +20,7 @@ Blinker statusLed;
  * @note A future version must allow changing this index at runtime and
  * reconfiguring the radio without rebooting.
  */
-size_t settings::lora::detail::current_profile_index = settings::lora::DEFAULT_PROFILE_INDEX;
+size_t settings::lora::detail::current_lora_profile_index = settings::lora::DEFAULT_LORA_PROFILE_INDEX;
 
 /** @brief Save transmission state between loops. */
 int transmissionState = RADIOLIB_ERR_NONE;
