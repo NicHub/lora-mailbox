@@ -230,6 +230,7 @@ void addLoraSettingsToJsonDoc()
 {
     const settings::lora::Parameters &lora = settings::lora::current();
     json_doc["LORA"]["LORA_PROFILE_INDEX"] = settings::lora::getLoraProfileIndex();
+    json_doc["LORA"]["LORA_PROFILE_NAME"] = lora.name;
     json_doc["LORA"]["LORA_PROFILE_COUNT"] = settings::lora::LORA_PROFILE_COUNT;
     json_doc["LORA"]["LORA_FREQ"] = lora.freq;
     json_doc["LORA"]["LORA_BW"] = lora.bw;

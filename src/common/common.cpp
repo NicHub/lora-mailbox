@@ -103,6 +103,8 @@ void setupLoRa()
             yield();
     }
     Serial.print(F(" success"));
+    Serial.print(F(" profile="));
+    Serial.print(lora.name);
 }
 
 void printSplashScreen()

@@ -8,6 +8,7 @@
 
 #include <RadioLib.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "common/ntfy_types.h"
 #include "user_settings/user_settings_secrets.h"
@@ -94,6 +95,7 @@ namespace settings::lora
 {
     struct Parameters
     {
+        const char *name;
         float freq;
         float bw;
         uint8_t sf;
@@ -107,6 +109,7 @@ namespace settings::lora
 
     static constexpr Parameters LORA_PROFILES[] = {
         {
+            "faraday",
             868.0,
             62.5,
             12,
@@ -117,10 +120,34 @@ namespace settings::lora
             1.6,
             false,
         },
+        {
+            "fast",
+            868.0,
+            500.0,
+            5,
+            4,
+            RADIOLIB_SX126X_SYNC_WORD_PRIVATE,
+            14,
+            8,
+            1.6,
+            false,
+        },
+        {
+            "sx1262_default",
+            434.0,
+            125.0,
+            9,
+            7,
+            RADIOLIB_SX126X_SYNC_WORD_PRIVATE,
+            10,
+            8,
+            1.6,
+            false,
+        },
     };
 
     static constexpr size_t LORA_PROFILE_COUNT = sizeof(LORA_PROFILES) / sizeof(LORA_PROFILES[0]);
-    static constexpr size_t DEFAULT_LORA_PROFILE_INDEX = 0;
+    static constexpr size_t DEFAULT_LORA_PROFILE_INDEX = 1;
     static_assert(LORA_PROFILE_COUNT > 0, "At least one LoRa profile must be defined");
     static_assert(DEFAULT_LORA_PROFILE_INDEX < LORA_PROFILE_COUNT, "Invalid default LoRa profile index");
 
@@ -132,6 +159,28 @@ namespace settings::lora
     static inline bool isValidLoraProfileIndex(size_t index)
     {
         return index < LORA_PROFILE_COUNT;
+    }
+
+    static inline bool findLoraProfileIndexByName(const char *name, size_t &index)
+    {
+        if (name == nullptr)
+            return false;
+
+        for (size_t i = 0; i < LORA_PROFILE_COUNT; ++i)
+        {
+            if (strcmp(LORA_PROFILES[i].name, name) == 0)
+            {
+                index = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static inline bool isValidLoraProfileName(const char *name)
+    {
+        size_t index = 0;
+        return findLoraProfileIndexByName(name, index);
     }
 
     static inline size_t getLoraProfileIndex()
@@ -147,14 +196,33 @@ namespace settings::lora
         return true;
     }
 
+    static inline bool setLoraProfileName(const char *name)
+    {
+        size_t index = 0;
+        if (!findLoraProfileIndexByName(name, index))
+            return false;
+        return setLoraProfileIndex(index);
+    }
+
     static inline const Parameters &loraProfile(size_t index)
     {
         return LORA_PROFILES[isValidLoraProfileIndex(index) ? index : DEFAULT_LORA_PROFILE_INDEX];
     }
 
+    static inline const Parameters &loraProfile(const char *name)
+    {
+        size_t index = 0;
+        return loraProfile(findLoraProfileIndexByName(name, index) ? index : DEFAULT_LORA_PROFILE_INDEX);
+    }
+
     static inline const Parameters &current()
     {
         return loraProfile(detail::current_lora_profile_index);
+    }
+
+    static inline const char *getLoraProfileName()
+    {
+        return current().name;
     }
 }
 
