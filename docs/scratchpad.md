@@ -264,3 +264,14 @@ mosquitto_sub -h mqtt.ouilogique.ch -p 8883 -u guest -P guest123 -t "mbx_rz/B8:F
   }
 }
 ```
+
+```bash
+mosquitto_pub \
+    -h mqtt.ouilogique.ch \
+    -p 8883 \
+    --insecure \
+    -u guest \
+    -P guest123 \
+    -t "mbx_nj/simulator/pwm" \
+    -m "$(hostname) - $(date "+%Y-%m-%dT%H:%M:%S")"
+```
