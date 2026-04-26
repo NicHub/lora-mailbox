@@ -109,7 +109,7 @@ namespace settings::lora
 
     static constexpr Parameters LORA_PROFILES[] = {
         {
-            "faraday_cage",
+            "lora_profile_faraday_cage",
             float{868.0f},
             float{62.5f},
             uint8_t{12},
@@ -121,7 +121,7 @@ namespace settings::lora
             false,
         },
         {
-            "fast",
+            "lora_profile_fast",
             float{868.0f},
             float{500.0f},
             uint8_t{5},
@@ -133,7 +133,7 @@ namespace settings::lora
             false,
         },
         {
-            "sx1262_default",
+            "lora_profile_sx1262_default",
             float{434.0f},
             float{125.0f},
             uint8_t{9},
@@ -147,7 +147,7 @@ namespace settings::lora
     };
 
     static constexpr size_t LORA_PROFILE_COUNT = sizeof(LORA_PROFILES) / sizeof(LORA_PROFILES[0]);
-    static constexpr char DEFAULT_LORA_PROFILE_NAME[] = "fast";
+    static constexpr char DEFAULT_LORA_PROFILE_NAME[] = "lora_profile_fast";
     static constexpr size_t DEFAULT_LORA_PROFILE_INDEX = 1;
     static_assert(LORA_PROFILE_COUNT > 0, "At least one LoRa profile must be defined");
     static_assert(DEFAULT_LORA_PROFILE_INDEX < LORA_PROFILE_COUNT, "Invalid default LoRa profile index");
