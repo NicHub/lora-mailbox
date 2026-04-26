@@ -6,6 +6,8 @@
 
 #include "common/common.h"
 
+#include <string.h>
+
 Module lora_module(
     settings::board::LORA_CS,
     settings::board::LORA_IRQ,
@@ -15,12 +17,103 @@ SX1262 radio(&lora_module);
 
 Blinker statusLed;
 
+namespace
+{
+constexpr size_t LORA_PROFILE_COUNT = sizeof(settings::lora::LORA_PROFILES) / sizeof(settings::lora::LORA_PROFILES[0]);
+constexpr size_t DEFAULT_LORA_PROFILE_INDEX = 1;
+static_assert(LORA_PROFILE_COUNT > 0, "At least one LoRa profile must be defined");
+static_assert(DEFAULT_LORA_PROFILE_INDEX < LORA_PROFILE_COUNT, "Invalid default LoRa profile index");
+} // namespace
+
 /**
  * @note For now, the LoRa profile can only be chosen at startup.
  * @note A future version must allow changing this profile at runtime and
  * reconfiguring the radio without rebooting.
  */
-size_t settings::lora::detail::current_lora_profile_index = settings::lora::defaultLoraProfileIndex();
+static size_t current_lora_profile_index = settings::lora::defaultLoraProfileIndex();
+
+bool settings::lora::isValidLoraProfileIndex(size_t index)
+{
+    return index < LORA_PROFILE_COUNT;
+}
+
+bool settings::lora::findLoraProfileIndexByName(const char *name, size_t &index)
+{
+    if (name == nullptr)
+        return false;
+
+    for (size_t i = 0; i < LORA_PROFILE_COUNT; ++i)
+    {
+        if (strcmp(LORA_PROFILES[i].name, name) == 0)
+        {
+            index = i;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool settings::lora::isValidLoraProfileName(const char *name)
+{
+    size_t index = 0;
+    return findLoraProfileIndexByName(name, index);
+}
+
+size_t settings::lora::defaultLoraProfileIndex()
+{
+    size_t index = 0;
+    if (DEFAULT_LORA_PROFILE_NAME[0] != '\0' &&
+        findLoraProfileIndexByName(DEFAULT_LORA_PROFILE_NAME, index))
+        return index;
+    return DEFAULT_LORA_PROFILE_INDEX;
+}
+
+size_t settings::lora::loraProfileCount()
+{
+    return LORA_PROFILE_COUNT;
+}
+
+size_t settings::lora::getLoraProfileIndex()
+{
+    return current_lora_profile_index;
+}
+
+bool settings::lora::setLoraProfileIndex(size_t index)
+{
+    if (!isValidLoraProfileIndex(index))
+        return false;
+    current_lora_profile_index = index;
+    return true;
+}
+
+bool settings::lora::setLoraProfileName(const char *name)
+{
+    size_t index = 0;
+    if (!findLoraProfileIndexByName(name, index))
+        return false;
+    return setLoraProfileIndex(index);
+}
+
+const settings::lora::Parameters &settings::lora::loraProfile(size_t index)
+{
+    return LORA_PROFILES[isValidLoraProfileIndex(index) ? index : defaultLoraProfileIndex()];
+}
+
+const settings::lora::Parameters &settings::lora::loraProfile(const char *name)
+{
+    size_t index = 0;
+    return loraProfile(findLoraProfileIndexByName(name, index) ? index : defaultLoraProfileIndex());
+}
+
+const settings::lora::Parameters &settings::lora::current()
+{
+    return loraProfile(current_lora_profile_index);
+}
+
+const char *settings::lora::getLoraProfileName()
+{
+    return current().name;
+}
 
 /** @brief Save transmission state between loops. */
 int transmissionState = RADIOLIB_ERR_NONE;

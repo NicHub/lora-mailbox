@@ -8,7 +8,6 @@
 
 #include <RadioLib.h>
 #include <stddef.h>
-#include <string.h>
 
 #include "common/ntfy_types.h"
 #include "user_settings/user_settings_secrets.h"
@@ -146,94 +145,7 @@ namespace settings::lora
         },
     };
 
-    static constexpr size_t LORA_PROFILE_COUNT = sizeof(LORA_PROFILES) / sizeof(LORA_PROFILES[0]);
     static constexpr char DEFAULT_LORA_PROFILE_NAME[] = "lora_profile_faraday_cage";
-    static constexpr size_t DEFAULT_LORA_PROFILE_INDEX = 1;
-    static_assert(LORA_PROFILE_COUNT > 0, "At least one LoRa profile must be defined");
-    static_assert(DEFAULT_LORA_PROFILE_INDEX < LORA_PROFILE_COUNT, "Invalid default LoRa profile index");
-
-    namespace detail
-    {
-        extern size_t current_lora_profile_index;
-    }
-
-    static inline bool isValidLoraProfileIndex(size_t index)
-    {
-        return index < LORA_PROFILE_COUNT;
-    }
-
-    static inline bool findLoraProfileIndexByName(const char *name, size_t &index)
-    {
-        if (name == nullptr)
-            return false;
-
-        for (size_t i = 0; i < LORA_PROFILE_COUNT; ++i)
-        {
-            if (strcmp(LORA_PROFILES[i].name, name) == 0)
-            {
-                index = i;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static inline bool isValidLoraProfileName(const char *name)
-    {
-        size_t index = 0;
-        return findLoraProfileIndexByName(name, index);
-    }
-
-    static inline size_t defaultLoraProfileIndex()
-    {
-        size_t index = 0;
-        if (DEFAULT_LORA_PROFILE_NAME[0] != '\0' &&
-            findLoraProfileIndexByName(DEFAULT_LORA_PROFILE_NAME, index))
-            return index;
-        return DEFAULT_LORA_PROFILE_INDEX;
-    }
-
-    static inline size_t getLoraProfileIndex()
-    {
-        return detail::current_lora_profile_index;
-    }
-
-    static inline bool setLoraProfileIndex(size_t index)
-    {
-        if (!isValidLoraProfileIndex(index))
-            return false;
-        detail::current_lora_profile_index = index;
-        return true;
-    }
-
-    static inline bool setLoraProfileName(const char *name)
-    {
-        size_t index = 0;
-        if (!findLoraProfileIndexByName(name, index))
-            return false;
-        return setLoraProfileIndex(index);
-    }
-
-    static inline const Parameters &loraProfile(size_t index)
-    {
-        return LORA_PROFILES[isValidLoraProfileIndex(index) ? index : defaultLoraProfileIndex()];
-    }
-
-    static inline const Parameters &loraProfile(const char *name)
-    {
-        size_t index = 0;
-        return loraProfile(findLoraProfileIndexByName(name, index) ? index : defaultLoraProfileIndex());
-    }
-
-    static inline const Parameters &current()
-    {
-        return loraProfile(detail::current_lora_profile_index);
-    }
-
-    static inline const char *getLoraProfileName()
-    {
-        return current().name;
-    }
 }
 
 /** @brief MQTT settings. */

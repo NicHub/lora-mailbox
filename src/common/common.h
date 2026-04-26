@@ -30,6 +30,22 @@ extern volatile bool loraEvent;
 
 static constexpr char PREFIX[] = "\n[" PROJECT_NAME "] ";
 
+namespace settings::lora
+{
+    bool isValidLoraProfileIndex(size_t index);
+    bool findLoraProfileIndexByName(const char *name, size_t &index);
+    bool isValidLoraProfileName(const char *name);
+    size_t defaultLoraProfileIndex();
+    size_t loraProfileCount();
+    size_t getLoraProfileIndex();
+    bool setLoraProfileIndex(size_t index);
+    bool setLoraProfileName(const char *name);
+    const Parameters &loraProfile(size_t index);
+    const Parameters &loraProfile(const char *name);
+    const Parameters &current();
+    const char *getLoraProfileName();
+}
+
 /**
  * @brief RadioLib IRQ callback for TX/RX completion.
  * @note This function must have `void` return type and no arguments.
