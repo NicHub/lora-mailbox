@@ -228,15 +228,18 @@ void addRxCommonFieldsToJsonDoc(RxTrigger trigger)
 
 void addLoraSettingsToJsonDoc()
 {
-    json_doc["LORA"]["LORA_FREQ"] = settings::lora::FREQ;
-    json_doc["LORA"]["LORA_BW"] = settings::lora::BW;
-    json_doc["LORA"]["LORA_SF"] = settings::lora::SF;
-    json_doc["LORA"]["LORA_CR"] = settings::lora::CR;
-    json_doc["LORA"]["LORA_SYNCWORD"] = settings::lora::SYNCWORD;
-    json_doc["LORA"]["LORA_POWER"] = settings::lora::POWER;
-    json_doc["LORA"]["LORA_PREAMBLE_LENGTH"] = settings::lora::PREAMBLE_LENGTH;
-    json_doc["LORA"]["LORA_TCXO_VOLTAGE"] = settings::lora::TCXO_VOLTAGE;
-    json_doc["LORA"]["LORA_USE_REGULATOR_LDO"] = settings::lora::USE_REGULATOR_LDO;
+    const settings::lora::Parameters &lora = settings::lora::current();
+    json_doc["LORA"]["LORA_PROFILE_INDEX"] = settings::lora::getProfileIndex();
+    json_doc["LORA"]["LORA_PROFILE_COUNT"] = settings::lora::PROFILE_COUNT;
+    json_doc["LORA"]["LORA_FREQ"] = lora.freq;
+    json_doc["LORA"]["LORA_BW"] = lora.bw;
+    json_doc["LORA"]["LORA_SF"] = lora.sf;
+    json_doc["LORA"]["LORA_CR"] = lora.cr;
+    json_doc["LORA"]["LORA_SYNCWORD"] = lora.syncword;
+    json_doc["LORA"]["LORA_POWER"] = lora.power;
+    json_doc["LORA"]["LORA_PREAMBLE_LENGTH"] = lora.preamble_length;
+    json_doc["LORA"]["LORA_TCXO_VOLTAGE"] = lora.tcxo_voltage;
+    json_doc["LORA"]["LORA_USE_REGULATOR_LDO"] = lora.use_regulator_ldo;
 }
 
 void heartBeat()

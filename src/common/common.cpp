@@ -15,6 +15,13 @@ SX1262 radio(&lora_module);
 
 Blinker statusLed;
 
+/**
+ * @note For now, the LoRa profile index can only be chosen at startup.
+ * @note A future version must allow changing this index at runtime and
+ * reconfiguring the radio without rebooting.
+ */
+size_t settings::lora::detail::current_profile_index = settings::lora::DEFAULT_PROFILE_INDEX;
+
 /** @brief Save transmission state between loops. */
 int transmissionState = RADIOLIB_ERR_NONE;
 
@@ -78,16 +85,17 @@ void setupLoRa()
 {
     Serial.print(PREFIX);
     Serial.print(F("Initializing LoRa..."));
+    const settings::lora::Parameters &lora = settings::lora::current();
     int state = radio.begin(
-        settings::lora::FREQ,
-        settings::lora::BW,
-        settings::lora::SF,
-        settings::lora::CR,
-        settings::lora::SYNCWORD,
-        settings::lora::POWER,
-        settings::lora::PREAMBLE_LENGTH,
-        settings::lora::TCXO_VOLTAGE,
-        settings::lora::USE_REGULATOR_LDO);
+        lora.freq,
+        lora.bw,
+        lora.sf,
+        lora.cr,
+        lora.syncword,
+        lora.power,
+        lora.preamble_length,
+        lora.tcxo_voltage,
+        lora.use_regulator_ldo);
     if (state != RADIOLIB_ERR_NONE)
     {
         Serial.printf(" failed, code %d\n", state);

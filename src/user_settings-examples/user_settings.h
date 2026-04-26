@@ -7,6 +7,7 @@
 #pragma once
 
 #include <RadioLib.h>
+#include <stddef.h>
 
 #include "common/ntfy_types.h"
 #include "user_settings/user_settings_secrets.h"
@@ -91,15 +92,70 @@ namespace settings::wifi
 /** @brief LoRa settings. */
 namespace settings::lora
 {
-    static constexpr float FREQ = 868.0;
-    static constexpr float BW = 62.5;
-    static constexpr uint8_t SF = 12;
-    static constexpr uint8_t CR = 8;
-    static constexpr uint8_t SYNCWORD = RADIOLIB_SX126X_SYNC_WORD_PRIVATE;
-    static constexpr int8_t POWER = 14;
-    static constexpr uint16_t PREAMBLE_LENGTH = 12;
-    static constexpr float TCXO_VOLTAGE = 1.6;
-    static constexpr bool USE_REGULATOR_LDO = false;
+    struct Parameters
+    {
+        float freq;
+        float bw;
+        uint8_t sf;
+        uint8_t cr;
+        uint8_t syncword;
+        int8_t power;
+        uint16_t preamble_length;
+        float tcxo_voltage;
+        bool use_regulator_ldo;
+    };
+
+    static constexpr Parameters PROFILES[] = {
+        {
+            868.0,
+            62.5,
+            12,
+            8,
+            RADIOLIB_SX126X_SYNC_WORD_PRIVATE,
+            14,
+            12,
+            1.6,
+            false,
+        },
+    };
+
+    static constexpr size_t PROFILE_COUNT = sizeof(PROFILES) / sizeof(PROFILES[0]);
+    static constexpr size_t DEFAULT_PROFILE_INDEX = 0;
+    static_assert(PROFILE_COUNT > 0, "At least one LoRa profile must be defined");
+    static_assert(DEFAULT_PROFILE_INDEX < PROFILE_COUNT, "Invalid default LoRa profile index");
+
+    namespace detail
+    {
+        extern size_t current_profile_index;
+    }
+
+    static inline bool isValidProfileIndex(size_t index)
+    {
+        return index < PROFILE_COUNT;
+    }
+
+    static inline size_t getProfileIndex()
+    {
+        return detail::current_profile_index;
+    }
+
+    static inline bool setProfileIndex(size_t index)
+    {
+        if (!isValidProfileIndex(index))
+            return false;
+        detail::current_profile_index = index;
+        return true;
+    }
+
+    static inline const Parameters &profile(size_t index)
+    {
+        return PROFILES[isValidProfileIndex(index) ? index : DEFAULT_PROFILE_INDEX];
+    }
+
+    static inline const Parameters &current()
+    {
+        return profile(detail::current_profile_index);
+    }
 }
 
 /** @brief MQTT settings. */
