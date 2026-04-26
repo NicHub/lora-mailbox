@@ -175,9 +175,23 @@ static inline const char *getBoardUidHex()
  */
 void goToDeepSleep();
 
+extern TxTrigger tx_trigger;
+
+extern uint32_t next_heartbeat_deadline_ms;
+
+void setupGPIOs();
+
+void setupRtcWakeup();
+
+bool sleepSecondsOrPin(uint32_t seconds, bool pin_enabled);
+
+bool isHeartbeatDue(uint32_t now_ms);
+
+void advanceHeartbeatDeadline(uint32_t now_ms);
+
 uint16_t readMsgCounter();
 
-uint16_t readVInitialRaw();
+uint16_t readBatteryRawInitial();
 
 void saveMsgCounter(uint16_t cnt);
 
