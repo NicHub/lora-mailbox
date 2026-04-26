@@ -10,12 +10,34 @@
 #include <RadioLib.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
+#include "common/common.h"
+#include "wifi.h"
 #include "user_settings/user_settings.h"
 
 static constexpr uint64_t MASK = 1ULL << settings::board::WAKEUP_PIN;
 
+extern LoraMailboxWifi lmb_wifi;
+
 void debounce(uint32_t);
 void blink(uint32_t, uint32_t, uint32_t, uint32_t, bool);
+
+void setupGPIOs();
+
+void setupLoRaRX();
+
+void setupWiFi();
+
+void setupMQTT();
+
+void publishRxWifiReconnectedMessage();
+
+void heartBeat();
+
+void readLoRa();
+
+void counterCheck();
+
+void broadcastResults();
 
 /**
  * @note Platform counter storage API.
