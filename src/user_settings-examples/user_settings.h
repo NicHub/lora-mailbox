@@ -109,7 +109,7 @@ namespace settings::lora
 
     static constexpr Parameters LORA_PROFILES[] = {
         {
-            "faraday",
+            "faraday_cage",
             float{868.0f},
             float{62.5f},
             uint8_t{12},
@@ -147,6 +147,7 @@ namespace settings::lora
     };
 
     static constexpr size_t LORA_PROFILE_COUNT = sizeof(LORA_PROFILES) / sizeof(LORA_PROFILES[0]);
+    static constexpr char DEFAULT_LORA_PROFILE_NAME[] = "fast";
     static constexpr size_t DEFAULT_LORA_PROFILE_INDEX = 1;
     static_assert(LORA_PROFILE_COUNT > 0, "At least one LoRa profile must be defined");
     static_assert(DEFAULT_LORA_PROFILE_INDEX < LORA_PROFILE_COUNT, "Invalid default LoRa profile index");
@@ -183,6 +184,15 @@ namespace settings::lora
         return findLoraProfileIndexByName(name, index);
     }
 
+    static inline size_t defaultLoraProfileIndex()
+    {
+        size_t index = 0;
+        if (DEFAULT_LORA_PROFILE_NAME[0] != '\0' &&
+            findLoraProfileIndexByName(DEFAULT_LORA_PROFILE_NAME, index))
+            return index;
+        return DEFAULT_LORA_PROFILE_INDEX;
+    }
+
     static inline size_t getLoraProfileIndex()
     {
         return detail::current_lora_profile_index;
@@ -206,13 +216,13 @@ namespace settings::lora
 
     static inline const Parameters &loraProfile(size_t index)
     {
-        return LORA_PROFILES[isValidLoraProfileIndex(index) ? index : DEFAULT_LORA_PROFILE_INDEX];
+        return LORA_PROFILES[isValidLoraProfileIndex(index) ? index : defaultLoraProfileIndex()];
     }
 
     static inline const Parameters &loraProfile(const char *name)
     {
         size_t index = 0;
-        return loraProfile(findLoraProfileIndexByName(name, index) ? index : DEFAULT_LORA_PROFILE_INDEX);
+        return loraProfile(findLoraProfileIndexByName(name, index) ? index : defaultLoraProfileIndex());
     }
 
     static inline const Parameters &current()

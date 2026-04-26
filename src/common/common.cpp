@@ -16,11 +16,11 @@ SX1262 radio(&lora_module);
 Blinker statusLed;
 
 /**
- * @note For now, the LoRa profile index can only be chosen at startup.
- * @note A future version must allow changing this index at runtime and
+ * @note For now, the LoRa profile can only be chosen at startup.
+ * @note A future version must allow changing this profile at runtime and
  * reconfiguring the radio without rebooting.
  */
-size_t settings::lora::detail::current_lora_profile_index = settings::lora::DEFAULT_LORA_PROFILE_INDEX;
+size_t settings::lora::detail::current_lora_profile_index = settings::lora::defaultLoraProfileIndex();
 
 /** @brief Save transmission state between loops. */
 int transmissionState = RADIOLIB_ERR_NONE;
